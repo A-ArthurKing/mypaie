@@ -1,0 +1,169 @@
+/*
+ * Fichier : NotesQualite.css
+ * Rôle    : Styles de la page Notes Qualité.
+ * Module  : mypaie / Pages / NotesQualite
+ */
+
+.notes-qualite-page {
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.notes-qualite-page__content {
+    position: relative;
+    min-height: 400px;
+}
+
+.notes-qualite-page__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 25px;
+}
+
+.notes-qualite-page__title {
+    font-size: 1.5rem;
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-primary);
+    margin: 0;
+}
+
+.notes-qualite-page__subtitle {
+    color: var(--color-light-text-muted);
+    font-size: var(--text-sm);
+    margin-top: 4px;
+}
+
+/* KPI */
+.nq-kpi-global {
+    background: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    text-align: right;
+    box-shadow: var(--shadow-light-sm);
+}
+
+.nq-kpi-global__label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--color-light-text-muted);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.05em;
+}
+
+.nq-kpi-global__value {
+    font-size: 1.4rem;
+    font-weight: var(--weight-bold);
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+}
+
+/* FILTRES */
+.nq-filtres {
+    display: flex;
+    gap: 20px;
+    background: var(--color-light-surface);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-light-border);
+    margin-bottom: 15px;
+    align-items: flex-end;
+}
+
+.nq-filtres__groupe {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nq-filtres__groupe label {
+    font-size: 11px;
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-muted);
+    text-transform: uppercase;
+}
+
+.nq-search-input {
+    position: relative;
+    width: 250px;
+}
+
+.nq-search-input i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-light-text-muted);
+    font-size: 0.85rem;
+}
+
+.nq-search-input input {
+    width: 100%;
+    height: 38px;
+    padding: 0 10px 0 35px;
+    background: var(--color-light-surface-2);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.nq-search-input input:focus {
+    border-color: var(--color-accent);
+    background: #fff;
+    box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+/* STATUT */
+.nq-statut {
+    margin-bottom: 12px;
+    font-size: var(--text-sm);
+    color: var(--color-light-text-secondary);
+}
+
+.nq-statut__loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-accent);
+    font-weight: var(--weight-medium);
+}
+
+/* GRILLE */
+.nq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.nq-grid-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 0;
+    gap: 15px;
+    color: var(--color-light-text-muted);
+}
+
+.nq-grid-loading i {
+    font-size: 2rem;
+    color: var(--color-accent);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

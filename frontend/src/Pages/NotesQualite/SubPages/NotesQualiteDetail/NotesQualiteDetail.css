@@ -1,0 +1,163 @@
+/*
+ * Fichier : NotesQualiteDetail.css
+ * Rôle    : Styles de base de la vue détail qualité.
+ * Module  : mypaie / Pages / NotesQualite / SubPages / NotesQualiteDetail
+ */
+
+.nq-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: fadeInDetail 0.3s ease-out;
+}
+
+/* NAVIGATION & TITRE */
+.nq-detail__nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 10px;
+    background: var(--color-light-surface);
+    padding: 12px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-light-border);
+}
+
+.nq-detail__retour {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    background: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    transition: all var(--transition-fast);
+}
+
+.nq-detail__retour:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.nq-detail__search-bar {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.nq-detail__search-bar i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-light-text-muted);
+}
+
+.nq-detail__search-bar input {
+    width: 100%;
+    height: 36px;
+    padding: 0 35px 0 35px;
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    background: var(--color-light-surface-2);
+}
+
+.nq-detail__clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--color-light-text-muted);
+}
+
+.nq-detail__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-primary);
+}
+
+.nq-detail__title i {
+    color: var(--color-accent);
+}
+
+.nq-detail__count {
+    margin-left: 10px;
+    padding: 2px 8px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: var(--weight-semibold);
+}
+
+@keyframes fadeInDetail {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilitaires de notes partagés si besoin */
+.nq-note {
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.nq-note--good {
+    color: #2e7d32;
+    background: #e8f5e9;
+}
+
+.nq-note--bad {
+    color: #c62828;
+    background: #ffebee;
+}
+
+.nq-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+}
+
+.nq-table th {
+    background: var(--color-light-surface-2);
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--color-light-text-muted);
+    font-weight: var(--weight-bold);
+    border-bottom: 1px solid var(--color-light-border);
+}
+
+.nq-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-light-border-subtle);
+    color: var(--color-light-text-primary);
+}
+
+.nq-th--num,
+.nq-td--num {
+    text-align: right !important;
+}
+
+.nq-td--muted {
+    color: var(--color-light-text-muted);
+    font-size: 12px;
+}

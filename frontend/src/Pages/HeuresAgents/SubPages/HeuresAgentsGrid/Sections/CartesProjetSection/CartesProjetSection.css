@@ -1,0 +1,20 @@
+/*
+ * Fichier : CartesProjetSection.css
+ * Rôle    : Grille responsive pour les cartes projet.
+ * Module  : mypaie / Pages / HeuresAgents / Sections
+ */
+
+/* #region GRILLE */
+.cartes-projet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .cartes-projet-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* #endregion */

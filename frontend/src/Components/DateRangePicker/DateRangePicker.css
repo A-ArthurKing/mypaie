@@ -1,0 +1,196 @@
+/*
+ * Fichier : DateRangePicker.css
+ * Role    : Styles du sélecteur de plage de dates (Calendrier + Saisie manuelle).
+ * Module  : mypaie / Components / DateRangePicker
+ */
+
+.dr-picker {
+    position: relative;
+    width: 100%;
+}
+
+.dr-picker__input {
+    width: 100% !important;
+    height: 38px;
+    padding: 0 10px 0 34px !important;
+    background: var(--color-light-surface) !important;
+    border: 1px solid var(--color-light-border) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--color-light-text-primary) !important;
+    font-size: var(--text-sm) !important;
+    font-family: var(--font-sans) !important;
+    outline: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.dr-picker__input:focus {
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 1px var(--color-accent) !important;
+}
+
+.dr-picker__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-light-text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+/* #region REACT DATEPICKER CUSTOM */
+.react-datepicker-popper {
+    z-index: 9999 !important;
+}
+
+.react-datepicker {
+    font-family: var(--font-sans) !important;
+    border: 1px solid var(--color-light-border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-light-md) !important;
+    background: var(--color-light-surface) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 580px !important;
+    /* Largeur fixe pour 2 mois côte à côte */
+    overflow: visible !important;
+}
+
+.react-datepicker__triangle {
+    display: none !important;
+}
+
+.react-datepicker__month-container {
+    float: left !important;
+}
+
+.react-datepicker__header {
+    padding-top: 12px !important;
+}
+
+.react-datepicker__current-month {
+    font-weight: var(--weight-bold) !important;
+    color: var(--color-light-text-primary) !important;
+    text-transform: capitalize !important;
+    margin-bottom: 10px !important;
+}
+
+/* Force la grille pour les jours et noms de jours */
+.react-datepicker__day-names,
+.react-datepicker__week {
+    display: flex !important;
+    justify-content: space-around !important;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    margin: 1px !important;
+    font-size: 12px !important;
+}
+
+.react-datepicker__day-name {
+    color: var(--color-light-text-muted) !important;
+    font-weight: var(--weight-medium) !important;
+    font-size: 10px !important;
+}
+
+/* Jours en cercles parfaits */
+.react-datepicker__day {
+    color: var(--color-light-text-primary) !important;
+    border-radius: 50% !important;
+    transition: all var(--transition-fast) !important;
+    cursor: pointer !important;
+}
+
+.react-datepicker__day:hover {
+    background-color: var(--color-light-surface-hover) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--range-start,
+.react-datepicker__day--range-end {
+    background-color: var(--color-accent) !important;
+    color: #ffffff !important;
+    border-radius: 50% !important;
+}
+
+.react-datepicker__day--in-range {
+    background-color: var(--color-accent-soft) !important;
+    color: var(--color-accent) !important;
+    border-radius: 50% !important;
+}
+
+.react-datepicker__day--in-selecting-range {
+    background-color: var(--color-accent-soft) !important;
+    color: var(--color-accent) !important;
+    border-radius: 50% !important;
+}
+
+.react-datepicker__day--disabled {
+    color: var(--color-light-text-muted) !important;
+    opacity: 0.3 !important;
+}
+
+.react-datepicker__navigation-icon::before {
+    border-color: var(--color-light-text-muted) !important;
+}
+
+.react-datepicker__navigation:hover *::before {
+    border-color: var(--color-accent) !important;
+}
+
+/* #endregion */
+
+/* #region FOOTER SAISIE MANUELLE */
+.dr-picker__footer {
+    padding: 12px 16px;
+    background: var(--color-light-surface-2);
+    border-top: 1px solid var(--color-light-border-subtle);
+    flex-basis: 100%;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+.dr-picker__manual {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.dr-picker__manual-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dr-picker__manual-field span {
+    font-size: 11px;
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-muted);
+    text-transform: uppercase;
+}
+
+.dr-picker__manual-field input {
+    width: 130px;
+    height: 32px;
+    padding: 0 8px;
+    background: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    color: var(--color-light-text-primary);
+    font-family: var(--font-sans);
+    outline: none;
+}
+
+.dr-picker__manual-field input:focus {
+    border-color: var(--color-accent);
+}
+
+/* #endregion */

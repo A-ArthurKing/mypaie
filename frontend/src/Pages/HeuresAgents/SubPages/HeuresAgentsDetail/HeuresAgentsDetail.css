@@ -1,0 +1,24 @@
+/*
+ * Fichier : HeuresAgentsDetail.css
+ * Rôle    : Styles de base de la vue détail des heures.
+ * Module  : mypaie / Pages / HeuresAgents / SubPages / HeuresAgentsDetail
+ */
+
+.ha-detail-container {
+    animation: fadeInDetail 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@keyframes fadeInDetail {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

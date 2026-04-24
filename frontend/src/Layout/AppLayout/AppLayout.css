@@ -1,0 +1,23 @@
+/*
+ * Fichier : AppLayout.css
+ * Rôle    : Mise en page principale — sidebar + zone de contenu côte à côte.
+ * Module  : mypaie / Layout
+ */
+
+/* #region LAYOUT */
+.app-layout {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--color-bg-app);
+}
+
+.app-layout__main {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    /* On retire overflow-x: hidden pour ne pas couper les popups (ex: calendrier) */
+    background: var(--color-bg-content);
+}
+
+/* #endregion */

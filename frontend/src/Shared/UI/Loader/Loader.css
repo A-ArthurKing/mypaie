@@ -1,0 +1,58 @@
+/*
+ * Fichier : Loader.css
+ * Rôle    : Styles du composant Loader personnalisé.
+ */
+
+.mypaie-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    min-height: 200px;
+}
+
+.mypaie-loader__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.mypaie-loader__icon {
+    font-size: 3rem;
+    color: var(--color-accent);
+    animation: loaderRotate 2s infinite ease-in-out;
+}
+
+.mypaie-loader__text {
+    font-size: 0.9rem;
+    font-weight: var(--weight-medium);
+    color: var(--color-light-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+@keyframes loaderRotate {
+    0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: scale(1.2) rotate(180deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1) rotate(360deg);
+        opacity: 0.7;
+    }
+}

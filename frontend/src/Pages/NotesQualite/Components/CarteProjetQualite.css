@@ -1,0 +1,127 @@
+/*
+ * Fichier : CarteProjetQualite.css
+ * Rôle    : Styles de la carte KPI Qualité.
+ */
+
+.carte-qualite {
+    background: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.carte-qualite:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-light-md);
+    transform: translateY(-2px);
+}
+
+.carte-qualite__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.carte-qualite__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.carte-qualite__arrow {
+    font-size: 0.75rem;
+    color: var(--color-light-text-muted);
+    transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.carte-qualite:hover .carte-qualite__arrow {
+    color: var(--color-accent);
+    transform: translateX(3px);
+}
+
+.carte-qualite__body {
+    padding: 15px 0 5px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.carte-qualite__gauge-container {
+    position: relative;
+    width: 140px;
+    height: 85px;
+    display: flex;
+    justify-content: center;
+}
+
+.carte-qualite__gauge {
+    width: 100%;
+    height: 100%;
+}
+
+.gauge-bg {
+    stroke: var(--color-light-surface-2);
+    stroke-linecap: round;
+}
+
+.gauge-value {
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.gauge-value.good {
+    stroke: #2e7d32;
+}
+
+.gauge-value.bad {
+    stroke: #e8533a;
+}
+
+.carte-qualite__score-center {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.carte-qualite__score-number {
+    font-size: 1.5rem;
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-primary);
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+.carte-qualite__footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-light-border-subtle);
+}
+
+.carte-qualite__stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--color-light-text-secondary);
+}
+
+.carte-qualite__stat i {
+    color: var(--color-accent);
+    font-size: 0.8rem;
+}

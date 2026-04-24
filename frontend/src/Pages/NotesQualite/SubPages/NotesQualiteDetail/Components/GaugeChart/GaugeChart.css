@@ -1,0 +1,70 @@
+/*
+ * Fichier : GaugeChart.css
+ * Rôle    : Styles pour le composant de jauge.
+ */
+
+.nq-gauge {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nq-gauge__container {
+    position: relative;
+    width: 100%;
+}
+
+.nq-gauge__svg {
+    width: 100%;
+    height: auto;
+}
+
+.nq-gauge__bg {
+    stroke: var(--color-light-surface-2);
+    stroke-width: 10;
+    stroke-linecap: round;
+}
+
+.nq-gauge__value {
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease-out;
+}
+
+.nq-gauge__value.good {
+    stroke: #2e7d32;
+}
+
+.nq-gauge__value.bad {
+    stroke: #e8533a;
+}
+
+.nq-gauge__center {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.nq-gauge__number {
+    font-size: 1.8rem;
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+    color: var(--color-light-text-primary);
+}
+
+/* Tailles */
+.nq-gauge--large {
+    max-width: 200px;
+}
+
+.nq-gauge--small {
+    max-width: 120px;
+}
+
+.nq-gauge--small .nq-gauge__number {
+    font-size: 1.2rem;
+}

@@ -1,0 +1,414 @@
+/*
+ * Fichier : HeuresAgents.css
+ * Role    : Styles de la page HeuresAgents — tableau des heures des agents.
+ *           Scoping strict via la classe racine .heures-agents-page.
+ *           Zone de contenu claire (#f5f6f8) — utilise les variables --color-light-*.
+ * Module  : mypaie / Pages / HeuresAgents
+ */
+
+/* #region PAGE WRAPPER */
+.heures-agents-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: transparent;
+    color: var(--color-light-text-primary);
+    font-family: var(--font-sans);
+    padding: clamp(12px, 3vw, 28px);
+    gap: 16px;
+    box-sizing: border-box;
+}
+
+.heures-agents-page__content {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+}
+
+
+/* #endregion */
+
+/* #region EN-TETE PAGE */
+.heures-agents-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.heures-agents-page__title {
+    font-size: clamp(var(--text-xl), 2.5vw, var(--text-2xl));
+    font-weight: var(--weight-bold);
+    margin: 0;
+    color: var(--color-light-text-primary);
+}
+
+.heures-agents-page__subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-light-text-muted);
+    margin: 2px 0 0;
+}
+
+/* #endregion */
+
+/* #region BARRE DE FILTRES */
+.ha-filtres {
+    background: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    box-shadow: var(--shadow-light-sm);
+}
+
+.ha-filtres__groupe {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.ha-filtres__react-select {
+    width: 100%;
+}
+
+.ha-filtres__label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-light-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ha-filtres__input,
+.ha-filtres__select {
+    height: 38px;
+    padding: 0 10px;
+    background: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-light-text-primary);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.ha-filtres__input:focus,
+.ha-filtres__select:focus {
+    border-color: var(--color-accent);
+}
+
+.ha-filtres__input::placeholder {
+    color: var(--color-light-text-muted);
+}
+
+.ha-filtres__actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.ha-filtres__btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.ha-filtres__btn--apply {
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+}
+
+.ha-filtres__btn--apply:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    transform: none;
+}
+
+.ha-filtres__btn--apply:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ha-filtres__btn--reset {
+    background: transparent;
+    color: var(--color-light-text-muted);
+    border: 1px solid var(--color-light-border);
+}
+
+.ha-filtres__btn--reset:hover:not(:disabled) {
+    color: var(--color-light-text-primary);
+    border-color: var(--color-light-text-muted);
+    transform: none;
+}
+
+/* #endregion */
+
+/* #region BARRE DE STATUT */
+.ha-statut {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: var(--text-sm);
+    color: var(--color-light-text-muted);
+}
+
+.ha-statut__count {
+    font-weight: var(--weight-semibold);
+    color: var(--color-light-text-primary);
+}
+
+.ha-statut__loading-text {
+    color: var(--color-light-text-muted);
+    font-style: italic;
+    font-size: var(--text-xs);
+    animation: ha-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ha-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes ha-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* #endregion */
+
+/* #region TABLEAU */
+.ha-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-light-sm);
+    background: var(--color-light-surface);
+}
+
+.ha-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    min-width: 900px;
+}
+
+.ha-table thead tr {
+    background: var(--color-light-surface-2);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-raised);
+}
+
+.ha-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: var(--weight-bold);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-light-text-muted);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--color-light-border);
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: color var(--transition-fast);
+}
+
+.ha-table th:hover {
+    color: var(--color-light-text-primary);
+}
+
+.ha-table th.sorted {
+    color: var(--color-accent);
+}
+
+.ha-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-light-border-subtle);
+    color: var(--color-light-text-primary);
+    white-space: nowrap;
+}
+
+.ha-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ha-table tbody tr:hover td {
+    background: var(--color-light-surface-hover);
+}
+
+.ha-table td.ha-td--muted {
+    color: var(--color-light-text-muted);
+}
+
+.ha-table td.ha-td--number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+}
+
+/* #endregion */
+
+/* #region BADGES CLOTURE */
+.ha-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.03em;
+}
+
+.ha-badge--oui {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+}
+
+.ha-badge--non {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--color-light-text-muted);
+}
+
+.ha-badge--partial {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+}
+
+/* #endregion */
+
+/* #region PAGINATION */
+.ha-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+
+.ha-pagination__btn {
+    height: 32px;
+    min-width: 44px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-light-border);
+    background: var(--color-light-surface);
+    color: var(--color-light-text-muted);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.ha-pagination__btn:hover:not(:disabled) {
+    color: var(--color-light-text-primary);
+    border-color: var(--color-light-text-muted);
+    background: var(--color-light-surface);
+    transform: none;
+}
+
+.ha-pagination__btn--active {
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    border-color: var(--color-accent);
+    font-weight: var(--weight-bold);
+}
+
+.ha-pagination__btn--active:hover {
+    background: var(--color-accent-hover);
+    transform: none;
+}
+
+.ha-pagination__btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.ha-pagination__info {
+    font-size: var(--text-xs);
+    color: var(--color-light-text-muted);
+    padding: 0 4px;
+}
+
+/* #endregion */
+
+/* #region ETAT VIDE / ERREUR */
+.ha-etat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    gap: 10px;
+    color: var(--color-light-text-muted);
+    text-align: center;
+}
+
+.ha-etat__icon {
+    font-size: 1.8rem;
+    opacity: 0.5;
+}
+
+.ha-etat__message {
+    font-size: var(--text-base);
+}
+
+.ha-etat--erreur .ha-etat__message {
+    color: var(--color-error);
+}
+
+/* #endregion */
+
+/* #region RESPONSIVE MOBILE */
+@media (max-width: 600px) {
+    .ha-filtres {
+        flex-direction: column;
+    }
+
+    .ha-filtres__groupe {
+        width: 100%;
+    }
+
+    .ha-filtres__input,
+    .ha-filtres__select {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .ha-filtres__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* #endregion */
