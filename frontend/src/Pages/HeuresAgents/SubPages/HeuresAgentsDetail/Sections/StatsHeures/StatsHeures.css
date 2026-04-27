@@ -19,11 +19,11 @@
 }
 
 .ha-stats-card {
-    background: var(--color-light-surface);
-    border: 1px solid var(--color-light-border);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 20px;
-    box-shadow: var(--shadow-light-sm);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -33,7 +33,7 @@
     font-size: 11px;
     text-transform: uppercase;
     font-weight: var(--weight-bold);
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
     letter-spacing: 0.05em;
 }
 
@@ -43,7 +43,7 @@
     gap: 12px;
     font-size: 1.8rem;
     font-weight: var(--weight-bold);
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
 }
 
 .ha-stats-card__value i {
@@ -52,7 +52,7 @@
 
 .ha-stats-card--reel {
     border-color: var(--color-accent-soft);
-    background: linear-gradient(to bottom right, #fff, var(--color-light-surface-2));
+    background: linear-gradient(to bottom right, #fff, var(--color-surface-2));
 }
 
 .ha-stats-card--hf {
@@ -72,7 +72,7 @@
 
 .ha-stats-card__progress-bar {
     height: 6px;
-    background: var(--color-light-border);
+    background: var(--color-border);
     border-radius: 3px;
     position: relative;
     overflow: hidden;
@@ -93,11 +93,11 @@
 
 /* ── CHART ── */
 .ha-stats__chart-container {
-    background: var(--color-light-surface);
-    border: 1px solid var(--color-light-border);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 20px;
-    box-shadow: var(--shadow-light-sm);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
 }
@@ -112,7 +112,7 @@
 .ha-stats__chart-header h4 {
     margin: 0;
     font-size: 14px;
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
 }
 
 .ha-stats__legend {
@@ -198,7 +198,7 @@
 
 .ha-stats__bar-label {
     font-size: 10px;
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
     white-space: nowrap;
 }
 

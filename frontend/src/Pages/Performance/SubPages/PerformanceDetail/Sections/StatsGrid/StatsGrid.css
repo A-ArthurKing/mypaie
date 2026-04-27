@@ -1,0 +1,72 @@
+/*
+ * Fichier : StatsGrid.css
+ * Rôle    : Layout en grille des indicateurs de performance.
+ */
+
+/* #region GRID */
+.perf-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* #endregion */
+
+/* #region CARD INDICATEURS */
+.perf-stats-card {
+    background: var(--color-surface);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.perf-stats-card__title {
+    margin: 0 0 15px 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+    font-weight: var(--weight-bold);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 10px;
+}
+
+.perf-stats-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* #endregion */
+
+/* #region METRIC ITEM */
+.perf-metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.perf-metric-item__label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.perf-metric-item__value {
+    font-size: 0.95rem;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.perf-metric-item--accent .perf-metric-item__value {
+    color: var(--color-accent);
+}
+
+.perf-metric-item--muted .perf-metric-item__value {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: var(--weight-regular);
+}
+
+/* #endregion */

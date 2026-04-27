@@ -1,0 +1,113 @@
+# ============================================================
+# Fichier : docker-compose.yml
+# Rôle    : Orchestration complète de l'application mypaie.
+#           Services : frontend (Nginx), backend (Flask),
+#                      db (MySQL 8), phpmyadmin.
+# Module  : mypaie / root
+#
+# PORTS HOST :
+#   - Frontend  → http://localhost:3000
+#   - Backend   → http://localhost:5002  (debug direct)
+#   - MySQL     → localhost:3308         (client SQL local)
+#   - PHPMyAdmin→ http://localhost:8080
+#
+# NOTE : le port 3306 est occupé par XAMPP, 3307 par narratuluun_db,
+#        d'où le mapping 3308:3306 pour MySQL.
+# ============================================================
+
+services:
+
+  # ── MySQL 8 ─────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: mypaie_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Root2026!
+      MYSQL_DATABASE: mypaie_config
+      MYSQL_USER: mypaie
+      MYSQL_PASSWORD: Mypaie2026!
+    ports:
+      - "3308:3306"
+    volumes:
+      - mypaie_mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - mypaie_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "mypaie", "--password=Mypaie2026!"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── PHPMyAdmin ───────────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: mypaie_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: mypaie
+      PMA_PASSWORD: Mypaie2026!
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    networks:
+      - mypaie_network
+
+  # ── Backend Flask ────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: mypaie_backend:latest
+    container_name: mypaie_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env.docker
+    volumes:
+      # Monte le fichier de credentials GCP en lecture seule
+      - C:/DATA_PROJECT/AUTHENTIFICATION_GCP/data-project-438313-8e99289157d6.json:/app/gcp-credentials.json:ro
+    ports:
+      - "5002:5001"
+    networks:
+      - mypaie_network
+
+  # ── Frontend React / Vite (Mode DEV) ───────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: mypaie_frontend:latest
+    container_name: mypaie_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      # Synchronisation du code en temps réel (Hot Reload)
+      - ./frontend:/app
+      # Empêcher d'écraser les node_modules du conteneur par ceux du host
+      - /app/node_modules
+    ports:
+      # Vite utilisera le 5569 (accessible depuis ton host sur localhost:5569)
+      - "5569:5569"
+    networks:
+      - mypaie_network
+
+# ── Réseau interne ─────────────────────────────────────────────
+networks:
+  mypaie_network:
+    driver: bridge
+
+# ── Volumes persistants ────────────────────────────────────────
+volumes:
+  mypaie_mysql_data:
+    name: mypaie_mysql_data

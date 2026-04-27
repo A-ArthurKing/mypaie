@@ -1,0 +1,84 @@
+﻿/*
+ * Fichier : ReglesPrimes.css
+ * Rôle    : Styles spécifiques au module des Règles de Primes
+ * Module  : mypaie / Pages / ReglesPrimes
+ */
+
+.regles-primes {
+    padding: 20px;
+    max-width: 1700px;
+    margin: 0 auto;
+    color: var(--color-text-primary);
+}
+
+.regles-primes__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.regles-primes__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.regles-primes__subtitle {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.regles-primes__actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Bouton principal "Créer" */
+.btn-create-regle {
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-create-regle:hover {
+    background-color: var(--color-accent-hover);
+    transform: translateY(-1px);
+}
+
+.regles-primes__empty {
+    background-color: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    padding: 60px 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.regles-primes__empty-icon {
+    font-size: 3rem;
+    color: var(--color-text-muted);
+    margin-bottom: 16px;
+}
+
+.regles-primes__empty-text {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.regles-primes__empty-subtext {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}

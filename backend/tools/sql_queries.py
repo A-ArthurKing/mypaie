@@ -93,3 +93,37 @@ def query_qualite_stats_global(table_ref, where_str):
         GROUP BY ROLLUP(item, sous_item)
         ORDER BY item, sous_item
     """
+
+def query_performance_detail(table_ref, where_str):
+    """Récupération consolidée de la performance par agent."""
+    return f"""
+        SELECT 
+            matricule as agent_id_hash,
+            agent_nom as agent_name,
+            matricule as matricule,
+            ANY_VALUE(operation) as agent_group,
+            ANY_VALUE(projet) as projet,
+            SUM(nb_appels) as in_call_nbr,
+            SUM(nb_ventes) as booking_nbr,
+            SUM(temps_appel) as call_min,
+            SUM(temps_production) as logged_min,
+            SUM(temps_production) as worked_min,
+            COUNT(*) as nb_records,
+            MAX(date_ref) as date_ajout,
+            SUM(chiffre_affaire) as chiffre_affaire,
+            SAFE_DIVIDE(SUM(nb_ventes), NULLIF(SUM(nb_appels), 0)) * 100 as taux_conversion_calc,
+            SAFE_DIVIDE(SUM(csat * nb_csat), NULLIF(SUM(nb_csat), 0)) as csat_moyen
+        FROM {table_ref}
+        {where_str}
+        GROUP BY matricule, agent_nom
+        ORDER BY in_call_nbr DESC
+        LIMIT @limit OFFSET @offset
+    """
+
+def query_performance_count(table_ref, where_str):
+    """Comptage du nombre d'agents uniques pour la pagination."""
+    return f"""
+        SELECT COUNT(DISTINCT matricule) AS total
+        FROM {table_ref}
+        {where_str}
+    """

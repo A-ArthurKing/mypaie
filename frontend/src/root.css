@@ -1,9 +1,8 @@
 /*
  * Fichier : root.css
  * Rôle    : Design tokens globaux de l'application mypaie.
- *           Thème inspiré de Skillsphere — fond sombre prune/bordeaux,
+ *           Thème clair avec sidebar prune/bordeaux,
  *           accent orange-corail, typographie Inter.
- *           Toutes les couleurs, ombres, rayons et polices passent par ces variables.
  * Module  : mypaie / src
  */
 
@@ -14,35 +13,24 @@
 /* #region DESIGN TOKENS */
 :root {
 
-    /* ── Palette de base ──────────────────────────────── */
-    --color-bg-app: #1e1028;
-    /* fond global page — prune profond    */
-    --color-bg-nav: #180e22;
-    /* fond navbar / sidebar               */
+    /* -- Palette de base -------------------------------- */
+    --color-bg-app: #f5f6f8;
+    --color-bg-nav: #ffffff;
     --color-bg-sidebar: #49293e;
-    /* sidebar principale                  */
     --color-bg-content: #f5f6f8;
-    /* zone de contenu principale          */
-    --color-surface: #27183a;
-    /* cartes, panneaux, tableaux          */
-    --color-surface-2: #301f45;
-    /* surface élevée, thead               */
-    --color-surface-hover: #3a2754;
-    /* survol d'une ligne / item           */
-    --color-overlay: rgba(30, 16, 40, 0.85);
-    /* modals / toasts       */
 
-    /* ── Accent principal : orange-corail Skillsphere ─── */
+    --color-surface: #ffffff;
+    --color-surface-2: #eef0f4;
+    --color-surface-hover: #e4e7ed;
+    --color-overlay: rgba(0, 0, 0, 0.50);
+
+    /* -- Accent principal : orange-corail Skillsphere --- */
     --color-accent: #e8533a;
-    /* CTA, liens actifs, tri actif        */
     --color-accent-hover: #d4452d;
-    /* survol accent                       */
     --color-accent-soft: rgba(232, 83, 58, 0.15);
-    /* fond badge accent    */
     --color-accent-border: rgba(232, 83, 58, 0.40);
-    /* bordure accent       */
 
-    /* ── États sémantiques ───────────────────────────── */
+    /* -- �tats s�mantiques ----------------------------- */
     --color-success: #22c55e;
     --color-success-soft: rgba(34, 197, 94, 0.15);
     --color-warning: #f59e0b;
@@ -52,47 +40,26 @@
     --color-info: #38bdf8;
     --color-info-soft: rgba(56, 189, 248, 0.15);
 
-    /* ── Texte ───────────────────────────────────────── */
-    --color-text-primary: #f0eaf6;
-    /* texte principal sur fond sombre     */
-    --color-text-secondary: #c5b8d4;
-    /* texte secondaire                    */
-    --color-text-muted: #8c7fa0;
-    /* libellés, placeholders              */
-    --color-text-disabled: #5a5068;
-    /* éléments désactivés                 */
+    /* -- Texte ----------------------------------------- */
+    --color-text-primary: #111827;
+    --color-text-secondary: #374151;
+    --color-text-muted: #6b7280;
+    --color-text-disabled: #9ca3af;
     --color-text-on-accent: #ffffff;
-    /* texte sur bouton accent             */
     --color-text-on-light: #1a0f27;
-    /* texte sur fond clair (cartes)       */
 
-    /* ── Bordures ────────────────────────────────────── */
-    --color-border: #3d2b52;
-    /* bordures standard                   */
-    --color-border-subtle: #2e1f42;
-    /* séparateurs discrets                */
-    --color-border-strong: #5a3f72;
-    /* bordures mises en avant             */
+    /* -- Bordures -------------------------------------- */
+    --color-border: #d1d5db;
+    --color-border-subtle: #e5e7eb;
+    --color-border-strong: #9ca3af;
 
-    /* ── Ombres ──────────────────────────────────────── */
-    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.30);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
+    /* -- Ombres ---------------------------------------- */
+    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.20);
 
-    /* ── Thème clair — zone de contenu (#f5f6f8) ─────── */
-    --color-light-surface: #ffffff;
-    --color-light-surface-2: #eef0f4;
-    --color-light-surface-hover: #e4e7ed;
-    --color-light-border: #d1d5db;
-    --color-light-border-subtle: #e5e7eb;
-    --color-light-text-primary: #111827;
-    --color-light-text-secondary: #374151;
-    --color-light-text-muted: #6b7280;
-    --shadow-light-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
-    --shadow-light-md: 0 2px 8px rgba(0, 0, 0, 0.10);
-
-    /* ── Rayons ──────────────────────────────────────── */
+    /* -- Rayons ---------------------------------------- */
     --radius-xs: 4px;
     --radius-sm: 6px;
     --radius-md: 8px;
@@ -100,24 +67,17 @@
     --radius-xl: 16px;
     --radius-pill: 999px;
 
-    /* ── Typographie ─────────────────────────────────── */
+    /* -- Typographie ----------------------------------- */
     --font-sans: 'Inter', system-ui, 'Segoe UI', sans-serif;
     --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
 
     --text-xs: 0.70rem;
-    /* ~11px */
     --text-sm: 0.78rem;
-    /* ~12.5px */
     --text-base: 0.875rem;
-    /* ~14px */
     --text-md: 1rem;
-    /* 16px */
     --text-lg: 1.125rem;
-    /* 18px */
     --text-xl: 1.25rem;
-    /* 20px */
     --text-2xl: 1.5rem;
-    /* 24px */
 
     --weight-regular: 400;
     --weight-medium: 500;
@@ -125,12 +85,12 @@
     --weight-bold: 700;
     --weight-extrabold: 800;
 
-    /* ── Transitions ─────────────────────────────────── */
+    /* -- Transitions ----------------------------------- */
     --transition-fast: 0.12s ease;
     --transition-base: 0.20s ease;
     --transition-slow: 0.35s ease;
 
-    /* ── Z-index ─────────────────────────────────────── */
+    /* -- Z-index --------------------------------------- */
     --z-base: 0;
     --z-raised: 10;
     --z-overlay: 100;

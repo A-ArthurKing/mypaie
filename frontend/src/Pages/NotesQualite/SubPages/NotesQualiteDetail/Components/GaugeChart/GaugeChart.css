@@ -20,7 +20,7 @@
 }
 
 .nq-gauge__bg {
-    stroke: var(--color-light-surface-2);
+    stroke: var(--color-surface-2);
     stroke-width: 10;
     stroke-linecap: round;
 }
@@ -53,7 +53,7 @@
     font-size: 1.8rem;
     font-weight: var(--weight-bold);
     font-family: var(--font-mono);
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
 }
 
 /* Tailles */

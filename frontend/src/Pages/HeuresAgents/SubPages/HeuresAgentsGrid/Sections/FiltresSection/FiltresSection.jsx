@@ -29,12 +29,12 @@ const customSelectStyles = {
     ...base,
     minHeight: '38px',
     borderRadius: 'var(--radius-sm)',
-    borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-light-border)',
+    borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-border)',
     boxShadow: state.isFocused ? '0 0 0 1px var(--color-accent)' : 'none',
     '&:hover': {
-      borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-light-border-subtle)',
+      borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-border-subtle)',
     },
-    background: 'var(--color-light-surface)',
+    background: 'var(--color-surface)',
     fontFamily: 'var(--font-sans)',
     fontSize: 'var(--text-sm)',
   }),
@@ -45,7 +45,7 @@ const customSelectStyles = {
       : state.isFocused 
         ? 'var(--color-accent-soft)' 
         : 'transparent',
-    color: state.isSelected ? '#ffffff' : 'var(--color-light-text-primary)',
+    color: state.isSelected ? '#ffffff' : 'var(--color-text-primary)',
     cursor: 'pointer',
     fontSize: 'var(--text-sm)',
     '&:active': {
@@ -54,18 +54,18 @@ const customSelectStyles = {
   }),
   placeholder: (base) => ({
     ...base,
-    color: 'var(--color-light-text-muted)',
+    color: 'var(--color-text-muted)',
   }),
   singleValue: (base) => ({
     ...base,
-    color: 'var(--color-light-text-primary)',
+    color: 'var(--color-text-primary)',
   }),
   menu: (base) => ({
     ...base,
     borderRadius: 'var(--radius-md)',
-    boxShadow: 'var(--shadow-light-md)',
-    background: 'var(--color-light-surface)',
-    border: '1px solid var(--color-light-border)',
+    boxShadow: 'var(--shadow-md)',
+    background: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
   })
 }
 // #endregion
@@ -88,11 +88,6 @@ function FiltresSection({ equipes = [], projets = [], onApply, loading = false, 
   const optionsEquipes = [
     { value: '', label: 'Toutes les équipes' },
     ...equipes.map(eq => ({ value: eq, label: eq }))
-  ]
-
-  const optionsProjets = [
-    { value: '', label: 'Tous les projets' },
-    ...projets.map(p => ({ value: p, label: p }))
   ]
   // #endregion
 
@@ -141,15 +136,25 @@ function FiltresSection({ equipes = [], projets = [], onApply, loading = false, 
 
       <div className="ha-filtres__groupe">
         <label className="ha-filtres__label">Projet</label>
-        <Select
-          placeholder="Tous les projets"
-          options={optionsProjets}
-          styles={customSelectStyles}
-          value={optionsProjets.find(opt => opt.value === projet)}
-          onChange={opt => setProjet(opt ? opt.value : '')}
-          isClearable
-          className="ha-filtres__react-select"
-        />
+        <div className="ha-filtres__input-wrapper">
+          <input
+            type="text"
+            className="ha-filtres__input"
+            placeholder="Rechercher un projet..."
+            value={projet}
+            onChange={(e) => setProjet(e.target.value)}
+          />
+          {projet && (
+            <button 
+              type="button" 
+              className="ha-filtres__clear-btn" 
+              onClick={() => setProjet('')}
+              title="Effacer la recherche"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="ha-filtres__groupe">

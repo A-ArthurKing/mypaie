@@ -35,7 +35,7 @@
 .mypaie-loader__text {
     font-size: 0.9rem;
     font-weight: var(--weight-medium);
-    color: var(--color-light-text-secondary);
+    color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }

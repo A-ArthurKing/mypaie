@@ -10,10 +10,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5569,
+    host: true, // Écouter sur toutes les interfaces (important pour Docker)
     proxy: {
       // Redirige tous les appels /api/* vers le serveur Flask Python
+      // "backend" est le nom du service dans docker-compose.yml
       "/api": {
-        target: "http://127.0.0.1:5001",
+        target: "http://backend:5001",
         changeOrigin: true,
       },
     },

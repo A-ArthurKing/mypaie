@@ -33,7 +33,7 @@ const COLONNES = [
 // #endregion
 
 // #region COMPOSANT
-function DetailProjetSection({ projet, lignes = [], onRetour }) {
+function DetailProjetSection({ projet, lignes = [] }) {
 
   const [triKey, setTriKey]   = useState('LastName')
   const [triDesc, setTriDesc] = useState(false)
@@ -120,11 +120,6 @@ function DetailProjetSection({ projet, lignes = [], onRetour }) {
 
       {/* ── Barre de navigation retour ── */}
       <div className="detail-projet__nav">
-        <button className="detail-projet__retour" onClick={onRetour} type="button">
-          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
-          Retour aux projets
-        </button>
-        
         <div className="detail-projet__search-bar">
           <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
           <input 

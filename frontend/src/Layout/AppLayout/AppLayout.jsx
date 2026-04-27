@@ -1,6 +1,6 @@
-/*
+﻿/*
  * Fichier : AppLayout.jsx
- * Rôle    : Conteneur principal de l'application — assemble la Sidebar
+ * RÃ´le    : Conteneur principal de l'application â€” assemble la Sidebar
  *           et la zone de contenu (MainContainer) qui charge les pages.
  * Module  : mypaie / Layout
  */
@@ -8,21 +8,25 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from '../Sidebar/Sidebar'
 import HeuresAgents from '../../Pages/HeuresAgents/HeuresAgents'
 import NotesQualite from '../../Pages/NotesQualite/NotesQualite'
+import Performance from '../../Pages/Performance/Performance'
+import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
 import './AppLayout.css'
 
 function AppLayout() {
   return (
     <div className="app-layout">
 
-      {/* ── Barre latérale ── */}
+      {/* â”€â”€ Barre latÃ©rale â”€â”€ */}
       <Sidebar />
 
-      {/* ── Zone de contenu principale ── */}
+      {/* â”€â”€ Zone de contenu principale â”€â”€ */}
       <main className="app-layout__main">
         <Routes>
           <Route path="/heures/*" element={<HeuresAgents />} />
           <Route path="/qualite/*" element={<NotesQualite />} />
-          {/* Redirection par défaut vers les heures */}
+          <Route path="/performance/*" element={<Performance />} />
+          <Route path="/regles-primes/*" element={<ReglesPrimes />} />
+          {/* Redirection par dÃ©faut vers les heures */}
           <Route path="*" element={<Navigate to="/heures" replace />} />
         </Routes>
       </main>

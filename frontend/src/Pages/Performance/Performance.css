@@ -1,0 +1,90 @@
+/*
+ * Fichier : Performance.css
+ * Rôle    : Styles de la page Performance.
+ * Module  : mypaie / Pages / Performance
+ */
+
+.performance-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.performance-page__header {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.performance-page__title {
+    font-size: 1.5rem;
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+}
+
+.performance-page__subtitle {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* KPI GLOBAL */
+.perf-kpi-global {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    text-align: right;
+    box-shadow: var(--shadow-sm);
+}
+
+.perf-kpi-global__label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.05em;
+}
+
+.perf-kpi-global__value {
+    font-size: 1.4rem;
+    font-weight: var(--weight-bold);
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+}
+
+/* STATUT */
+.perf-statut {
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+.perf-statut strong {
+    color: var(--color-accent);
+}
+
+.performance-page__content {
+    flex: 1;
+    position: relative;
+    min-height: 400px;
+}

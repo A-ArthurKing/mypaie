@@ -1,0 +1,24 @@
+# ============================================================
+# Fichier : .dockerignore
+# Rôle    : Exclusions pour le build Docker du frontend.
+#           Évite de copier node_modules (très lourd).
+# Module  : mypaie / frontend
+# ============================================================
+
+# Dépendances locales Node
+node_modules/
+
+# Build précédent (sera recréé dans le conteneur)
+dist/
+
+# Cache Vite
+.vite/
+
+# Fichiers divers
+*.log
+.env.local
+.env.*.local
+
+# Contrôle de version
+.git/
+.gitignore

@@ -6,6 +6,13 @@
 
 /* #region BASE */
 .sidebar {
+    /* ── Couleurs spécifiques au thème sombre de la sidebar ── */
+    --color-text-primary: #f0eaf6;
+    --color-text-secondary: #c5b8d4;
+    --color-text-muted: #8c7fa0;
+    --color-surface-hover: rgba(255, 255, 255, 0.08);
+    --color-border-subtle: rgba(255, 255, 255, 0.1);
+
     display: flex;
     flex-direction: column;
     width: 200px;

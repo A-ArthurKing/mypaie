@@ -27,12 +27,18 @@ function HeuresAgentsDetail({ lignes }) {
 
   return (
     <div className="ha-detail-container">
+      <div className="ha-detail-header">
+        <button className="ha-detail-retour" onClick={() => navigate('/heures')} type="button">
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+          Retour aux projets
+        </button>
+      </div>
+
       <StatsHeures lignes={lignesProjet} />
       
       <DetailProjetSection
         projet={decodedProjet}
         lignes={lignesProjet}
-        onRetour={() => navigate('/heures')}
       />
     </div>
   )

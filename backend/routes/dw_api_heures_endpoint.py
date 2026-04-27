@@ -14,6 +14,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from services.dw_api_heures_provider import get_heures_agents, get_equipes_distinctes, get_projets_distincts
 from services.dw_api_qualite_provider import get_qualite_agents, get_qualite_stats_projets, get_qualite_stats_global
+from services.dw_api_performance_provider import get_performance_pvcp
 # #endregion
 
 # #region CONFIGURATION
@@ -155,6 +156,39 @@ def endpoint_qualite_stats_global():
     except Exception as err:
         logger.error("Erreur endpoint /api/qualite/stats/global : %s", err)
         return jsonify({"error": "Erreur serveur lors de la récupération des stats globales."}), 500
+
+
+# #region PERFORMANCE
+@app.route("/api/performance/pvcp", methods=["GET"])
+def endpoint_performance_pvcp():
+    """
+    Retourne les données de performance consolidées.
+    """
+    date_debut  = request.args.get("date_debut")
+    date_fin    = request.args.get("date_fin")
+    agent       = request.args.get("agent")
+    granularity = request.args.get("granularity", "total")
+
+    try:
+        limit  = min(int(request.args.get("limit", 500)), 1000)
+        offset = max(int(request.args.get("offset", 0)), 0)
+    except ValueError:
+        return jsonify({"error": "Les paramètres limit et offset doivent être des entiers."}), 400
+
+    try:
+        result = get_performance_pvcp(
+            date_debut=date_debut,
+            date_fin=date_fin,
+            agent=agent,
+            granularity=granularity,
+            limit=limit,
+            offset=offset
+        )
+        return jsonify(result), 200
+    except Exception as err:
+        logger.error("Erreur endpoint /api/performance/pvcp : %s", err)
+        return jsonify({"error": "Erreur serveur lors de la récupération des données performance."}), 500
+# #endregion
 
 
 @app.route("/api/health", methods=["GET"])

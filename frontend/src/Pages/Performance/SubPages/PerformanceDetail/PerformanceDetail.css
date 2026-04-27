@@ -1,0 +1,149 @@
+/*
+ * Fichier : PerformanceDetail.css
+ * Rôle    : Styles de la vue détail performance.
+ */
+
+.perf-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeInDetail 0.3s ease-out;
+}
+
+.perf-detail__header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--color-surface);
+    padding: 15px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.perf-detail__back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    transition: all var(--transition-fast);
+}
+
+.perf-detail__back:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.perf-detail__agent {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.perf-detail__avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: var(--color-bg-sidebar);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--weight-bold);
+    font-size: 1.2rem;
+}
+
+.perf-detail__name {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-text-primary);
+}
+
+.perf-detail__meta {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+/* ── GRID ── */
+.perf-detail__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.perf-detail__section {
+    background: var(--color-surface);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.perf-detail__section h3 {
+    margin: 0 0 15px 0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 10px;
+}
+
+.perf-detail__metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.perf-metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.perf-metric-item__label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.perf-metric-item__value {
+    font-size: 0.9rem;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-primary);
+}
+
+/* ── RAW ── */
+.perf-detail__raw {
+    background: #1e293b;
+    color: #cbd5e1;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    font-family: monospace;
+    font-size: 0.8rem;
+    overflow-x: auto;
+}
+
+.perf-detail__raw h4 {
+    margin: 0 0 10px 0;
+    color: #94a3b8;
+}
+
+.perf-detail__raw pre {
+    margin: 0;
+}
+
+@keyframes fadeInDetail {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

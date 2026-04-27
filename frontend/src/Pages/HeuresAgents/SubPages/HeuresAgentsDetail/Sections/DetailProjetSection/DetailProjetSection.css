@@ -14,35 +14,12 @@
     margin-bottom: 20px;
 }
 
-.detail-projet__retour {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 14px;
-    background: var(--color-light-surface);
-    border: 1px solid var(--color-light-border);
-    border-radius: var(--radius-sm);
-    color: var(--color-light-text-secondary);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    font-family: var(--font-sans);
-    cursor: pointer;
-    transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.detail-projet__retour:hover {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
-    transform: none;
-}
-
 .detail-projet__breadcrumb {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: var(--text-sm);
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
 }
 
 .detail-projet__breadcrumb i {
@@ -50,17 +27,17 @@
 }
 
 .detail-projet__breadcrumb span {
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
     font-weight: var(--weight-semibold);
 }
 
 .detail-projet__breadcrumb-sep {
-    color: var(--color-light-text-muted) !important;
+    color: var(--color-text-muted) !important;
     font-weight: var(--weight-regular) !important;
 }
 
 .detail-projet__breadcrumb-count {
-    color: var(--color-light-text-muted) !important;
+    color: var(--color-text-muted) !important;
     font-weight: var(--weight-regular) !important;
 }
 
@@ -77,7 +54,7 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
     font-size: 0.9rem;
     pointer-events: none;
 }
@@ -86,10 +63,10 @@
     width: 100%;
     height: 36px;
     padding: 0 35px 0 38px;
-    background: var(--color-light-surface-2);
-    border: 1px solid var(--color-light-border);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
     font-size: var(--text-sm);
     font-family: var(--font-sans);
     outline: none;
@@ -98,7 +75,7 @@
 }
 
 .detail-projet__search-bar input:focus {
-    background: var(--color-light-surface);
+    background: var(--color-surface);
     border-color: var(--color-accent);
     box-shadow: 0 0 0 2px var(--color-accent-soft);
 }
@@ -110,7 +87,7 @@
     transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
     cursor: pointer;
     padding: 4px;
     width: 24px;
@@ -123,7 +100,7 @@
 }
 
 .detail-projet__search-clear:hover {
-    background: var(--color-light-surface-hover);
+    background: var(--color-surface-hover);
     color: var(--color-accent);
 }
 
@@ -132,10 +109,10 @@
 /* #region TABLEAU */
 .detail-projet__table-wrapper {
     overflow-x: auto;
-    border: 1px solid var(--color-light-border);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-light-sm);
-    background: var(--color-light-surface);
+    box-shadow: var(--shadow-sm);
+    background: var(--color-surface);
 }
 
 .detail-projet__table {
@@ -146,7 +123,7 @@
 }
 
 .detail-projet__table thead tr {
-    background: var(--color-light-surface-2);
+    background: var(--color-surface-2);
 }
 
 .detail-projet__table th {
@@ -156,9 +133,9 @@
     font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
     white-space: nowrap;
-    border-bottom: 1px solid var(--color-light-border);
+    border-bottom: 1px solid var(--color-border);
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
@@ -166,7 +143,7 @@
 }
 
 .detail-projet__table th:hover {
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
 }
 
 .detail-projet__table th.sorted {
@@ -184,8 +161,8 @@
 
 .detail-projet__table td {
     padding: 8px 14px;
-    border-bottom: 1px solid var(--color-light-border-subtle);
-    color: var(--color-light-text-primary);
+    border-bottom: 1px solid var(--color-border-subtle);
+    color: var(--color-text-primary);
     white-space: nowrap;
 }
 
@@ -194,11 +171,11 @@
 }
 
 .detail-projet__table tbody tr:hover td {
-    background: var(--color-light-surface-hover);
+    background: var(--color-surface-hover);
 }
 
 .dp-td--muted {
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
 }
 
 .dp-td--num {
@@ -215,7 +192,7 @@
 .dp-td--empty {
     padding: 30px !important;
     text-align: center !important;
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
     font-style: italic;
 }
 
@@ -235,10 +212,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-light-surface);
-    border: 1px solid var(--color-light-border);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    color: var(--color-light-text-secondary);
+    color: var(--color-text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
@@ -256,31 +233,31 @@
 
 .dp-pagination__info {
     font-size: var(--text-sm);
-    color: var(--color-light-text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .dp-pagination__info strong {
-    color: var(--color-light-text-primary);
+    color: var(--color-text-primary);
 }
 
 /* #endregion */
 
 /* #region TFOOT */
 .detail-projet__tfoot {
-    background: var(--color-light-surface-2);
-    border-top: 2px solid var(--color-light-border);
+    background: var(--color-surface-2);
+    border-top: 2px solid var(--color-border);
 }
 
 .dp-tfoot--label {
     padding: 9px 14px;
     font-weight: var(--weight-bold);
     font-size: var(--text-sm);
-    color: var(--color-light-text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .dp-tfoot--label i {
     margin-right: 6px;
-    color: var(--color-light-text-muted);
+    color: var(--color-text-muted);
 }
 
 .dp-tfoot--val {

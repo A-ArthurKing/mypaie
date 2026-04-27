@@ -1,0 +1,60 @@
+/*
+ * Fichier : RawData.css
+ * Rôle    : Styles du visualiseur de données JSON.
+ */
+
+.perf-raw-data {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.perf-raw-data__toggle {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.perf-raw-data__toggle:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-text-muted);
+}
+
+.perf-raw-data__toggle.active {
+    color: var(--color-accent);
+    border-color: var(--color-accent-border);
+}
+
+.perf-raw-data__content {
+    background: #1e293b;
+    color: #cbd5e1;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

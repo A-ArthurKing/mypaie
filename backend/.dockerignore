@@ -1,0 +1,26 @@
+# ============================================================
+# Fichier : .dockerignore
+# Rôle    : Exclusions pour le build Docker du backend.
+#           Réduit la taille du contexte envoyé au daemon.
+# Module  : mypaie / backend
+# ============================================================
+
+# Environnement virtuel local Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers d'environnement locaux (non-Docker)
+.env
+
+# Artefacts divers
+*.log
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Contrôle de version
+.git/
+.gitignore

@@ -129,10 +129,12 @@ function NotesQualiteDetail({ lignes }) {
 
   return (
     <div className="nq-detail">
-      <div className="nq-detail__nav">
+      <div style={{ display: 'flex', marginBottom: '5px' }}>
         <button className="nq-detail__retour" onClick={() => navigate('/qualite')}>
-          <i className="fa-solid fa-arrow-left" /> Retour
+          <i className="fa-solid fa-arrow-left" /> Retour aux projets
         </button>
+      </div>
+      <div className="nq-detail__nav">
         <div className="nq-detail__search-bar">
           <i className="fa-solid fa-magnifying-glass" />
           <input

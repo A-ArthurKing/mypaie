@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Fichier : Sidebar.jsx
  * Rôle    : Barre de navigation latérale de l'application mypaie.
  *           Affiche le logo, les liens de navigation et le bas de page utilisateur.
@@ -10,8 +10,10 @@ import './Sidebar.css'
 
 // Définition des entrées de navigation
 const NAV_ITEMS = [
-  { id: 'heures',   label: 'Heures agents',  icon: 'fa-solid fa-clock',        path: '/heures'   },
-  { id: 'qualite',  label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite'  },
+  { id: 'heures',      label: 'Heures agents',  icon: 'fa-solid fa-clock',        path: '/heures'      },
+  { id: 'qualite',     label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite'     },
+  { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance' },
+  { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
 ]
 
 function Sidebar() {
