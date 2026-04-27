@@ -74,6 +74,8 @@ services:
     env_file:
       - ./backend/.env.docker
     volumes:
+      # Synchronisation du code source en temps réel (évite de rebuilder)
+      - ./backend:/app
       # Monte le fichier de credentials GCP en lecture seule
       - C:/DATA_PROJECT/AUTHENTIFICATION_GCP/data-project-438313-8e99289157d6.json:/app/gcp-credentials.json:ro
     ports:

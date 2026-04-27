@@ -58,10 +58,10 @@ function Sidebar() {
 
       {/* ── Pied de sidebar ── */}
       <div className="sidebar__footer">
-        <button className="sidebar__nav-item" title={collapsed ? 'Paramètres' : undefined}>
+        <NavLink to="/parametres" className={({ isActive }) => `sidebar__nav-item${isActive ? ' sidebar__nav-item--active' : ''}`} title={collapsed ? 'Paramètres' : undefined}>
           <i className="fa-solid fa-gear sidebar__nav-icon" />
           {!collapsed && <span className="sidebar__nav-label">Paramètres</span>}
-        </button>
+        </NavLink>
       </div>
 
     </aside>

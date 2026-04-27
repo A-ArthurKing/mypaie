@@ -1,37 +1,63 @@
 ﻿/*
  * Fichier : ReglesPrimes.jsx
- * Rôle    : Page principale du générateur de règles de primes
+ * Rôle    : Page principale du générateur de règles de primes.
+ *           Orchestration de l'état + routage. Le rendu est délégué aux sections.
  * Module  : mypaie / Pages / ReglesPrimes
  */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import './ReglesPrimes.css';
+import HeaderSection from './Sections/HeaderSection/HeaderSection';
+import ReglesGridSection from './Sections/ReglesGridSection/ReglesGridSection';
+import CreateRegleModal from './Components/CreateRegleModal/CreateRegleModal';
+import RegleDetail from './SubPages/RegleDetail/RegleDetail';
 
 export default function ReglesPrimes() {
-  return (
-    <div className="regles-primes">
-      <header className="regles-primes__header">
-        <div>
-          <h1 className="regles-primes__title">Générateur de Règles</h1>
-          <p className="regles-primes__subtitle">
-            Configurez les règles de calcul des primes (KPIs, paliers, statuts)
-          </p>
-        </div>
-        <div className="regles-primes__actions">
-          <button className="btn-create-regle">
-            <i className="fa-solid fa-plus"></i> Nouvelle Règle
-          </button>
-        </div>
-      </header>
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [regles, setRegles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-      {/* État vide temporaire avant implémentation de la grille */}
-      <div className="regles-primes__empty">
-        <i className="fa-solid fa-calculator regles-primes__empty-icon"></i>
-        <h2 className="regles-primes__empty-text">Aucune règle configurée</h2>
-        <p className="regles-primes__empty-subtext">
-          Cliquez sur "Nouvelle Règle" pour définir vos premières règles de primes.
-        </p>
-      </div>
-    </div>
+  const fetchRegles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/regles');
+      if (!res.ok) throw new Error('Erreur API');
+      const data = await res.json();
+      setRegles(data);
+    } catch (e) {
+      setRegles([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRegles();
+  }, [fetchRegles]);
+
+  const handleCreated = () => {
+    setIsModalOpen(false);
+    fetchRegles();
+  };
+
+  return (
+    <Routes>
+      <Route index element={
+        <div className="regles-primes">
+          <HeaderSection onCreateClick={() => setIsModalOpen(true)} />
+          <ReglesGridSection
+            regles={regles}
+            loading={loading}
+            onCardClick={(id) => navigate(`/regles-primes/${id}`)}
+          />
+          {isModalOpen && (
+            <CreateRegleModal onClose={() => setIsModalOpen(false)} onCreated={handleCreated} />
+          )}
+        </div>
+      } />
+      <Route path=":regleId" element={<RegleDetail />} />
+    </Routes>
   );
 }

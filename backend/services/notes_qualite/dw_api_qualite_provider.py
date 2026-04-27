@@ -3,7 +3,7 @@ Fichier : dw_api_qualite_provider.py
 Rôle    : Service de lecture des données qualité (Eval Plus) depuis BigQuery.
           Permet de récupérer les notes par agent, projet ou date.
 Dépend  : dw_api_bigquery_connector
-Module  : mypaie / backend
+Module  : mypaie / backend / services / notes_qualite
 """
 
 # #region IMPORTS
@@ -83,8 +83,7 @@ def get_qualite_agents(
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-    # Utilisation des requêtes déportées dans tools/sql_queries.py
-    data_query = query_qualite_detail(table_ref, colonnes_str, where_str)
+    data_query  = query_qualite_detail(table_ref, colonnes_str, where_str)
     count_query = query_qualite_count(table_ref, where_str)
 
     pagination_params = query_params + [
@@ -93,19 +92,12 @@ def get_qualite_agents(
     ]
 
     try:
-        data_job = client.query(
-            data_query,
-            job_config=_build_job_config(pagination_params),
-        )
-        count_job = client.query(
-            count_query,
-            job_config=_build_job_config(query_params),
-        )
+        data_job  = client.query(data_query,  job_config=_build_job_config(pagination_params))
+        count_job = client.query(count_query, job_config=_build_job_config(query_params))
 
-        rows = [dict(row) for row in data_job.result()]
+        rows  = [dict(row) for row in data_job.result()]
         total = next(iter(count_job.result()), {"total": 0})["total"]
-
-        rows = _serialize_rows(rows)
+        rows  = _serialize_rows(rows)
 
         return {"data": rows, "total": int(total), "limit": limit, "offset": offset}
 
@@ -114,8 +106,9 @@ def get_qualite_agents(
         raise
 
 
-# TTL du cache stats projets : 5 minutes (données peu volatiles en intraday)
+# TTL du cache stats projets : 5 minutes
 _CACHE_TTL_STATS = 300
+
 
 def get_qualite_stats_projets(
     date_debut: Optional[str] = None,
@@ -123,20 +116,18 @@ def get_qualite_stats_projets(
 ) -> list:
     """
     Récupère les statistiques agrégées (moyenne et nombre d'évals) par projet.
-    C'est beaucoup plus performant que de tout charger côté client.
     """
-    # Vérification du cache avant d'interroger BigQuery
     cache_key = f"stats_projets::{date_debut}::{date_fin}"
     cached = get_cached(cache_key)
     if cached is not None:
         logger.debug("Cache HIT stats_projets [%s]", cache_key)
         return cached
 
-    client = get_bigquery_client()
+    client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_QUALITE}.{BQ_TABLE_QUALITE}`"
 
     where_clauses = []
-    query_params = []
+    query_params  = []
 
     if date_debut:
         where_clauses.append("Date_Evaluation >= @date_debut")
@@ -146,14 +137,11 @@ def get_qualite_stats_projets(
         query_params.append({"name": "date_fin", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_fin}})
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-
-    # Utilisation de la requête déportée
-    query = query_qualite_stats_projets(table_ref, where_str)
+    query     = query_qualite_stats_projets(table_ref, where_str)
 
     try:
-        job = client.query(query, job_config=_build_job_config(query_params))
+        job    = client.query(query, job_config=_build_job_config(query_params))
         result = [dict(row) for row in job.result()]
-        # Mise en cache du résultat pour éviter les appels BigQuery répétitifs
         set_cached(cache_key, result, _CACHE_TTL_STATS)
         return result
     except GoogleCloudError as err:
@@ -173,11 +161,11 @@ def get_qualite_stats_global(
     if cached is not None:
         return cached
 
-    client = get_bigquery_client()
+    client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_QUALITE}.{BQ_TABLE_QUALITE}`"
 
     where_clauses = []
-    query_params = []
+    query_params  = []
 
     if date_debut:
         where_clauses.append("Date_Evaluation >= @date_debut")
@@ -187,38 +175,31 @@ def get_qualite_stats_global(
         query_params.append({"name": "date_fin", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_fin}})
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-    query = query_qualite_stats_global(table_ref, where_str)
+    query     = query_qualite_stats_global(table_ref, where_str)
 
     try:
-        job = client.query(query, job_config=_build_job_config(query_params))
+        job  = client.query(query, job_config=_build_job_config(query_params))
         rows = [dict(row) for row in job.result()]
 
-        # Structuration des données ROLLUP
-        # item=None, sous_item=None => Moyenne globale
-        # item=val,  sous_item=None => Moyenne de l'item
-        # item=val,  sous_item=val  => Moyenne du sous-item
-        
-        result = {
-            "moyenne_globale": 0,
-            "nb_total": 0,
-            "items": {}
-        }
+        result = {"moyenne_globale": 0, "nb_total": 0, "items": {}}
 
         for row in rows:
-            it = row["item"]
+            it  = row["item"]
             sit = row["sous_item"]
             moy = row["moyenne"]
-            nb = row["nb"]
+            nb  = row["nb"]
 
             if it is None and sit is None:
                 result["moyenne_globale"] = moy
-                result["nb_total"] = nb
+                result["nb_total"]        = nb
             elif sit is None:
-                if it not in result["items"]: result["items"][it] = {"moyenne": 0, "nb": 0, "sous_items": {}}
+                if it not in result["items"]:
+                    result["items"][it] = {"moyenne": 0, "nb": 0, "sous_items": {}}
                 result["items"][it]["moyenne"] = moy
-                result["items"][it]["nb"] = nb
+                result["items"][it]["nb"]      = nb
             else:
-                if it not in result["items"]: result["items"][it] = {"moyenne": 0, "nb": 0, "sous_items": {}}
+                if it not in result["items"]:
+                    result["items"][it] = {"moyenne": 0, "nb": 0, "sous_items": {}}
                 result["items"][it]["sous_items"][sit] = {"moyenne": moy, "nb": nb}
 
         set_cached(cache_key, result, _CACHE_TTL_STATS)
@@ -227,7 +208,6 @@ def get_qualite_stats_global(
     except GoogleCloudError as err:
         logger.error("Erreur BigQuery stats global qualité: %s", err)
         raise
-
 
 # #endregion
 

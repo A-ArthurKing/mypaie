@@ -1,0 +1,132 @@
+/* ReglesGridSection.css */
+
+/* ── État vide / chargement ──────────────────────────────────── */
+.regles-grid-section__empty {
+    background-color: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    padding: 60px 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.regles-grid-section__empty-icon {
+    font-size: 3rem;
+    color: var(--color-text-muted);
+    margin-bottom: 16px;
+    display: block;
+}
+
+.regles-grid-section__empty-text {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin: 0 0 8px;
+}
+
+.regles-grid-section__empty-subtext {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+/* ── Grille ──────────────────────────────────────────────────── */
+.regles-grid-section__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+/* ── Carte règle ─────────────────────────────────────────────── */
+.regle-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.regle-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.regle-card--inactive {
+    opacity: 0.6;
+}
+
+.regle-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.regle-card__projet {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.regle-card__badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.regle-card__badge--actif {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.regle-card__badge--inactif {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.regle-card__nom {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.regle-card__description {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.regle-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+.regle-card__periodicite {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.regle-card__code {
+    font-size: 0.72rem;
+    font-family: monospace;
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-app);
+    padding: 2px 6px;
+    border-radius: 4px;
+}

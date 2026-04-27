@@ -1,8 +1,8 @@
--- ============================================================
+﻿-- ============================================================
 -- Fichier : 00_schema.sql
--- Rôle    : Initialisation de la base mypaie_config.
---           Crée les tables du moteur de calcul des primes
---           et insère les données de référence (KPIs, statuts).
+-- RÃ´le    : Initialisation de la base mypaie_config.
+--           CrÃ©e les tables du moteur de calcul des primes
+--           et insÃ¨re les donnÃ©es de rÃ©fÃ©rence (KPIs, statuts).
 -- Module  : mypaie / mysql / init
 -- ============================================================
 -- Assurer l'encodage UTF-8 strict
@@ -14,12 +14,12 @@ SET
 SET
     utf8mb4;
 
--- Utiliser la base créée automatiquement par Docker
+-- Utiliser la base crÃ©Ã©e automatiquement par Docker
 USE mypaie_config;
 
 -- ============================================================
 -- TABLE : matrice_statuts
--- Rôle  : Types de contrats / statuts des agents
+-- RÃ´le  : Types de contrats / statuts des agents
 -- ============================================================
 CREATE TABLE
     IF NOT EXISTS matrice_statuts (
@@ -34,14 +34,14 @@ CREATE TABLE
 
 -- ============================================================
 -- TABLE : matrice_kpis
--- Rôle  : Définition des KPIs utilisables dans les matrices
+-- RÃ´le  : DÃ©finition des KPIs utilisables dans les matrices
 -- ============================================================
 CREATE TABLE
     IF NOT EXISTS matrice_kpis (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Code technique (CSAT, CONV, CA...)',
         libelle VARCHAR(100) NOT NULL,
-        unite VARCHAR(20) COMMENT 'Unité de mesure (%, EUR, appels...)',
+        unite VARCHAR(20) COMMENT 'UnitÃ© de mesure (%, EUR, appels...)',
         description TEXT,
         actif TINYINT (1) NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -50,18 +50,20 @@ CREATE TABLE
 
 -- ============================================================
 -- TABLE : matrice_primes
--- Rôle  : Matrices de primes (une par projet/opération/période)
+-- RÃ´le  : Matrices de primes (une par projet/opÃ©ration/pÃ©riode)
 -- ============================================================
 CREATE TABLE
     IF NOT EXISTS matrice_primes (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant métier unique',
+        code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant mÃ©tier unique',
         libelle VARCHAR(200) NOT NULL,
-        projet VARCHAR(100) NOT NULL COMMENT 'Projet ou client concerné',
-        operation VARCHAR(100) COMMENT 'Opération spécifique (NULL = toutes)',
-        statut_id INT UNSIGNED COMMENT 'Statut agent ciblé (NULL = tous)',
-        periode_debut DATE NOT NULL COMMENT 'Début de validité de la matrice',
-        periode_fin DATE COMMENT 'Fin de validité (NULL = illimitée)',
+        projet VARCHAR(100) NOT NULL COMMENT 'Projet ou client concernÃ©',
+        operation VARCHAR(100) COMMENT 'OpÃ©ration spÃ©cifique (NULL = toutes)',
+        periodicite VARCHAR(50) DEFAULT 'mensuelle',
+        description TEXT,
+        statut_id INT UNSIGNED COMMENT 'Statut agent ciblÃ© (NULL = tous)',
+        periode_debut DATE NOT NULL COMMENT 'DÃ©but de validitÃ© de la matrice',
+        periode_fin DATE COMMENT 'Fin de validitÃ© (NULL = illimitÃ©e)',
         actif TINYINT (1) NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -70,7 +72,7 @@ CREATE TABLE
 
 -- ============================================================
 -- TABLE : matrice_objectifs
--- Rôle  : Objectifs KPI associés à chaque matrice
+-- RÃ´le  : Objectifs KPI associÃ©s Ã  chaque matrice
 -- ============================================================
 CREATE TABLE
     IF NOT EXISTS matrice_objectifs (
@@ -88,7 +90,7 @@ CREATE TABLE
 
 -- ============================================================
 -- TABLE : matrice_paliers
--- Rôle  : Paliers de primes selon la note globale (0-100)
+-- RÃ´le  : Paliers de primes selon la note globale (0-100)
 -- ============================================================
 CREATE TABLE
     IF NOT EXISTS matrice_paliers (
@@ -110,7 +112,7 @@ CREATE TABLE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- ============================================================
--- DONNÉES DE RÉFÉRENCE : KPIs standards
+-- DONNÃ‰ES DE RÃ‰FÃ‰RENCE : KPIs standards
 -- ============================================================
 INSERT INTO
     matrice_kpis (code, libelle, unite, description)
@@ -119,7 +121,7 @@ VALUES
         'CSAT',
         'Satisfaction Client',
         '%',
-        'Score moyen de satisfaction client sur la période'
+        'Score moyen de satisfaction client sur la pÃ©riode'
     ),
     (
         'CONV',
@@ -131,25 +133,25 @@ VALUES
         'CA',
         'Chiffre d''Affaires',
         'EUR',
-        'Total du chiffre d''affaires généré'
+        'Total du chiffre d''affaires gÃ©nÃ©rÃ©'
     ),
     (
         'APPELS',
         'Nombre d''Appels',
         'appels',
-        'Volume total d''appels traités'
+        'Volume total d''appels traitÃ©s'
     ),
     (
         'DMT',
-        'Durée Moyenne de Traitement',
+        'DurÃ©e Moyenne de Traitement',
         'min',
         'Temps moyen de traitement par appel'
     ),
     (
         'LOGGED',
-        'Heures Loguées',
+        'Heures LoguÃ©es',
         'h',
-        'Nombre d''heures effectivement loguées'
+        'Nombre d''heures effectivement loguÃ©es'
     ) ON DUPLICATE KEY
 UPDATE libelle =
 VALUES
@@ -159,15 +161,15 @@ VALUES
     (unite);
 
 -- ============================================================
--- DONNÉES DE RÉFÉRENCE : Statuts agents
+-- DONNÃ‰ES DE RÃ‰FÃ‰RENCE : Statuts agents
 -- ============================================================
 INSERT INTO
     matrice_statuts (code, libelle)
 VALUES
-    ('CDI', 'CDI — Contrat à Durée Indéterminée'),
-    ('CDD', 'CDD — Contrat à Durée Déterminée'),
+    ('CDI', 'CDI â€” Contrat Ã  DurÃ©e IndÃ©terminÃ©e'),
+    ('CDD', 'CDD â€” Contrat Ã  DurÃ©e DÃ©terminÃ©e'),
     ('STAGE', 'Stage'),
-    ('INTER', 'Intérimaire'),
+    ('INTER', 'IntÃ©rimaire'),
     ('PRESTA', 'Prestataire Externe') ON DUPLICATE KEY
 UPDATE libelle =
 VALUES

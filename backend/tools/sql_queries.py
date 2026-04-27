@@ -4,6 +4,14 @@ Rôle    : Bibliothèque centrale des requêtes SQL BigQuery.
           Utilisé comme un "Toolbox" pour les services de données.
 Module  : mypaie / backend / tools
 """
+import os
+
+# Construction dynamique de la référence pour la table de mapping des projets
+def get_mapping_table_ref():
+    project_id = os.getenv("GCP_PROJECT_ID")
+    dataset_paie = os.getenv("BQ_DATASET_PAIE")
+    return f"`{project_id}.{dataset_paie}.projet_mapping`"
+
 
 def query_heures_detail(table_ref, colonnes_str, where_str):
     """Récupération détaillée des heures agents avec filtres."""
@@ -96,26 +104,30 @@ def query_qualite_stats_global(table_ref, where_str):
 
 def query_performance_detail(table_ref, where_str):
     """Récupération consolidée de la performance par agent."""
+    mapping_ref = get_mapping_table_ref()
     return f"""
+        WITH raw_data AS (
+            SELECT * FROM {table_ref} {where_str}
+        )
         SELECT 
-            matricule as agent_id_hash,
-            agent_nom as agent_name,
-            matricule as matricule,
-            ANY_VALUE(operation) as agent_group,
-            ANY_VALUE(projet) as projet,
-            SUM(nb_appels) as in_call_nbr,
-            SUM(nb_ventes) as booking_nbr,
-            SUM(temps_appel) as call_min,
-            SUM(temps_production) as logged_min,
-            SUM(temps_production) as worked_min,
+            r.matricule as agent_id_hash,
+            r.agent_nom as agent_name,
+            r.matricule as matricule,
+            ANY_VALUE(r.operation) as agent_group,
+            ANY_VALUE(COALESCE(m.standard_name, r.projet)) as projet,
+            SUM(r.nb_appels) as in_call_nbr,
+            SUM(r.nb_ventes) as booking_nbr,
+            SUM(r.temps_appel) as call_min,
+            SUM(r.temps_production) as logged_min,
+            SUM(r.temps_production) as worked_min,
             COUNT(*) as nb_records,
-            MAX(date_ref) as date_ajout,
-            SUM(chiffre_affaire) as chiffre_affaire,
-            SAFE_DIVIDE(SUM(nb_ventes), NULLIF(SUM(nb_appels), 0)) * 100 as taux_conversion_calc,
-            SAFE_DIVIDE(SUM(csat * nb_csat), NULLIF(SUM(nb_csat), 0)) as csat_moyen
-        FROM {table_ref}
-        {where_str}
-        GROUP BY matricule, agent_nom
+            MAX(r.date_ref) as date_ajout,
+            SUM(r.chiffre_affaire) as chiffre_affaire,
+            SAFE_DIVIDE(SUM(r.nb_ventes), NULLIF(SUM(r.nb_appels), 0)) * 100 as taux_conversion_calc,
+            SAFE_DIVIDE(SUM(r.csat * r.nb_csat), NULLIF(SUM(r.nb_csat), 0)) as csat_moyen
+        FROM raw_data r
+        LEFT JOIN {mapping_ref} m ON UPPER(TRIM(r.projet)) = UPPER(TRIM(m.source_name))
+        GROUP BY r.matricule, r.agent_nom
         ORDER BY in_call_nbr DESC
         LIMIT @limit OFFSET @offset
     """

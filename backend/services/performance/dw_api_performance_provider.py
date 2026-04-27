@@ -2,7 +2,7 @@
 Fichier : dw_api_performance_provider.py
 Rôle    : Service de lecture des données de performance (PVCP) depuis BigQuery.
           Extrait les métriques JSON et gère les filtres.
-Module  : mypaie / backend / services
+Module  : mypaie / backend / services / performance
 """
 
 import logging
@@ -38,7 +38,6 @@ def get_performance_pvcp(
         table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.v_paie_agent_hebdo`"
         date_col = "date_ref"
     else:
-        table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.BQ_TABLE_PAIE_PERF`" # Oups variable wrong
         table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.{BQ_TABLE_PAIE_PERF}`"
         date_col = "date_ref"
 
@@ -95,12 +94,9 @@ def get_performance_pvcp(
 
         # Transformation pour la compatibilité Frontend
         for r in results:
-            # On expose les infos clés à la racine
             r['chiffre_affaire'] = r.get('chiffre_affaire')
-            # Le taux de conversion est déjà calculé dans les vues, ou on le garde pour le calcul auto
             r['taux_conversion_calc'] = r.get('taux_conversion') if granularity in ["month", "week"] else r.get('taux_conversion_calc')
             
-            # Et on garde metrics_full pour la vue détail (sections)
             r['metrics_full'] = {
                 'in_call_nbr': r.get('in_call_nbr'),
                 'booking_nbr': r.get('nb_ventes') if granularity in ["month", "week"] else r.get('booking_nbr'),

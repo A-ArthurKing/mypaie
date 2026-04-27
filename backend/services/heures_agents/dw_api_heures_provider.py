@@ -4,7 +4,7 @@ Rôle    : Service de lecture des heures agents depuis BigQuery.
           Applique les filtres de date et de matricule, et retourne
           les données paginées sous forme de liste de dictionnaires.
 Dépend  : dw_api_bigquery_connector
-Module  : mypaie / backend
+Module  : mypaie / backend / services / heures_agents
 """
 
 # #region IMPORTS
@@ -13,9 +13,9 @@ from typing import Optional
 from google.cloud.exceptions import GoogleCloudError
 from config.dw_api_bigquery_connector import get_bigquery_client, GCP_PROJECT_ID, BQ_DATASET_ID, BQ_TABLE_HEURES
 from tools.sql_queries import (
-    query_heures_detail, 
-    query_heures_count, 
-    query_equipes_distinctes, 
+    query_heures_detail,
+    query_heures_count,
+    query_equipes_distinctes,
     query_projets_heures_distincts
 )
 from tools.cache import get_cached, set_cached
@@ -24,7 +24,6 @@ from tools.cache import get_cached, set_cached
 # #region CONFIGURATION
 logger = logging.getLogger(__name__)
 
-# Colonnes exposées à l'interface — évite de sortir des champs internes
 COLONNES_EXPOSEES = [
     "matricule",
     "LastName",
@@ -64,12 +63,11 @@ def get_heures_agents(
     """
     client = get_bigquery_client()
 
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
+    table_ref    = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
     colonnes_str = ", ".join(COLONNES_EXPOSEES)
 
-    # Construction des clauses WHERE via paramètres BigQuery pour éviter les injections SQL
     where_clauses = []
-    query_params = []
+    query_params  = []
 
     if date_debut:
         where_clauses.append("date >= @date_debut")
@@ -103,32 +101,21 @@ def get_heures_agents(
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-    # Utilisation des requêtes déportées dans tools/sql_queries.py
-    data_query = query_heures_detail(table_ref, colonnes_str, where_str)
+    data_query  = query_heures_detail(table_ref, colonnes_str, where_str)
     count_query = query_heures_count(table_ref, where_str)
 
-    # Ajout des paramètres de pagination
     pagination_params = query_params + [
         {"name": "limit",  "parameterType": {"type": "INT64"}, "parameterValue": {"value": str(limit)}},
         {"name": "offset", "parameterType": {"type": "INT64"}, "parameterValue": {"value": str(offset)}},
     ]
 
     try:
-        # Exécution des deux requêtes en parallèle logique
-        data_job = client.query(
-            data_query,
-            job_config=_build_job_config(pagination_params),
-        )
-        count_job = client.query(
-            count_query,
-            job_config=_build_job_config(query_params),
-        )
+        data_job  = client.query(data_query,  job_config=_build_job_config(pagination_params))
+        count_job = client.query(count_query, job_config=_build_job_config(query_params))
 
-        rows = [dict(row) for row in data_job.result()]
+        rows  = [dict(row) for row in data_job.result()]
         total = next(iter(count_job.result()), {"total": 0})["total"]
-
-        # Sérialisation des types non-JSON (date, datetime)
-        rows = _serialize_rows(rows)
+        rows  = _serialize_rows(rows)
 
         return {"data": rows, "total": int(total), "limit": limit, "offset": offset}
 
@@ -137,8 +124,9 @@ def get_heures_agents(
         raise
 
 
-# TTL du cache dropdowns : 30 minutes (données très stables)
+# TTL du cache dropdowns : 30 minutes
 _CACHE_TTL_DROPDOWNS = 1800
+
 
 def get_equipes_distinctes() -> list:
     """Retourne la liste des équipes distinctes pour alimenter le filtre dropdown."""
@@ -146,9 +134,9 @@ def get_equipes_distinctes() -> list:
     if cached is not None:
         return cached
 
-    client = get_bigquery_client()
+    client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
-    query = query_equipes_distinctes(table_ref)
+    query     = query_equipes_distinctes(table_ref)
 
     try:
         rows = [_repair_encoding(row["Equipe"]) for row in client.query(query).result()]
@@ -158,15 +146,16 @@ def get_equipes_distinctes() -> list:
         logger.error("Erreur BigQuery lors de la lecture des équipes: %s", err)
         raise
 
+
 def get_projets_distincts() -> list:
     """Retourne la liste des projets distincts pour alimenter le filtre dropdown."""
     cached = get_cached("projets_distincts")
     if cached is not None:
         return cached
 
-    client = get_bigquery_client()
+    client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
-    query = query_projets_heures_distincts(table_ref)
+    query     = query_projets_heures_distincts(table_ref)
 
     try:
         rows = [_repair_encoding(row["projet"]) for row in client.query(query).result()]
@@ -192,7 +181,6 @@ def _build_job_config(params: list):
                 p["parameterValue"]["value"],
             )
         )
-
     config = bq.QueryJobConfig()
     config.query_parameters = bq_params
     return config
@@ -217,14 +205,10 @@ def _serialize_rows(rows: list) -> list:
 
 
 def _repair_encoding(val: any) -> any:
-    """
-    Répare les chaînes qui semblent être du UTF-8 interprété comme Latin-1 (ex: Ã© -> é).
-    Si la chaîne n'est pas une string ou si la réparation échoue, retourne la valeur brute.
-    """
+    """Répare les chaînes UTF-8 interprétées comme Latin-1."""
     if not isinstance(val, str):
         return val
     try:
-        # Si on peut l'encoder en latin-1 et le décoder en utf-8, c'est une double-encodage
         return val.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         return val

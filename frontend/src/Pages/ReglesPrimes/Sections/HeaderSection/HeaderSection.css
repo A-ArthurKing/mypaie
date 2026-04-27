@@ -1,0 +1,46 @@
+/* HeaderSection.css */
+
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.header-section__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.header-section__subtitle {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin: 4px 0 0;
+}
+
+.header-section__actions {
+    display: flex;
+    gap: 12px;
+}
+
+.header-section__btn-create {
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.header-section__btn-create:hover {
+    background-color: var(--color-accent-hover);
+    transform: translateY(-1px);
+}

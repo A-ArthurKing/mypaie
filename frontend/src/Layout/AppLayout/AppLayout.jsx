@@ -10,6 +10,7 @@ import HeuresAgents from '../../Pages/HeuresAgents/HeuresAgents'
 import NotesQualite from '../../Pages/NotesQualite/NotesQualite'
 import Performance from '../../Pages/Performance/Performance'
 import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
+import Parametres from '../../Pages/Parametres/Parametres'
 import './AppLayout.css'
 
 function AppLayout() {
@@ -26,6 +27,7 @@ function AppLayout() {
           <Route path="/qualite/*" element={<NotesQualite />} />
           <Route path="/performance/*" element={<Performance />} />
           <Route path="/regles-primes/*" element={<ReglesPrimes />} />
+          <Route path="/parametres/*" element={<Parametres />} />
           {/* Redirection par dÃ©faut vers les heures */}
           <Route path="*" element={<Navigate to="/heures" replace />} />
         </Routes>
