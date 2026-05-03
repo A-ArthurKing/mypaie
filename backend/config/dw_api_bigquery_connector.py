@@ -38,6 +38,7 @@ BQ_TABLE_PERF   = os.getenv("BQ_TABLE_PERF")
 
 BQ_DATASET_PAIE = os.getenv("BQ_DATASET_PAIE")
 BQ_TABLE_PAIE_PERF = os.getenv("BQ_TABLE_PAIE_PERF")
+BQ_TABLE_PAIE_QUALITE = os.getenv("BQ_TABLE_PAIE_QUALITE")
 
 # Client singleton — instancié une seule fois pour éviter le coût de reconnexion GCP
 _bq_client: bigquery.Client | None = None

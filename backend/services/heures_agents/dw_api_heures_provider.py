@@ -1,29 +1,27 @@
 """
 Fichier : dw_api_heures_provider.py
-Rôle    : Service de lecture des heures agents depuis BigQuery.
-          Applique les filtres de date et de matricule, et retourne
-          les données paginées sous forme de liste de dictionnaires.
-Dépend  : dw_api_bigquery_connector
+Rôle    : Service de lecture des heures agents depuis MySQL (table heures_corrigees).
+          Remplace l'ancien provider BigQuery pour des requêtes plus rapides
+          et une lecture directe à la source (base gestionpaie).
+Dépend  : db_gestionpaie_connector
 Module  : mypaie / backend / services / heures_agents
 """
 
 # #region IMPORTS
 import logging
+import datetime
 from typing import Optional
-from google.cloud.exceptions import GoogleCloudError
-from config.dw_api_bigquery_connector import get_bigquery_client, GCP_PROJECT_ID, BQ_DATASET_ID, BQ_TABLE_HEURES
-from tools.sql_queries import (
-    query_heures_detail,
-    query_heures_count,
-    query_equipes_distinctes,
-    query_projets_heures_distincts
-)
+from config.db_gestionpaie_connector import get_gestionpaie_connection
 from tools.cache import get_cached, set_cached
 # #endregion
 
 # #region CONFIGURATION
 logger = logging.getLogger(__name__)
 
+# Table source dans gestionpaie
+_TABLE = "heures_corrigees"
+
+# Colonnes exposées (identiques à l'ancien provider BigQuery)
 COLONNES_EXPOSEES = [
     "matricule",
     "LastName",
@@ -43,6 +41,8 @@ COLONNES_EXPOSEES = [
     "cloture_rh",
     "updated_at",
 ]
+
+_COLONNES_SQL = ", ".join(COLONNES_EXPOSEES)
 # #endregion
 
 
@@ -57,70 +57,60 @@ def get_heures_agents(
     offset: int = 0,
 ) -> dict:
     """
-    Interroge BigQuery pour récupérer les heures des agents.
-    Applique les filtres passés en paramètre et retourne un dict
-    contenant les données et le nombre total de lignes trouvées.
+    Interroge MySQL (gestionpaie.heures_corrigees) pour récupérer les heures agents.
+    Les lignes supprimées (deleted_at IS NOT NULL) sont exclues.
+    Retourne un dict { data, total, limit, offset }.
     """
-    client = get_bigquery_client()
-
-    table_ref    = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
-    colonnes_str = ", ".join(COLONNES_EXPOSEES)
-
-    where_clauses = []
-    query_params  = []
+    where_clauses = ["deleted_at IS NULL"]
+    params: list = []
 
     if date_debut:
-        where_clauses.append("date >= @date_debut")
-        query_params.append(
-            {"name": "date_debut", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_debut}}
-        )
+        where_clauses.append("date >= %s")
+        params.append(date_debut)
 
     if date_fin:
-        where_clauses.append("date <= @date_fin")
-        query_params.append(
-            {"name": "date_fin", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_fin}}
-        )
+        where_clauses.append("date <= %s")
+        params.append(date_fin)
 
     if matricule:
-        where_clauses.append("matricule = @matricule")
-        query_params.append(
-            {"name": "matricule", "parameterType": {"type": "STRING"}, "parameterValue": {"value": matricule}}
-        )
+        where_clauses.append("matricule = %s")
+        params.append(matricule)
 
     if equipe:
-        where_clauses.append("LOWER(Equipe) LIKE LOWER(@equipe)")
-        query_params.append(
-            {"name": "equipe", "parameterType": {"type": "STRING"}, "parameterValue": {"value": f"%{equipe}%"}}
-        )
+        where_clauses.append("Equipe LIKE %s")
+        params.append(f"%{equipe}%")
 
     if projet:
-        where_clauses.append("LOWER(projet) LIKE LOWER(@projet)")
-        query_params.append(
-            {"name": "projet", "parameterType": {"type": "STRING"}, "parameterValue": {"value": f"%{projet}%"}}
-        )
+        where_clauses.append("projet LIKE %s")
+        params.append(f"%{projet}%")
 
-    where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+    where_sql = "WHERE " + " AND ".join(where_clauses)
 
-    data_query  = query_heures_detail(table_ref, colonnes_str, where_str)
-    count_query = query_heures_count(table_ref, where_str)
-
-    pagination_params = query_params + [
-        {"name": "limit",  "parameterType": {"type": "INT64"}, "parameterValue": {"value": str(limit)}},
-        {"name": "offset", "parameterType": {"type": "INT64"}, "parameterValue": {"value": str(offset)}},
-    ]
+    data_sql  = (
+        f"SELECT {_COLONNES_SQL} FROM {_TABLE} {where_sql} "
+        f"ORDER BY date DESC, LastName ASC "
+        f"LIMIT %s OFFSET %s"
+    )
+    count_sql = f"SELECT COUNT(*) AS total FROM {_TABLE} {where_sql}"
 
     try:
-        data_job  = client.query(data_query,  job_config=_build_job_config(pagination_params))
-        count_job = client.query(count_query, job_config=_build_job_config(query_params))
+        conn = get_gestionpaie_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(count_sql, params)
+                total = (cur.fetchone() or {}).get("total", 0)
 
-        rows  = [dict(row) for row in data_job.result()]
-        total = next(iter(count_job.result()), {"total": 0})["total"]
-        rows  = _serialize_rows(rows)
+                cur.execute(data_sql, params + [limit, offset])
+                rows = cur.fetchall()
 
-        return {"data": rows, "total": int(total), "limit": limit, "offset": offset}
-
-    except GoogleCloudError as err:
-        logger.error("Erreur BigQuery lors de la lecture des heures agents: %s", err)
+        return {
+            "data":   _serialize_rows(rows),
+            "total":  int(total),
+            "limit":  limit,
+            "offset": offset,
+        }
+    except Exception as err:
+        logger.error("Erreur MySQL lors de la lecture des heures agents: %s", err)
         raise
 
 
@@ -134,16 +124,21 @@ def get_equipes_distinctes() -> list:
     if cached is not None:
         return cached
 
-    client    = get_bigquery_client()
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
-    query     = query_equipes_distinctes(table_ref)
-
+    sql = (
+        f"SELECT DISTINCT Equipe FROM {_TABLE} "
+        f"WHERE Equipe IS NOT NULL AND deleted_at IS NULL "
+        f"ORDER BY Equipe"
+    )
     try:
-        rows = [_repair_encoding(row["Equipe"]) for row in client.query(query).result()]
+        conn = get_gestionpaie_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                rows = [r["Equipe"] for r in cur.fetchall() if r["Equipe"]]
         set_cached("equipes_distinctes", rows, _CACHE_TTL_DROPDOWNS)
         return rows
-    except GoogleCloudError as err:
-        logger.error("Erreur BigQuery lors de la lecture des équipes: %s", err)
+    except Exception as err:
+        logger.error("Erreur MySQL lors de la lecture des équipes: %s", err)
         raise
 
 
@@ -153,63 +148,119 @@ def get_projets_distincts() -> list:
     if cached is not None:
         return cached
 
-    client    = get_bigquery_client()
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_HEURES}`"
-    query     = query_projets_heures_distincts(table_ref)
-
+    sql = (
+        f"SELECT DISTINCT projet FROM {_TABLE} "
+        f"WHERE projet IS NOT NULL AND deleted_at IS NULL "
+        f"ORDER BY projet"
+    )
     try:
-        rows = [_repair_encoding(row["projet"]) for row in client.query(query).result()]
+        conn = get_gestionpaie_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                rows = [r["projet"] for r in cur.fetchall() if r["projet"]]
         set_cached("projets_distincts", rows, _CACHE_TTL_DROPDOWNS)
         return rows
-    except GoogleCloudError as err:
-        logger.error("Erreur BigQuery lors de la lecture des projets: %s", err)
+    except Exception as err:
+        logger.error("Erreur MySQL lors de la lecture des projets: %s", err)
+        raise
+
+
+def get_totaux_par_matricule(
+    date_debut: Optional[str],
+    date_fin: Optional[str],
+    matricules: list,
+) -> dict:
+    """
+    Retourne le total des heures (heure_total) agrégé par matricule pour
+    une liste de matricules et une plage de dates.
+    Résultat : { matricule_str: total_ms, ... }
+    """
+    if not matricules:
+        return {}
+
+    placeholders = ", ".join(["%s"] * len(matricules))
+    where_clauses = [
+        "deleted_at IS NULL",
+        f"matricule IN ({placeholders})",
+    ]
+    params: list = list(matricules)
+
+    if date_debut:
+        where_clauses.append("date >= %s")
+        params.append(date_debut)
+    if date_fin:
+        where_clauses.append("date <= %s")
+        params.append(date_fin)
+
+    where_sql = "WHERE " + " AND ".join(where_clauses)
+    sql = (
+        f"SELECT matricule, "
+        f"  SEC_TO_TIME(SUM(TIME_TO_SEC(heure_total))) AS total_heure "
+        f"FROM {_TABLE} {where_sql} "
+        f"GROUP BY matricule"
+    )
+
+    try:
+        conn = get_gestionpaie_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                rows = cur.fetchall()
+
+        result = {}
+        for row in rows:
+            mat = str(row["matricule"])
+            result[mat] = _time_str_to_ms(row["total_heure"])
+        return result
+    except Exception as err:
+        logger.error("Erreur MySQL lors du calcul des totaux par matricule: %s", err)
         raise
 # #endregion
 
 
-# #region HELPERS INTERNES
-def _build_job_config(params: list):
-    """Construit un QueryJobConfig BigQuery à partir d'une liste de paramètres bruts."""
-    from google.cloud import bigquery as bq
+# Colonnes stockées en varchar 'HH:MM:SS' à convertir en millisecondes
+_COLONNES_TIME = frozenset({
+    "heure_ht", "heure_hp", "heure_hc", "heure_hf",
+    "heure_total", "heure_ecart",
+})
 
-    bq_params = []
-    for p in params:
-        bq_params.append(
-            bq.ScalarQueryParameter(
-                p["name"],
-                p["parameterType"]["type"],
-                p["parameterValue"]["value"],
-            )
-        )
-    config = bq.QueryJobConfig()
-    config.query_parameters = bq_params
-    return config
+
+def _time_str_to_ms(val) -> int:
+    """Convertit une string 'HH:MM:SS' (ou timedelta) en millisecondes."""
+    if isinstance(val, datetime.timedelta):
+        return int(val.total_seconds() * 1000)
+    if not val or not isinstance(val, str):
+        return 0
+    try:
+        parts = val.split(":")
+        h = int(parts[0]) if len(parts) > 0 else 0
+        m = int(parts[1]) if len(parts) > 1 else 0
+        s = int(parts[2]) if len(parts) > 2 else 0
+        return (h * 3600 + m * 60 + s) * 1000
+    except (ValueError, IndexError):
+        return 0
 
 
 def _serialize_rows(rows: list) -> list:
-    """Convertit les types date/datetime en chaînes ISO et répare l'encodage des chaînes."""
-    import datetime
-
+    """
+    Convertit les types MySQL non-JSON-serialisables :
+    - date/datetime → chaîne ISO
+    - timedelta (colonnes TIME) → millisecondes
+    - varchar 'HH:MM:SS' (colonnes heure_*) → millisecondes (format attendu par le frontend)
+    """
     serialized = []
     for row in rows:
         clean = {}
         for key, value in row.items():
-            if isinstance(value, (datetime.date, datetime.datetime)):
+            if key in _COLONNES_TIME:
+                clean[key] = _time_str_to_ms(value)
+            elif isinstance(value, datetime.timedelta):
+                clean[key] = int(value.total_seconds() * 1000)
+            elif isinstance(value, (datetime.date, datetime.datetime)):
                 clean[key] = value.isoformat()
-            elif isinstance(value, str):
-                clean[key] = _repair_encoding(value)
             else:
                 clean[key] = value
         serialized.append(clean)
     return serialized
-
-
-def _repair_encoding(val: any) -> any:
-    """Répare les chaînes UTF-8 interprétées comme Latin-1."""
-    if not isinstance(val, str):
-        return val
-    try:
-        return val.encode('latin-1').decode('utf-8')
-    except (UnicodeEncodeError, UnicodeDecodeError):
-        return val
 # #endregion

@@ -11,6 +11,7 @@ from services.notes_qualite.dw_api_qualite_provider import (
     get_qualite_agents,
     get_qualite_stats_projets,
     get_qualite_stats_global,
+    get_qualite_totaux_par_matricule,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,28 @@ def endpoint_qualite():
     except Exception as err:
         logger.error("Erreur endpoint /api/qualite : %s", err)
         return jsonify({"error": "Erreur serveur lors de la récupération des données qualité."}), 500
+
+
+@notes_qualite_bp.route("/api/qualite/totaux", methods=["GET"])
+def endpoint_qualite_totaux():
+    """
+    Retourne la moyenne des notes qualité agrégée par matricule.
+    Paramètres query : date_debut, date_fin, matricules (CSV)
+    """
+    date_debut = request.args.get("date_debut")
+    date_fin   = request.args.get("date_fin")
+    matricules_raw = request.args.get("matricules", "")
+    matricules = [m.strip() for m in matricules_raw.split(",") if m.strip()]
+
+    if not matricules:
+        return jsonify({"error": "Le paramètre 'matricules' est requis."}), 400
+
+    try:
+        result = get_qualite_totaux_par_matricule(date_debut, date_fin, matricules)
+        return jsonify({"data": result}), 200
+    except Exception as err:
+        logger.error("Erreur endpoint /api/qualite/totaux : %s", err)
+        return jsonify({"error": "Erreur serveur lors du calcul des totaux qualité."}), 500
 
 
 @notes_qualite_bp.route("/api/qualite/projets", methods=["GET"])

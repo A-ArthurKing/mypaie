@@ -191,6 +191,29 @@
     color: var(--color-accent);
 }
 
+.agents-table__heures-loader {
+    opacity: 0.5;
+}
+
+/* Qualité colors */
+.agents-table__qualite {
+    font-weight: var(--weight-bold);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+
+.agents-table__qualite--good {
+    color: var(--color-success);
+}
+
+.agents-table__qualite--average {
+    color: var(--color-warning);
+}
+
+.agents-table__qualite--bad {
+    color: var(--color-error);
+}
+
 .clickable {
     cursor: pointer;
     user-select: none;

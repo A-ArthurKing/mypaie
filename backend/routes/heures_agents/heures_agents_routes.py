@@ -11,6 +11,7 @@ from services.heures_agents.dw_api_heures_provider import (
     get_heures_agents,
     get_equipes_distinctes,
     get_projets_distincts,
+    get_totaux_par_matricule,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,3 +73,26 @@ def endpoint_projets():
     except Exception as err:
         logger.error("Erreur endpoint /api/heures/projets : %s", err)
         return jsonify({"error": "Erreur serveur lors de la récupération des projets."}), 500
+
+
+@heures_agents_bp.route("/api/heures/totaux", methods=["GET"])
+def endpoint_totaux():
+    """
+    Retourne le total des heures (heure_total) agrégé par matricule.
+    Paramètres query : date_debut, date_fin, matricules (CSV : '10773,11056,9410')
+    Réponse : { "data": { "10773": 612000000, "11056": 432000000, ... } }
+    """
+    date_debut  = request.args.get("date_debut")
+    date_fin    = request.args.get("date_fin")
+    matricules_raw = request.args.get("matricules", "")
+    matricules = [m.strip() for m in matricules_raw.split(",") if m.strip()]
+
+    if not matricules:
+        return jsonify({"error": "Le paramètre 'matricules' est requis (CSV)."}), 400
+
+    try:
+        result = get_totaux_par_matricule(date_debut, date_fin, matricules)
+        return jsonify({"data": result}), 200
+    except Exception as err:
+        logger.error("Erreur endpoint /api/heures/totaux : %s", err)
+        return jsonify({"error": "Erreur serveur lors du calcul des totaux."}), 500

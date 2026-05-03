@@ -26,6 +26,10 @@ export default function AgentsOnglet({ regle }) {
   const [heuresMap, setHeuresMap] = useState({});
   const [loadingHeures, setLoadingHeures] = useState(false);
 
+  // Qualité
+  const [qualiteMap, setQualiteMap] = useState({});
+  const [loadingQualite, setLoadingQualite] = useState(false);
+
   // Mois sélectionné (format 'YYYY-MM'), initialisé au mois courant
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -74,25 +78,31 @@ export default function AgentsOnglet({ regle }) {
       .finally(() => setLoading(false));
   }, [regle?.id]);
 
-  // Fetch heures du mois sélectionné
+  // Fetch heures et qualité du mois sélectionné
   useEffect(() => {
     if (agents.length === 0) return;
+    
+    const { date_debut, date_fin } = selectedMonthRange;
+    const matricules = agents.map(a => a.matricule).filter(Boolean).join(',');
+
+    // 1. Fetch Heures
     setLoadingHeures(true);
     setHeuresMap({});
-    const { date_debut, date_fin } = selectedMonthRange;
-    fetch(`/api/heures?date_debut=${date_debut}&date_fin=${date_fin}&limit=1000`)
+    fetch(`/api/heures/totaux?date_debut=${date_debut}&date_fin=${date_fin}&matricules=${matricules}`)
       .then(res => res.json())
-      .then(data => {
-        const map = {};
-        (data.data || []).forEach(row => {
-          if (!row.matricule) return;
-          const mat = String(row.matricule);
-          map[mat] = (map[mat] || 0) + (Number(row.heure_total) || 0);
-        });
-        setHeuresMap(map);
-      })
+      .then(data => setHeuresMap(data.data || {}))
       .catch(err => console.error('[AgentsOnglet] Erreur fetch heures:', err))
       .finally(() => setLoadingHeures(false));
+
+    // 2. Fetch Qualité
+    setLoadingQualite(true);
+    setQualiteMap({});
+    fetch(`/api/qualite/totaux?date_debut=${date_debut}&date_fin=${date_fin}&matricules=${matricules}`)
+      .then(res => res.json())
+      .then(data => setQualiteMap(data.data || {}))
+      .catch(err => console.error('[AgentsOnglet] Erreur fetch qualité:', err))
+      .finally(() => setLoadingQualite(false));
+
   }, [agents, selectedMonthRange]);
 
   // Fonction pour calculer le montant cible d'un agent
@@ -214,6 +224,10 @@ export default function AgentsOnglet({ regle }) {
                   Heures
                   <span className="agents-table__month-badge">{selectedMonthRange.label}</span>
                 </th>
+                <th style={{ textAlign: 'right' }} title={`Moyenne qualité — ${selectedMonthRange.label}`}>
+                  Qualité
+                  <span className="agents-table__month-badge">{selectedMonthRange.label}</span>
+                </th>
                 <th style={{ textAlign: 'center' }}>Sanction</th>
                 <th>Statut</th>
                 <th style={{ textAlign: 'right' }}>
@@ -246,7 +260,18 @@ export default function AgentsOnglet({ regle }) {
                         <span className="agents-table__heures-loader"><i className="fa-solid fa-spinner fa-spin"></i></span>
                       ) : heuresMap[String(a.matricule)] != null ? (
                         <span className="agents-table__heures">
-                          {heuresMap[String(a.matricule)].toFixed(1)}<span className="agents-table__heures-unit">h</span>
+                          {(heuresMap[String(a.matricule)] / 3600000).toFixed(1)}<span className="agents-table__heures-unit">h</span>
+                        </span>
+                      ) : (
+                        <span className="agents-table__heures-na">—</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {loadingQualite ? (
+                        <span className="agents-table__heures-loader"><i className="fa-solid fa-spinner fa-spin"></i></span>
+                      ) : qualiteMap[String(a.matricule)] != null ? (
+                        <span className={`agents-table__qualite agents-table__qualite--${qualiteMap[String(a.matricule)] >= 80 ? 'good' : qualiteMap[String(a.matricule)] >= 50 ? 'average' : 'bad'}`}>
+                          {qualiteMap[String(a.matricule)].toFixed(1)}<span className="agents-table__heures-unit">%</span>
                         </span>
                       ) : (
                         <span className="agents-table__heures-na">—</span>
