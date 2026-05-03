@@ -1,0 +1,16 @@
+.parametres-header {
+    margin-bottom: 24px;
+}
+
+.parametres-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.parametres-subtitle {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: var(--color-text-muted);
+}

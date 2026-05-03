@@ -1,0 +1,31 @@
+.agents-onglet__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background-color: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.agents-onglet__empty-icon {
+    font-size: 3rem;
+    color: var(--color-border);
+    margin-bottom: 16px;
+}
+
+.agents-onglet__empty-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 8px;
+}
+
+.agents-onglet__empty-text {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    max-width: 400px;
+    margin: 0;
+}

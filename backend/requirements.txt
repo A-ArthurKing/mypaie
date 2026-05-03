@@ -4,3 +4,4 @@ google-cloud-bigquery==3.25.0
 python-dotenv==1.0.1
 pymysql==1.1.1
 cryptography==43.0.3
+pymssql==2.3.0

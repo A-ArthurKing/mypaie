@@ -50,21 +50,26 @@ CREATE TABLE
 
 -- ============================================================
 -- TABLE : matrice_primes
--- RÃ´le  : Matrices de primes (une par projet/opÃ©ration/pÃ©riode)
+-- Rôle  : Matrices de primes (une par projet/opération/période)
 -- ============================================================
 CREATE TABLE
     IF NOT EXISTS matrice_primes (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant mÃ©tier unique',
+        code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant métier unique',
         libelle VARCHAR(200) NOT NULL,
-        projet VARCHAR(100) NOT NULL COMMENT 'Projet ou client concernÃ©',
-        operation VARCHAR(100) COMMENT 'OpÃ©ration spÃ©cifique (NULL = toutes)',
-        periodicite VARCHAR(50) DEFAULT 'mensuelle',
+        projet VARCHAR(100) NOT NULL COMMENT 'Projet ou client concerné',
+        operation VARCHAR(100) COMMENT 'Opération spécifique (NULL = toutes)',
+        periodicite VARCHAR(20) DEFAULT 'mensuelle',
         description TEXT,
-        statut_id INT UNSIGNED COMMENT 'Statut agent ciblÃ© (NULL = tous)',
-        periode_debut DATE NOT NULL COMMENT 'DÃ©but de validitÃ© de la matrice',
-        periode_fin DATE COMMENT 'Fin de validitÃ© (NULL = illimitÃ©e)',
+        description_kpi TEXT COMMENT 'Description des KPIs de la règle',
+        statut_id INT UNSIGNED COMMENT 'Statut agent ciblé (NULL = tous)',
+        periode_debut DATE NOT NULL COMMENT 'Début de validité de la matrice',
+        periode_fin DATE COMMENT 'Fin de validité (NULL = illimitée)',
         actif TINYINT (1) NOT NULL DEFAULT 1,
+        -- JSON libre stockant toute la configuration du moteur de calcul :
+        -- postes[], paliers_scoring[], config_temps{}, indicateurs[],
+        -- regles_assiduite[], declencheurs[]
+        grille_objectifs JSON NULL COMMENT 'Configuration complète du moteur de calcul (JSON)',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT fk_matrice_statut FOREIGN KEY (statut_id) REFERENCES matrice_statuts (id) ON DELETE SET NULL

@@ -1,0 +1,116 @@
+.attendance-rules-section {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.attendance-header {
+    margin-bottom: 16px;
+}
+
+.attendance-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 2px 0;
+}
+
+.attendance-subtitle {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.attendance-table-container {
+    overflow-x: auto;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 400px;
+}
+
+.attendance-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background-color: var(--color-bg-light);
+    color: var(--color-text-secondary);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.attendance-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.rule-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+}
+
+.input-group input {
+    width: 45px;
+    padding: 4px 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.rule-separator {
+    font-weight: 800;
+    font-size: 0.7rem;
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.impact-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: var(--color-bg-light);
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.impact-input:focus {
+    background: white;
+    border-color: var(--color-accent);
+    outline: none;
+}
+
+.attendance-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.center {
+    text-align: center;
+}

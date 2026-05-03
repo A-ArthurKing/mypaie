@@ -15,6 +15,7 @@ from routes.notes_qualite.notes_qualite_routes import notes_qualite_bp
 from routes.performance.performance_routes import performance_bp
 from routes.regles_primes.regles_primes_routes import regles_primes_bp
 from routes.parametres.parametres_routes import parametres_bp
+from routes.agents.agents_routes import agents_bp
 # #endregion
 
 # #region CONFIGURATION
@@ -39,6 +40,7 @@ app.register_blueprint(notes_qualite_bp)
 app.register_blueprint(performance_bp)
 app.register_blueprint(regles_primes_bp)
 app.register_blueprint(parametres_bp)
+app.register_blueprint(agents_bp)
 # #endregion
 
 

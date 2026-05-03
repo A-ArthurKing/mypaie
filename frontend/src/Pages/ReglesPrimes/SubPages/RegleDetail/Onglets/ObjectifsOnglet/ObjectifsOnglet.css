@@ -1,74 +1,53 @@
-/* ObjectifsOnglet.css */
-
-.objectifs-onglet {
+﻿.objectifs-onglet {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    padding: 10px 0;
 }
 
-.objectifs-onglet__kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 14px;
+.objectifs-onglet__header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
 }
 
-.objectifs-onglet__kpi-card {
+.grille-container-wrapper {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 15px;
+}
+
+.objectifs-onglet__section-wrapper {
+    margin-bottom: 15px;
+}
+
+.objectifs-onglet__separator {
+    height: 1px;
+    background-color: var(--color-border-light);
+    width: 100%;
+    margin: 8px 0 15px 0;
+}
+
+.objectifs-onglet__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px dashed var(--color-border);
     border-radius: 8px;
-    padding: 16px 18px;
-}
-
-.objectifs-onglet__kpi-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.objectifs-onglet__kpi-value {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-}
-
-.objectifs-onglet__description {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 20px;
-}
-
-.objectifs-onglet__description-title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin: 0 0 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.objectifs-onglet__description-text {
-    font-size: 0.95rem;
-    color: var(--color-text-primary);
-    line-height: 1.6;
-    margin: 0;
-    white-space: pre-wrap;
-}
-
-.objectifs-onglet__description--empty {
-    display: flex;
-    align-items: center;
-    gap: 10px;
     color: var(--color-text-muted);
-    font-size: 0.88rem;
-    font-style: italic;
+    text-align: center;
+}
+
+.objectifs-onglet__empty i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
+
+.objectifs-onglet__empty p {
+    margin: 0;
+    font-size: 0.95rem;
 }

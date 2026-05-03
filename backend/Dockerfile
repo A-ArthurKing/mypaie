@@ -9,11 +9,13 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Dépendances système minimales pour gcc (grpcio wheel) et SSL (pymysql)
+# Dépendances système minimales pour gcc (grpcio wheel), SSL (pymysql) et FreeTDS (pymssql/SQL Server)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     gcc \
     libssl-dev \
+    freetds-dev \
+    freetds-bin \
     && rm -rf /var/lib/apt/lists/*
 
 # Installer les dépendances Python en premier (cache layer)

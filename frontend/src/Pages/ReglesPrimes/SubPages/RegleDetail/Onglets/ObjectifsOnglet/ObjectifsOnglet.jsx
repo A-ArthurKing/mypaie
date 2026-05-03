@@ -5,76 +5,237 @@
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './ObjectifsOnglet.css';
-
-const PERIODICITE_LABELS = {
-  mensuelle: 'Mensuelle',
-  trimestrielle: 'Trimestrielle',
-  semestrielle: 'Semestrielle',
-  annuelle: 'Annuelle',
-};
-
-function KpiCard({ icon, label, value }) {
-  return (
-    <div className="objectifs-onglet__kpi-card">
-      <div className="objectifs-onglet__kpi-label">
-        <i className={icon}></i> {label}
-      </div>
-      <div className="objectifs-onglet__kpi-value">{value || '—'}</div>
-    </div>
-  );
-}
+import KpiGridSection from './Sections/KpiGridSection/KpiGridSection';
+import DescriptionSection from './Sections/DescriptionSection/DescriptionSection';
+import ToolbarSection from './Sections/ToolbarSection/ToolbarSection';
+import GrilleSection from './Sections/GrilleSection/GrilleSection';
+import GrilleEditorModal from './Components/GrilleEditorModal/GrilleEditorModal';
+import SaveVersionModal from './Components/SaveVersionModal/SaveVersionModal';
+import ConfirmationModal from '../../../../../../Components/ConfirmationModal/ConfirmationModal';
 
 export default function ObjectifsOnglet({ regle }) {
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isNewMode, setIsNewMode] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [pendingGrille, setPendingGrille] = useState(null);
+  const [pendingGrilleUuid, setPendingGrilleUuid] = useState(null); // Pour savoir si on sauvegarde une nouvelle version d'une grille existante
+  
+  const [configs, setConfigs] = useState([]);
+  const [loadingConfigs, setLoadingConfigs] = useState(true);
+  const [selectedVersions, setSelectedVersions] = useState({}); // { grilleUuid: configId }
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { uuid, nom }
+
+  const fetchConfigs = async () => {
+    try {
+      const res = await fetch(`/api/regles/${regle.id}/configs`);
+      const data = await res.json();
+      const list = data.data || [];
+      setConfigs(list);
+      
+      // Initialiser les versions sélectionnées (priorité à l'active, sinon la plus récente)
+      const initialSelected = {};
+      const grillesMap = {};
+      list.forEach(c => {
+        const uuid = c.grille_uuid || 'default';
+        if (!grillesMap[uuid]) grillesMap[uuid] = [];
+        grillesMap[uuid].push(c);
+      });
+
+      Object.entries(grillesMap).forEach(([uuid, versions]) => {
+        const active = versions.find(v => v.est_active);
+        initialSelected[uuid] = active ? active.id : versions[0].id;
+      });
+      setSelectedVersions(initialSelected);
+    } catch (e) {
+      console.error("Erreur chargement configs", e);
+    } finally {
+      setLoadingConfigs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (regle?.id) fetchConfigs();
+  }, [regle?.id]);
+
+  if (!regle) return null;
+
+  const handleSaveGrille = (newGrille, grilleUuid = null) => {
+    setPendingGrille(newGrille);
+    setPendingGrilleUuid(grilleUuid);
+    setIsSaveModalOpen(true);
+  };
+
+  const handleConfirmSaveVersion = async (libelle, newGrilleNom) => {
+    // Si pendingGrilleUuid est présent, c'est une nouvelle version d'une grille existante
+    // Sinon, si isNewMode est vrai, c'est une toute nouvelle grille
+    const activeForUuid = configs.find(c => c.id === selectedVersions[pendingGrilleUuid]);
+    
+    const grilleUuid = pendingGrilleUuid || (isNewMode ? `grille_${Date.now()}` : 'default');
+    const grilleNom = isNewMode ? newGrilleNom : (activeForUuid?.grille_nom || 'Grille');
+
+    try {
+      const res = await fetch(`/api/regles/${regle.id}/configs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          libelle,
+          content: pendingGrille,
+          activate: true,
+          grille_uuid: grilleUuid,
+          grille_nom: grilleNom
+        })
+      });
+      if (res.ok) {
+        setIsEditorOpen(false);
+        setIsNewMode(false);
+        setPendingGrilleUuid(null);
+        fetchConfigs();
+      }
+    } catch (e) {
+      alert("Erreur lors de l'enregistrement de la grille");
+    }
+  };
+
+  const handleActivateConfig = async (configId) => {
+    try {
+      const res = await fetch(`/api/regles/${regle.id}/configs/${configId}/activate`, {
+        method: 'POST'
+      });
+      if (res.ok) fetchConfigs();
+    } catch (e) {
+      alert("Erreur lors de l'activation");
+    }
+  };
+
+  const handleDeleteGrille = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const res = await fetch(`/api/regles/${regle.id}/grilles/${deleteConfirm.uuid}`, { method: 'DELETE' });
+      if (res.ok) {
+        setDeleteConfirm(null);
+        fetchConfigs();
+      } else {
+        alert("Erreur lors de la suppression de la grille");
+      }
+    } catch (e) {
+      alert("Erreur lors de la suppression de la grille");
+    }
+  };
+
+  const handleMoveGrille = async (uuid, direction) => {
+    const uuids = Object.keys(grillesGroups);
+    const index = uuids.indexOf(uuid);
+    if (index === -1) return;
+
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= uuids.length) return;
+
+    const newUuids = [...uuids];
+    [newUuids[index], newUuids[newIndex]] = [newUuids[newIndex], newUuids[index]];
+
+    const orders = newUuids.map((id, idx) => ({ uuid: id, ordre: idx }));
+
+    try {
+      const res = await fetch(`/api/regles/${regle.id}/grilles/order`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orders })
+      });
+      if (res.ok) fetchConfigs();
+    } catch (e) {
+      alert("Erreur lors du déplacement de la grille");
+    }
+  };
+
+  // Grouper les configs pour l'affichage
+  const grillesGroups = {};
+  // On s'assure que configs est trié par grille_ordre s'il existe
+  const sortedConfigs = [...configs].sort((a, b) => (a.grille_ordre || 0) - (b.grille_ordre || 0));
+  
+  sortedConfigs.forEach(c => {
+    const uuid = c.grille_uuid || 'default';
+    if (!grillesGroups[uuid]) grillesGroups[uuid] = [];
+    grillesGroups[uuid].push(c);
+  });
+
   return (
     <div className="objectifs-onglet">
-      <div className="objectifs-onglet__kpi-grid">
-        <KpiCard
-          icon="fa-regular fa-calendar"
-          label="Périodicité"
-          value={PERIODICITE_LABELS[regle.periodicite] ?? regle.periodicite}
-        />
-        <KpiCard
-          icon="fa-regular fa-calendar-days"
-          label="Début de période"
-          value={regle.periode_debut}
-        />
-        <KpiCard
-          icon="fa-regular fa-calendar-xmark"
-          label="Fin de période"
-          value={regle.periode_fin}
-        />
-        <KpiCard
-          icon="fa-regular fa-clock"
-          label="Créée le"
-          value={regle.created_at}
-        />
-        <KpiCard
-          icon="fa-regular fa-pen-to-square"
-          label="Modifiée le"
-          value={regle.updated_at}
-        />
-        <KpiCard
-          icon="fa-solid fa-folder"
-          label="Projet"
-          value={regle.projet}
-        />
+      <div className="objectifs-onglet__header-actions">
+        <button className="btn-toolbar btn-toolbar--new" onClick={() => { setIsNewMode(true); setIsEditorOpen(true); }}>
+          <i className="fa-solid fa-plus"></i> Créer une nouvelle Grille indépendante
+        </button>
       </div>
 
-      {regle.description ? (
-        <div className="objectifs-onglet__description">
-          <h3 className="objectifs-onglet__description-title">
-            <i className="fa-regular fa-file-lines"></i> Description
-          </h3>
-          <p className="objectifs-onglet__description-text">{regle.description}</p>
-        </div>
-      ) : (
-        <div className="objectifs-onglet__description objectifs-onglet__description--empty">
-          <i className="fa-regular fa-file-lines"></i>
-          <span>Aucune description renseignée.</span>
+      <div className="objectifs-onglet__section-wrapper">
+        <KpiGridSection regle={regle} />
+      </div>
+
+      <div className="objectifs-onglet__separator"></div>
+
+      {Object.entries(grillesGroups).length === 0 && (
+        <div className="objectifs-onglet__empty">
+            <i className="fa-solid fa-bullseye"></i>
+            <p>Aucune grille configurée. Cliquez sur le bouton ci-dessus pour commencer.</p>
         </div>
       )}
+
+      {Object.entries(grillesGroups).map(([uuid, versions], index, array) => {
+        const selectedId = selectedVersions[uuid];
+        const currentVersion = versions.find(v => v.id === selectedId) || versions[0];
+        
+        return (
+          <div key={uuid} className="grille-container-wrapper">
+            <ToolbarSection 
+              title={currentVersion.grille_nom || 'Grille'}
+              configs={versions}
+              activeConfigId={selectedId}
+              onSelectConfig={(id) => setSelectedVersions(prev => ({ ...prev, [uuid]: id }))}
+              onActivateConfig={handleActivateConfig}
+              onEdit={() => {
+                setPendingGrilleUuid(uuid);
+                setIsNewMode(false);
+                setIsEditorOpen(true);
+              }}
+              onDelete={() => setDeleteConfirm({ uuid, nom: currentVersion.grille_nom || 'cette grille' })}
+              onMoveUp={() => handleMoveGrille(uuid, 'up')}
+              onMoveDown={() => handleMoveGrille(uuid, 'down')}
+              isFirst={index === 0}
+              isLast={index === array.length - 1}
+            />
+            <GrilleSection grille={currentVersion.content} />
+            <div className="objectifs-onglet__separator"></div>
+          </div>
+        );
+      })}
+
+      <GrilleEditorModal 
+        key={isNewMode ? 'new' : (pendingGrilleUuid || 'edit')}
+        isOpen={isEditorOpen}
+        onClose={() => { setIsEditorOpen(false); setIsNewMode(false); setPendingGrilleUuid(null); }}
+        onSave={(data) => handleSaveGrille(data, pendingGrilleUuid)}
+        initialData={isNewMode ? null : (configs.find(c => c.id === selectedVersions[pendingGrilleUuid])?.content)}
+      />
+
+      <SaveVersionModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onConfirm={handleConfirmSaveVersion}
+        isNewGrille={isNewMode}
+      />
+
+      <ConfirmationModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDeleteGrille}
+        title="Supprimer la grille"
+        message={`Êtes-vous sûr de vouloir supprimer la grille "${deleteConfirm?.nom}" ? Toutes ses versions seront définitivement supprimées.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }
+

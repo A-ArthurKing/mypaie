@@ -88,15 +88,15 @@ def get_heures_agents(
         )
 
     if equipe:
-        where_clauses.append("Equipe = @equipe")
+        where_clauses.append("LOWER(Equipe) LIKE LOWER(@equipe)")
         query_params.append(
-            {"name": "equipe", "parameterType": {"type": "STRING"}, "parameterValue": {"value": equipe}}
+            {"name": "equipe", "parameterType": {"type": "STRING"}, "parameterValue": {"value": f"%{equipe}%"}}
         )
 
     if projet:
-        where_clauses.append("projet = @projet")
+        where_clauses.append("LOWER(projet) LIKE LOWER(@projet)")
         query_params.append(
-            {"name": "projet", "parameterType": {"type": "STRING"}, "parameterValue": {"value": projet}}
+            {"name": "projet", "parameterType": {"type": "STRING"}, "parameterValue": {"value": f"%{projet}%"}}
         )
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""

@@ -1,0 +1,2344 @@
+
+========== MCC_S01_FEG-GRILLE BUSINESS HTLV_PRIMES AGENT-ACTIVITE_V05.xlsx ==========
+  -- Variable --
+    [J1] 'Eléments déclencheurs = Réclamation client Agent'
+    [A2] 'Auteur EG:'
+    [J2] '1 réclamation client sur le mois'
+    [O2] 'Toute la prime est perdue'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [J7] 'KPI1'
+    [K7] 'Objectif VS Statut'
+    [L7] "Taux d'atteinte"
+    [M7] 'Nb de points'
+    [N7] 'KPI2'
+    [O7] 'Objectif VS Statut'
+    [M8] 15
+    [M9] 0
+    [M10] 0
+    [M11] 0
+    [M12] 0
+    [M13] 0
+    [M14] 0
+    [M15] 0
+    [M16] 0
+    [M17] 0
+    [M18] 0
+    [M19] 0
+    [M20] 0
+    [M21] 0
+    [M22] 0
+    [M23] 0
+    [M24] 0
+    [M25] 0
+    [M26] 0
+    [M27] 0
+    [M28] 0
+    [M29] 0
+    [M30] 0
+    [M31] 0
+    [M32] 0
+    [M33] 0
+    [M34] 0
+    [M35] 0
+    [M36] 0
+    [M37] 0
+    [M38] 0
+    [M39] 0
+    [M40] 0
+    [M41] 0
+    [M42] 0
+    [M43] 0
+    [M44] 0
+    [M45] 0
+    [M46] 0
+    [M47] 0
+    [M48] 0
+    [M49] 0
+    [M50] 0
+    [M51] 0
+    [M52] 0
+    [M53] 0
+    [M54] 0
+    [M55] 0
+    [M56] 0
+    [M57] 0
+    [M58] 0
+    [M59] 0
+    [M60] 0
+    [M61] 0
+    [M62] 0
+    [M63] 0
+    [M64] 0
+    [M65] 0
+    [M66] 0
+    [M67] 0
+    [M68] 0
+    [M69] 0
+    [M70] 0
+    [M71] 0
+    [M72] 0
+    [M73] 0
+    [M74] 0
+    [M75] 0
+    [M76] 0
+    [M77] 0
+    [M78] 0
+    [M79] 0
+    [M80] 0
+    [M81] 0
+    [M82] 0
+    [M83] 0
+    [M84] 0
+    [M85] 0
+    [M86] 0
+    [M87] 0
+    [M88] 0
+    [M89] 0
+    [M90] 0
+    [M91] 0
+    [M92] 0
+    [M93] 0
+    [M94] 0
+    [M95] 0
+    [M96] 0
+    [M97] 0
+    [M98] 0
+    [M99] 0
+    [M100] 0
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 15
+    [F4] 27.5
+    [G4] 27.5
+    [H4] 20
+    [I4] 10
+    [J4] 'MALUS'
+    [E5] 'KPI1'
+    [F5] 'KPI2'
+    [G5] 'KPI3'
+    [H5] 'KPI4'
+    [I5] 'KPI5'
+    [J5] 'KPI6'
+    [A6] 'ACTIVITE 1'
+    [B6] 'ACTIVITE 1'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'ACTIVITE 1'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'ACTIVITE 1'
+    [E8] 'INTITULE KPI1'
+    [F8] 'INTITULE KPI2'
+    [G8] 'INTITULE KPI3'
+    [H8] 'INTITULE KPI4'
+    [I8] 'INTITULE KPI5'
+    [J8] 'INTITULE KPI6'
+    [A9] 'ACTIVITE 1'
+    [C9] 'Débutant'
+    [D9] 1200
+    [E9] 0.4
+    [F9] datetime.time(0, 5, 30)
+    [G9] 7
+    [H9] 0.92
+    [I9] 0.98
+    [J9] 0
+    [A10] 'ACTIVITE 1'
+    [C10] 'Confirmé'
+    [D10] 1200
+    [E10] 0.4
+    [F10] datetime.time(0, 5, 30)
+    [G10] 9
+    [H10] 0.92
+    [I10] 0.98
+    [J10] 0
+    [A11] 'ACTIVITE 1'
+    [C11] 'Sénior'
+    [D11] 1200
+    [E11] 0.4
+    [F11] datetime.time(0, 5, 30)
+    [G11] 9
+    [H11] 0.92
+    [I11] 0.98
+    [J11] 0
+    [A13] 'ACTIVITE 2'
+    [B13] 'ACTIVITE 2'
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [A14] 'ACTIVITE 2'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [A15] 'ACTIVITE 2'
+    [E15] 'INTITULE KPI1'
+    [F15] 'INTITULE KPI2'
+    [G15] 'INTITULE KPI3'
+    [H15] 'INTITULE KPI4'
+    [I15] 'INTITULE KPI5'
+    [J15] 'INTITULE KPI6'
+    [A16] 'ACTIVITE 2'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [A17] 'ACTIVITE 2'
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [A18] 'ACTIVITE 2'
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 1200
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 1200
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 1200
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 1200
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 1200
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 1200
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 1200
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1200
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'ACTIVITE 1'
+    [E45] 'INTITULE KPI1'
+    [F45] 'INTITULE KPI2'
+    [G45] 'INTITULE KPI3'
+    [H45] 'INTITULE KPI4'
+    [I45] 'INTITULE KPI5'
+    [J45] 'INTITULE KPI6'
+    [C46] 'ACTIVITE 2'
+    [E46] 'INTITULE KPI1'
+    [F46] 'INTITULE KPI2'
+    [G46] 'INTITULE KPI3'
+    [H46] 'INTITULE KPI4'
+    [I46] 'INTITULE KPI5'
+    [J46] 'INTITULE KPI6'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP APEN SA_V01.xlsx ==========
+  -- Variable --
+    [J1] 'Eléments déclencheurs = Réclamation client Agent'
+    [A2] 'Auteur EG:'
+    [J2] '1 réclamation client sur le mois'
+    [O2] 'Toute la prime est perdue'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [J7] 'DMT'
+    [K7] 'Objectif VS Statut'
+    [L7] "Taux d'atteinte"
+    [M7] 'Nb de points'
+    [N7] 'CVR'
+    [O7] 'Objectif VS Statut'
+    [M8] 10
+    [M9] 0
+    [M10] 0
+    [M11] 0
+    [M12] 0
+    [M13] 0
+    [M14] 0
+    [M15] 0
+    [M16] 0
+    [M17] 0
+    [M18] 0
+    [M19] 0
+    [M20] 0
+    [M21] 0
+    [M22] 0
+    [M23] 0
+    [M24] 0
+    [M25] 0
+    [M26] 0
+    [M27] 0
+    [M28] 0
+    [M29] 0
+    [M30] 0
+    [M31] 0
+    [M32] 0
+    [M33] 0
+    [M34] 0
+    [M35] 0
+    [M36] 0
+    [M37] 0
+    [M38] 0
+    [M39] 0
+    [M40] 0
+    [M41] 0
+    [M42] 0
+    [M43] 0
+    [M44] 0
+    [M45] 0
+    [M46] 0
+    [M47] 0
+    [M48] 0
+    [M49] 0
+    [M50] 0
+    [M51] 0
+    [M52] 0
+    [M53] 0
+    [M54] 0
+    [M55] 0
+    [M56] 0
+    [M57] 0
+    [M58] 0
+    [M59] 0
+    [M60] 0
+    [M61] 0
+    [M62] 0
+    [M63] 0
+    [M64] 0
+    [M65] 0
+    [M66] 0
+    [M67] 0
+    [M68] 0
+    [M69] 0
+    [M70] 0
+    [M71] 0
+    [M72] 0
+    [M73] 0
+    [M74] 0
+    [M75] 0
+    [M76] 0
+    [M77] 0
+    [M78] 0
+    [M79] 0
+    [J81] 'DMT'
+    [N81] 'CVR'
+    [A82] 'aaaa'
+    [J82] 'Résultat'
+    [K82] 'Objectif'
+    [L82] "% d'att."
+    [N82] 'Résultat'
+    [O82] 'Objectif'
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 10
+    [F4] 45
+    [G4] 25
+    [H4] 10
+    [I4] 10
+    [J4] 'MALUS'
+    [E5] 'DMT'
+    [F5] 'CVR'
+    [G5] 'Avg NBR'
+    [H5] 'Tx MEA'
+    [I5] 'Note qualité'
+    [J5] 'KPI6'
+    [A6] 'CP SA'
+    [B6] 'CP SA'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'CP SA'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'CP SA'
+    [E8] 'DMT'
+    [F8] 'CVR'
+    [G8] 'Avg NBR'
+    [H8] 'Tx MEA'
+    [I8] 'Note qualité'
+    [J8] 'INTITULE KPI6'
+    [A9] 'CP SA'
+    [C9] 'Débutant'
+    [D9] 1200
+    [E9] 700
+    [F9] 0.35
+    [G9] 1000
+    [H9] 0.1
+    [I9] 0.8
+    [J9] 0
+    [A10] 'CP SA'
+    [C10] 'Confirmé'
+    [D10] 1200
+    [E10] 580
+    [F10] 0.4
+    [G10] 1300
+    [H10] 0.05
+    [I10] 0.85
+    [J10] 0
+    [A11] 'CP SA'
+    [C11] 'Sénior'
+    [D11] 1200
+    [E11] 480
+    [F11] 0.43
+    [G11] 1600
+    [H11] 0.02
+    [I11] 0.9
+    [J11] 0
+    [A13] 'PV SA'
+    [B13] 'PV SA'
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [A14] 'PV SA'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [A15] 'PV SA'
+    [E15] 'DMT'
+    [F15] 'CVR'
+    [G15] 'Avg NBR'
+    [H15] 'Tx MEA'
+    [I15] 'Note qualité'
+    [J15] 0
+    [A16] 'PV SA'
+    [C16] 'Débutant'
+    [D16] 1200
+    [E16] 300
+    [F16] 0.35
+    [G16] 1000
+    [H16] 0.1
+    [I16] 0.8
+    [J16] 0
+    [A17] 'PV SA'
+    [C17] 'Confirmé'
+    [D17] 1200
+    [E17] 300
+    [F17] 0.35
+    [G17] 1300
+    [H17] 0.05
+    [I17] 0.85
+    [J17] 0
+    [A18] 'PV SA'
+    [C18] 'Sénior'
+    [D18] 1200
+    [E18] 300
+    [F18] 0.35
+    [G18] 1400
+    [H18] 0.02
+    [I18] 0.9
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'CP SA'
+    [E45] 'DMT'
+    [F45] 'CVR'
+    [G45] 'Avg NBR'
+    [H45] 'Tx MEA'
+    [I45] 'Note qualité'
+    [J45] 'INTITULE KPI6'
+    [C46] 'PV SA'
+    [E46] 'DMT'
+    [F46] 'CVR'
+    [G46] 'Avg NBR'
+    [H46] 'Tx MEA'
+    [I46] 'Note qualité'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP APEN SE_V01.xlsx ==========
+  -- Variable --
+    [J1] 'Eléments déclencheurs = Réclamation client Agent'
+    [A2] 'Auteur EG:'
+    [J2] '1 réclamation client sur le mois'
+    [O2] 'Toute la prime est perdue'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [J7] 'DMT'
+    [K7] 'Objectif VS Statut'
+    [L7] "Taux d'atteinte"
+    [M7] 'Nb de points'
+    [N7] 'CVR Naturelle'
+    [O7] 'Objectif VS Statut'
+    [M8] 45
+    [M9] 0
+    [M10] 0
+    [M11] 0
+    [M12] 0
+    [M13] 0
+    [M14] 0
+    [M15] 0
+    [M16] 0
+    [M17] 0
+    [M18] 0
+    [M19] 0
+    [M20] 0
+    [M21] 0
+    [M22] 0
+    [M23] 0
+    [M24] 0
+    [M25] 0
+    [M26] 0
+    [M27] 0
+    [M28] 0
+    [M29] 0
+    [M30] 0
+    [M31] 0
+    [M32] 0
+    [M33] 0
+    [M34] 0
+    [M35] 0
+    [M36] 0
+    [M37] 0
+    [M38] 0
+    [M39] 0
+    [M40] 0
+    [M41] 0
+    [M42] 0
+    [M43] 0
+    [M44] 0
+    [M45] 0
+    [M46] 0
+    [M47] 0
+    [M48] 0
+    [M49] 0
+    [M50] 0
+    [M51] 0
+    [M52] 0
+    [M53] 0
+    [M54] 0
+    [M55] 0
+    [M56] 0
+    [M57] 0
+    [M58] 0
+    [M59] 0
+    [M60] 0
+    [M61] 0
+    [M62] 0
+    [M63] 0
+    [M64] 0
+    [M65] 0
+    [M66] 0
+    [M67] 0
+    [M68] 0
+    [M69] 0
+    [M70] 0
+    [M71] 0
+    [M72] 0
+    [M73] 0
+    [M74] 0
+    [M75] 0
+    [M76] 0
+    [M77] 0
+    [M78] 0
+    [M79] 0
+    [J81] 'DMT'
+    [N81] 'CVR Naturelle'
+    [A82] 'aaaa'
+    [J82] 'Résultat'
+    [K82] 'Objectif'
+    [L82] "% d'att."
+    [N82] 'Résultat'
+    [O82] 'Objectif'
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 45
+    [F4] 10
+    [G4] 10
+    [H4] 20
+    [I4] 15
+    [J4] 'MALUS'
+    [E5] 'DMT'
+    [F5] 'CVR Naturelle'
+    [G5] 'AVG NBR'
+    [H5] 'QUALITE'
+    [I5] 'Tx MEA'
+    [J5] 'KPI6'
+    [A6] 'CP SE'
+    [B6] 'CP SE'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'CP SE'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'CP SE'
+    [E8] 'DMT'
+    [F8] 'CVR Naturelle'
+    [G8] 'AVG NBR'
+    [H8] 'QUALITE'
+    [I8] 'Tx MEA'
+    [J8] 'INTITULE KPI6'
+    [A9] 'CP SE'
+    [C9] 'Débutant'
+    [D9] 1200
+    [E9] 350
+    [F9] 0.02
+    [G9] 750
+    [H9] 0.8
+    [I9] 0.1
+    [J9] 0
+    [A10] 'CP SE'
+    [C10] 'Confirmé'
+    [D10] 1200
+    [E10] 300
+    [F10] 0.03
+    [G10] 900
+    [H10] 0.85
+    [I10] 0.05
+    [J10] 0
+    [A11] 'CP SE'
+    [C11] 'Sénior'
+    [D11] 1200
+    [E11] 240
+    [F11] 0.04
+    [G11] 1000
+    [H11] 0.9
+    [I11] 0.03
+    [J11] 0
+    [A13] 'PV SE'
+    [B13] 'PV SE'
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [A14] 'PV SE'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [A15] 'PV SE'
+    [E15] 'DMT'
+    [F15] 'CVR Naturelle'
+    [G15] 'AVG NBR'
+    [H15] 'QUALITE'
+    [I15] 'Tx MEA'
+    [J15] 'INTITULE KPI6'
+    [A16] 'PV SE'
+    [C16] 'Débutant'
+    [D16] 1200
+    [E16] 350
+    [F16] 0.02
+    [G16] 750
+    [H16] 0.8
+    [I16] 0.1
+    [J16] 0
+    [A17] 'PV SE'
+    [C17] 'Confirmé'
+    [D17] 1200
+    [E17] 300
+    [F17] 0.03
+    [G17] 900
+    [H17] 0.85
+    [I17] 0.05
+    [J17] 0
+    [A18] 'PV SE'
+    [C18] 'Sénior'
+    [D18] 1200
+    [E18] 240
+    [F18] 0.04
+    [G18] 1000
+    [H18] 0.9
+    [I18] 0.03
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'CP SE'
+    [E45] 'DMT'
+    [F45] 'CVR Naturelle'
+    [G45] 'AVG NBR'
+    [H45] 'QUALITE'
+    [I45] 'Tx MEA'
+    [J45] 'INTITULE KPI6'
+    [C46] 'PV SE'
+    [E46] 'DMT'
+    [F46] 'CVR Naturelle'
+    [G46] 'AVG NBR'
+    [H46] 'QUALITE'
+    [I46] 'Tx MEA'
+    [J46] 'INTITULE KPI6'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP FR APSO_V01.xlsx ==========
+  -- Variable --
+    [A2] 'Auteur EG:'
+    [A3] 'Date émission EG:'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [K6] 'Qualité'
+    [L6] 'Satisfaction client'
+    [N6] "Nb de points avant l'assiduité"
+    [J7] 'CA'
+    [K7] 'Note qualité'
+    [L7] 'Réclamation client sur Agent'
+    [N9] 0
+    [N10] 0
+    [N11] 0
+    [N12] 0
+    [N13] 0
+    [N14] 0
+    [N15] 0
+    [N16] 0
+    [N17] 0
+    [N18] 0
+    [N19] 0
+    [N20] 0
+    [N21] 0
+    [N22] 0
+    [N23] 0
+    [N24] 0
+    [N25] 0
+    [N26] 0
+    [N27] 0
+    [N28] 0
+    [N29] 0
+    [N30] 0
+    [N31] 0
+    [N32] 0
+    [N33] 0
+    [N34] 0
+    [N35] 0
+    [N36] 0
+    [N37] 0
+    [N38] 0
+    [N39] 0
+    [N40] 0
+    [N41] 0
+    [N42] 0
+    [N43] 0
+    [N44] 0
+    [N45] 0
+    [N46] 0
+    [N47] 0
+    [N48] 0
+    [N49] 0
+    [N50] 0
+    [N51] 0
+    [N52] 0
+    [N53] 0
+    [N54] 0
+    [N55] 0
+    [N56] 0
+    [N57] 0
+    [N58] 0
+    [N59] 0
+    [N60] 0
+    [N61] 0
+    [N62] 0
+    [N63] 0
+    [N64] 0
+    [N65] 0
+    [N66] 0
+    [N67] 0
+    [N68] 0
+    [N69] 0
+    [N70] 0
+    [N71] 0
+    [N72] 0
+    [N73] 0
+    [N74] 0
+    [N75] 0
+    [N76] 0
+    [N77] 0
+    [N78] 0
+    [N79] 0
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 100
+    [J4] 'MALUS'
+    [E5] 'CA'
+    [F5] 'INTITULE KPI2'
+    [G5] 'INTITULE KPI3'
+    [H5] 'Note qualité'
+    [I5] 'INTITULE KPI5'
+    [J5] 'INTITULE KPI6'
+    [A6] 'CP APSO'
+    [B6] 'CP APSO'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'CP APSO'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'CP APSO'
+    [E8] 'CA'
+    [F8] 'INTITULE KPI2'
+    [G8] 'INTITULE KPI3'
+    [H8] 'Note qualité'
+    [I8] 'INTITULE KPI5'
+    [J8] 'INTITULE KPI6'
+    [A9] 'CP APSO'
+    [C9] 'Débutant'
+    [E9] 80000
+    [H9] 0.85
+    [A10] 'CP APSO'
+    [C10] 'Confirmé'
+    [E10] 80000
+    [H10] 0.84
+    [A11] 'CP APSO'
+    [C11] 'Sénior'
+    [E11] 80000
+    [H11] 0.84
+    [A13] 'PV APSO'
+    [B13] 'PV APSO'
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [A14] 'PV APSO'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [A15] 'PV APSO'
+    [E15] 'CA'
+    [F15] 'INTITULE KPI2'
+    [G15] 'INTITULE KPI3'
+    [H15] 'Note qualité'
+    [I15] 'INTITULE KPI5'
+    [J15] 'INTITULE KPI6'
+    [A16] 'PV APSO'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [A17] 'PV APSO'
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [A18] 'PV APSO'
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C29] "Matrice des indicateurs par typologie d'activité"
+    [C31] 'CP APSO'
+    [E31] 'CA'
+    [F31] 'INTITULE KPI2'
+    [G31] 'INTITULE KPI3'
+    [H31] 'Note qualité'
+    [I31] 'INTITULE KPI5'
+    [J31] 'INTITULE KPI6'
+    [C32] 'PV APSO'
+    [E32] 'CA'
+    [F32] 'INTITULE KPI2'
+    [G32] 'INTITULE KPI3'
+    [H32] 'Note qualité'
+    [I32] 'INTITULE KPI5'
+    [J32] 'INTITULE KPI6'
+    [E36] 'Paliers VS % Points'
+    [E38] 'Min'
+    [G38] 'Objectif'
+    [I38] 'Max'
+    [E40] 0.85
+    [G40] 0.9
+    [I40] 1
+    [F42] 'Palier 1'
+    [H42] 'Palier 2'
+    [J42] 'Palier 3'
+    [F44] 0.85
+    [H44] 0.9
+    [J44] 1
+    [E47] "Matrice des primes bonus sur l'activité"
+    [E49] 'PRIME'
+    [G49] 'DENOMINATION PRIME'
+    [E50] 'PRIME 1'
+    [G50] 'MISSION'
+    [E51] 'PRIME 2'
+    [E52] 'PRIME 3'
+    [E55] 'Liste des bénéficiaires des différents bonus'
+    [B57] 'MISSION'
+    [G57] 'PRIME 2'
+    [B59] 'Noms prénoms'
+    [C59] 'Matricule'
+    [D59] 'Montant Prime'
+    [G59] 'Noms prénoms'
+    [H59] 'Matricule'
+    [I59] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP FR GE WELCOME CALL_V01.xlsx ==========
+  -- Variable --
+    [J1] 'Eléments déclencheurs = Réclamation client Agent'
+    [A2] 'Auteur EG:'
+    [J2] '1 réclamation client sur le mois'
+    [O2] 'Toute la prime est perdue'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [J7] 'Taux de conversion'
+    [K7] 'Objectif VS Statut'
+    [L7] "Taux d'atteinte"
+    [M7] 'Nb de points'
+    [N7] 'ABV ADD-ON '
+    [O7] 'Objectif VS Statut'
+    [M8] 20
+    [M9] 0
+    [M10] 0
+    [M11] 0
+    [M12] 0
+    [M13] 0
+    [M14] 0
+    [M15] 0
+    [M16] 0
+    [M17] 0
+    [M18] 0
+    [M19] 0
+    [M20] 0
+    [M21] 0
+    [M22] 0
+    [M23] 0
+    [M24] 0
+    [M25] 0
+    [M26] 0
+    [M27] 0
+    [M28] 0
+    [M29] 0
+    [M30] 0
+    [M31] 0
+    [M32] 0
+    [M33] 0
+    [M34] 0
+    [M35] 0
+    [M36] 0
+    [M37] 0
+    [M38] 0
+    [M39] 0
+    [M40] 0
+    [M41] 0
+    [M42] 0
+    [M43] 0
+    [M44] 0
+    [M45] 0
+    [M46] 0
+    [M47] 0
+    [M48] 0
+    [M49] 0
+    [M50] 0
+    [M51] 0
+    [M52] 0
+    [M53] 0
+    [M54] 0
+    [M55] 0
+    [M56] 0
+    [M57] 0
+    [M58] 0
+    [M59] 0
+    [M60] 0
+    [M61] 0
+    [M62] 0
+    [M63] 0
+    [M64] 0
+    [M65] 0
+    [M66] 0
+    [M67] 0
+    [M68] 0
+    [M69] 0
+    [M70] 0
+    [M71] 0
+    [M72] 0
+    [M73] 0
+    [M74] 0
+    [M75] 0
+    [M76] 0
+    [M77] 0
+    [M78] 0
+    [M79] 0
+    [J81] 'Taux de conversion'
+    [N81] 'ABV ADD-ON '
+    [A82] 'aaaa'
+    [J82] 'Résultat'
+    [K82] 'Objectif'
+    [L82] "% d'att."
+    [N82] 'Résultat'
+    [O82] 'Objectif'
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 20
+    [F4] 20
+    [G4] 30
+    [H4] 0
+    [I4] 30
+    [J4] 'MALUS'
+    [E5] 'Taux de conversion'
+    [F5] 'ABV ADD-ON '
+    [G5] 'Taux contact'
+    [H5] 0
+    [I5] 'Note qualité'
+    [J5] 'KPI6'
+    [A6] 'PVCP FR WELCOME CALL'
+    [B6] 'PVCP FR WELCOME CALL'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'PVCP FR WELCOME CALL'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'PVCP FR WELCOME CALL'
+    [E8] 'Taux de conversion'
+    [F8] 'ABV ADD-ON '
+    [G8] 'Taux contact'
+    [H8] 0
+    [I8] 'Note qualité'
+    [J8] 'INTITULE KPI6'
+    [A9] 'PVCP FR WELCOME CALL'
+    [C9] 'Débutant'
+    [D9] 1200
+    [J9] 0
+    [A10] 'PVCP FR WELCOME CALL'
+    [C10] 'Confirmé'
+    [D10] 1200
+    [J10] 0
+    [A11] 'PVCP FR WELCOME CALL'
+    [C11] 'Sénior'
+    [D11] 1200
+    [J11] 0
+    [A13] 'PVCP GE WELCOME CALL'
+    [B13] 'PVCP GE WELCOME CALL'
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [A14] 'PVCP GE WELCOME CALL'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [A15] 'PVCP GE WELCOME CALL'
+    [E15] 'Taux de conversion'
+    [F15] 'ABV ADD-ON '
+    [G15] 'Taux contact'
+    [H15] 0
+    [I15] 'Note qualité'
+    [J15] 0
+    [A16] 'PVCP GE WELCOME CALL'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [A17] 'PVCP GE WELCOME CALL'
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [A18] 'PVCP GE WELCOME CALL'
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'PVCP FR WELCOME CALL'
+    [E45] 'Taux de conversion'
+    [F45] 'ABV ADD-ON '
+    [G45] 'Taux contact'
+    [I45] 'Note qualité'
+    [J45] 'INTITULE KPI6'
+    [C46] 'PVCP GE WELCOME CALL'
+    [E46] 'Taux de conversion'
+    [F46] 'ABV ADD-ON '
+    [G46] 'Taux contact'
+    [I46] 'Note qualité'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP GE APSO_V01.xlsx ==========
+  -- Variable --
+    [A2] 'Auteur EG:'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [K6] 'Qualité'
+    [L6] 'Satisfaction client'
+    [N6] "Nb de points avant l'assiduité"
+    [J7] 'CA'
+    [K7] 'Note qualité'
+    [L7] 'Réclamation client sur Agent'
+    [N9] 0
+    [N10] 0
+    [N11] 0
+    [N12] 0
+    [N13] 0
+    [N14] 0
+    [N15] 0
+    [N16] 0
+    [N17] 0
+    [N18] 0
+    [N19] 0
+    [N20] 0
+    [N21] 0
+    [N22] 0
+    [N23] 0
+    [N24] 0
+    [N25] 0
+    [N26] 0
+    [N27] 0
+    [N28] 0
+    [N29] 0
+    [N30] 0
+    [N31] 0
+    [N32] 0
+    [N33] 0
+    [N34] 0
+    [N35] 0
+    [N36] 0
+    [N37] 0
+    [N38] 0
+    [N39] 0
+    [N40] 0
+    [N41] 0
+    [N42] 0
+    [N43] 0
+    [N44] 0
+    [N45] 0
+    [N46] 0
+    [N47] 0
+    [N48] 0
+    [N49] 0
+    [N50] 0
+    [N51] 0
+    [N52] 0
+    [N53] 0
+    [N54] 0
+    [N55] 0
+    [N56] 0
+    [N57] 0
+    [N58] 0
+    [N59] 0
+    [N60] 0
+    [N61] 0
+    [N62] 0
+    [N63] 0
+    [N64] 0
+    [N65] 0
+    [N66] 0
+    [N67] 0
+    [N68] 0
+    [N69] 0
+    [N70] 0
+    [N71] 0
+    [N72] 0
+    [N73] 0
+    [N74] 0
+    [N75] 0
+    [N76] 0
+    [N77] 0
+    [N78] 0
+    [N79] 0
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [J4] 'MALUS'
+    [E5] 'CA'
+    [F5] 'INTITULE KPI2'
+    [G5] 'INTITULE KPI3'
+    [H5] 'Note qualité'
+    [I5] 'INTITULE KPI5'
+    [J5] 'INTITULE KPI6'
+    [A6] 'CP-GERMANO APSO'
+    [B6] 'CP-GERMANO APSO'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'CP-GERMANO APSO'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'CP-GERMANO APSO'
+    [E8] 'CA'
+    [F8] 'INTITULE KPI2'
+    [G8] 'INTITULE KPI3'
+    [H8] 'Note qualité'
+    [I8] 'INTITULE KPI5'
+    [J8] 'INTITULE KPI6'
+    [A9] 'CP-GERMANO APSO'
+    [C9] 'Débutant'
+    [E9] 80000
+    [H9] 0.84
+    [A10] 'CP-GERMANO APSO'
+    [C10] 'Confirmé'
+    [E10] 80000
+    [H10] 0.84
+    [A11] 'CP-GERMANO APSO'
+    [C11] 'Sénior'
+    [E11] 80000
+    [H11] 0.84
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'CP-GERMANO APSO'
+    [E45] 'CA'
+    [F45] 'INTITULE KPI2'
+    [G45] 'INTITULE KPI3'
+    [H45] 'Note qualité'
+    [I45] 'INTITULE KPI5'
+    [J45] 'INTITULE KPI6'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP GE SA_V01.xlsx ==========
+  -- Variable --
+    [J1] 'Eléments déclencheurs = Réclamation client Agent'
+    [A2] 'Auteur EG:'
+    [J2] '1 réclamation client sur le mois'
+    [O2] 'Toute la prime est perdue'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [J7] 'DMT'
+    [K7] 'Objectif VS Statut'
+    [L7] "Taux d'atteinte"
+    [M7] 'Nb de points'
+    [N7] 'CVR'
+    [O7] 'Objectif VS Statut'
+    [M8] 20
+    [M9] 0
+    [M10] 0
+    [M11] 0
+    [M12] 0
+    [M13] 0
+    [M14] 0
+    [M15] 0
+    [M16] 0
+    [M17] 0
+    [M18] 0
+    [M19] 0
+    [M20] 0
+    [M21] 0
+    [M22] 0
+    [M23] 0
+    [M24] 0
+    [M25] 0
+    [M26] 0
+    [M27] 0
+    [M28] 0
+    [M29] 0
+    [M30] 0
+    [M31] 0
+    [M32] 0
+    [M33] 0
+    [M34] 0
+    [M35] 0
+    [M36] 0
+    [M37] 0
+    [M38] 0
+    [M39] 0
+    [M40] 0
+    [M41] 0
+    [M42] 0
+    [M43] 0
+    [M44] 0
+    [M45] 0
+    [M46] 0
+    [M47] 0
+    [M48] 0
+    [M49] 0
+    [M50] 0
+    [M51] 0
+    [M52] 0
+    [M53] 0
+    [M54] 0
+    [M55] 0
+    [M56] 0
+    [M57] 0
+    [M58] 0
+    [M59] 0
+    [M60] 0
+    [M61] 0
+    [M62] 0
+    [M63] 0
+    [M64] 0
+    [M65] 0
+    [M66] 0
+    [M67] 0
+    [M68] 0
+    [M69] 0
+    [M70] 0
+    [M71] 0
+    [M72] 0
+    [M73] 0
+    [M74] 0
+    [M75] 0
+    [M76] 0
+    [M77] 0
+    [M78] 0
+    [M79] 0
+    [J81] 'DMT'
+    [N81] 'CVR'
+    [A82] 'aaaa'
+    [J82] 'Résultat'
+    [K82] 'Objectif'
+    [L82] "% d'att."
+    [N82] 'Résultat'
+    [O82] 'Objectif'
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 20
+    [F4] 40
+    [G4] 20
+    [H4] 10
+    [I4] 10
+    [J4] 'MALUS'
+    [E5] 'DMT'
+    [F5] 'CVR'
+    [G5] 'Avg NBR'
+    [H5] 'Tx MEA'
+    [I5] 'Note qualité'
+    [J5] 'KPI6'
+    [A6] 'CP GERMANO SA'
+    [B6] 'CP GERMANO SA'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'CP GERMANO SA'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'CP GERMANO SA'
+    [E8] 'DMT'
+    [F8] 'CVR'
+    [G8] 'Avg NBR'
+    [H8] 'Tx MEA'
+    [I8] 'Note qualité'
+    [J8] 'INTITULE KPI6'
+    [A9] 'CP GERMANO SA'
+    [C9] 'Débutant'
+    [D9] 1200
+    [E9] 700
+    [F9] 0.35
+    [G9] 1000
+    [H9] 0.1
+    [I9] 0.8
+    [J9] 0
+    [A10] 'CP GERMANO SA'
+    [C10] 'Confirmé'
+    [D10] 1200
+    [E10] 580
+    [F10] 0.4
+    [G10] 1300
+    [H10] 0.05
+    [I10] 0.85
+    [J10] 0
+    [A11] 'CP GERMANO SA'
+    [C11] 'Sénior'
+    [D11] 1200
+    [E11] 480
+    [F11] 0.43
+    [G11] 1600
+    [H11] 0.02
+    [I11] 0.9
+    [J11] 0
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'CP GERMANO SA'
+    [E45] 'DMT'
+    [F45] 'CVR'
+    [G45] 'Avg NBR'
+    [H45] 'Tx MEA'
+    [I45] 'Note qualité'
+    [J45] 'INTITULE KPI6'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP GE SE_V01.xlsx ==========
+  -- Variable --
+    [J1] 'Eléments déclencheurs = Réclamation client Agent'
+    [A2] 'Auteur EG:'
+    [J2] '1 réclamation client sur le mois'
+    [O2] 'Toute la prime est perdue'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [J7] 'DMT'
+    [K7] 'Objectif VS Statut'
+    [L7] "Taux d'atteinte"
+    [M7] 'Nb de points'
+    [N7] 'CVR'
+    [O7] 'Objectif VS Statut'
+    [M8] 45
+    [M9] 0
+    [M10] 0
+    [M11] 0
+    [M12] 0
+    [M13] 0
+    [M14] 0
+    [M15] 0
+    [M16] 0
+    [M17] 0
+    [M18] 0
+    [M19] 0
+    [M20] 0
+    [M21] 0
+    [M22] 0
+    [M23] 0
+    [M24] 0
+    [M25] 0
+    [M26] 0
+    [M27] 0
+    [M28] 0
+    [M29] 0
+    [M30] 0
+    [M31] 0
+    [M32] 0
+    [M33] 0
+    [M34] 0
+    [M35] 0
+    [M36] 0
+    [M37] 0
+    [M38] 0
+    [M39] 0
+    [M40] 0
+    [M41] 0
+    [M42] 0
+    [M43] 0
+    [M44] 0
+    [M45] 0
+    [M46] 0
+    [M47] 0
+    [M48] 0
+    [M49] 0
+    [M50] 0
+    [M51] 0
+    [M52] 0
+    [M53] 0
+    [M54] 0
+    [M55] 0
+    [M56] 0
+    [M57] 0
+    [M58] 0
+    [M59] 0
+    [M60] 0
+    [M61] 0
+    [M62] 0
+    [M63] 0
+    [M64] 0
+    [M65] 0
+    [M66] 0
+    [M67] 0
+    [M68] 0
+    [M69] 0
+    [M70] 0
+    [M71] 0
+    [M72] 0
+    [M73] 0
+    [M74] 0
+    [M75] 0
+    [M76] 0
+    [M77] 0
+    [M78] 0
+    [M79] 0
+    [J81] 'DMT'
+    [N81] 'CVR'
+    [A82] 'aaaa'
+    [J82] 'Résultat'
+    [K82] 'Objectif'
+    [L82] "% d'att."
+    [N82] 'Résultat'
+    [O82] 'Objectif'
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 45
+    [F4] 10
+    [G4] 10
+    [H4] 15
+    [I4] 20
+    [J4] 'MALUS'
+    [E5] 'DMT'
+    [F5] 'CVR'
+    [G5] 'Avg NBR'
+    [H5] 'Tx MEA'
+    [I5] 'Note qualité'
+    [J5] 'KPI6'
+    [A6] 'CP GERMANO SA'
+    [B6] 'CP GERMANO SA'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'CP GERMANO SA'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'CP GERMANO SA'
+    [E8] 'DMT'
+    [F8] 'CVR'
+    [G8] 'Avg NBR'
+    [H8] 'Tx MEA'
+    [I8] 'Note qualité'
+    [J8] 'INTITULE KPI6'
+    [A9] 'CP GERMANO SA'
+    [C9] 'Débutant'
+    [D9] 1200
+    [E9] 350
+    [F9] 0.02
+    [G9] 750
+    [H9] 0.1
+    [I9] 0.8
+    [J9] 0
+    [A10] 'CP GERMANO SA'
+    [C10] 'Confirmé'
+    [D10] 1200
+    [E10] 300
+    [F10] 0.03
+    [G10] 900
+    [H10] 0.05
+    [I10] 0.85
+    [J10] 0
+    [A11] 'CP GERMANO SA'
+    [C11] 'Sénior'
+    [D11] 1200
+    [E11] 240
+    [F11] 0.04
+    [G11] 100
+    [H11] 0.02
+    [I11] 0.9
+    [J11] 0
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'CP GERMANO SA'
+    [E45] 'DMT'
+    [F45] 'CVR'
+    [G45] 'Avg NBR'
+    [H45] 'Tx MEA'
+    [I45] 'Note qualité'
+    [J45] 'INTITULE KPI6'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'
+
+========== MCC_S01_FEG-GRILLE PRIMES AGENT-PVCP NL APSO_V01.xlsx ==========
+  -- Variable --
+    [A2] 'Auteur EG:'
+    [A3] 'Date émission EG:'
+    [A5] 'SOURCE PLANILICATION'
+    [B5] 'Interne'
+    [A6] 'Noms prénoms'
+    [B6] 'Matricule'
+    [C6] 'Manager'
+    [D6] 'Opération'
+    [E6] 'Sanction disciplinaire'
+    [F6] 'Statut'
+    [H6] 'Montant Cible'
+    [J6] 'Productivité'
+    [K6] 'Qualité'
+    [L6] 'Satisfaction client'
+    [N6] "Nb de points avant l'assiduité"
+    [J7] 'CA'
+    [K7] 'Note qualité'
+    [L7] 'Réclamation client sur Agent'
+    [N9] 0
+    [N10] 0
+    [N11] 0
+    [N12] 0
+    [N13] 0
+    [N14] 0
+    [N15] 0
+    [N16] 0
+    [N17] 0
+    [N18] 0
+    [N19] 0
+    [N20] 0
+    [N21] 0
+    [N22] 0
+    [N23] 0
+    [N24] 0
+    [N25] 0
+    [N26] 0
+    [N27] 0
+    [N28] 0
+    [N29] 0
+    [N30] 0
+    [N31] 0
+    [N32] 0
+    [N33] 0
+    [N34] 0
+    [N35] 0
+    [N36] 0
+    [N37] 0
+    [N38] 0
+    [N39] 0
+    [N40] 0
+    [N41] 0
+    [N42] 0
+    [N43] 0
+    [N44] 0
+    [N45] 0
+    [N46] 0
+    [N47] 0
+    [N48] 0
+    [N49] 0
+    [N50] 0
+    [N51] 0
+    [N52] 0
+    [N53] 0
+    [N54] 0
+    [N55] 0
+    [N56] 0
+    [N57] 0
+    [N58] 0
+    [N59] 0
+    [N60] 0
+    [N61] 0
+    [N62] 0
+    [N63] 0
+    [N64] 0
+    [N65] 0
+    [N66] 0
+    [N67] 0
+    [N68] 0
+    [N69] 0
+    [N70] 0
+    [N71] 0
+    [N72] 0
+    [N73] 0
+    [N74] 0
+    [N75] 0
+    [N76] 0
+    [N77] 0
+    [N78] 0
+    [N79] 0
+  -- OBJECTIFS --
+    [B1] 'Auteur EG:'
+    [B2] 'Date émission EG:'
+    [D4] 'Nb de points'
+    [E4] 100
+    [J4] 'MALUS'
+    [E5] 'CA'
+    [F5] 0
+    [G5] 0
+    [H5] 'Note qualité'
+    [I5] 0
+    [J5] 0
+    [A6] 'PVCP NL APSO'
+    [B6] 'PVCP NL APSO'
+    [C6] 'Statut'
+    [D6] 'Prime (Montant Brut)'
+    [E6] 'Objectifs / Indicateurs / Statuts'
+    [A7] 'PVCP NL APSO'
+    [E7] 'Productivité'
+    [H7] 'Qualité'
+    [J7] 'Sat Client'
+    [A8] 'PVCP NL APSO'
+    [E8] 'CA'
+    [F8] 0
+    [G8] 0
+    [H8] 'Note qualité'
+    [I8] 0
+    [J8] 0
+    [A9] 'PVCP NL APSO'
+    [C9] 'Débutant'
+    [A10] 'PVCP NL APSO'
+    [C10] 'Confirmé'
+    [A11] 'PVCP NL APSO'
+    [C11] 'Sénior'
+    [C13] 'Statut'
+    [D13] 'Prime (Montant Brut)'
+    [E13] 'Objectifs / Indicateurs / Statuts'
+    [E14] 'Productivité'
+    [H14] 'Qualité'
+    [J14] 'Sat Client'
+    [C16] 'Débutant'
+    [D16] 1200
+    [J16] 0
+    [C17] 'Confirmé'
+    [D17] 1200
+    [J17] 0
+    [C18] 'Sénior'
+    [D18] 1200
+    [J18] 0
+    [C20] 'Statut'
+    [D20] 'Prime (Montant Brut)'
+    [E20] 'Objectifs / Indicateurs / Statuts'
+    [E21] 'Productivité'
+    [H21] 'Qualité'
+    [J21] 'Sat Client'
+    [C23] 'Débutant'
+    [D23] 1200
+    [J23] 0
+    [C24] 'Confirmé'
+    [D24] 960
+    [J24] 0
+    [C25] 'Sénior'
+    [D25] 960
+    [J25] 0
+    [C27] 'Statut'
+    [D27] 'Prime (Montant Brut)'
+    [E27] 'Objectifs / Indicateurs / Statuts'
+    [E28] 'Productivité'
+    [H28] 'Qualité'
+    [J28] 'Sat Client'
+    [C30] 'Débutant'
+    [D30] 960
+    [J30] 0
+    [C31] 'Confirmé'
+    [D31] 960
+    [J31] 0
+    [C32] 'Sénior'
+    [D32] 960
+    [J32] 0
+    [C34] 'Statut'
+    [D34] 'Prime (Montant Brut)'
+    [E34] 'Objectifs / Indicateurs / Statuts'
+    [E35] 'Productivité'
+    [H35] 'Qualité'
+    [J35] 'Sat Client'
+    [C37] 'Débutant'
+    [D37] 960
+    [J37] 0
+    [C38] 'Confirmé'
+    [D38] 960
+    [J38] 0
+    [C39] 'Sénior'
+    [D39] 1440
+    [J39] 0
+    [C43] "Matrice des indicateurs par typologie d'activité"
+    [C45] 'PVCP NL APSO'
+    [E45] 'CA'
+    [H45] 'Note qualité'
+    [E52] 'Paliers VS % Points'
+    [E54] 'Min'
+    [G54] 'Objectif'
+    [I54] 'Max'
+    [E56] 0.85
+    [G56] 0.9
+    [I56] 1
+    [F58] 'Palier 1'
+    [H58] 'Palier 2'
+    [J58] 'Palier 3'
+    [F60] 0.85
+    [H60] 0.9
+    [J60] 1
+    [E63] "Matrice des primes bonus sur l'activité"
+    [E65] 'PRIME'
+    [G65] 'DENOMINATION PRIME'
+    [E66] 'PRIME 1'
+    [G66] 'MISSION'
+    [E67] 'PRIME 2'
+    [G67] 'PRIME DE LANGUE'
+    [E68] 'PRIME 3'
+    [E69] 'PRIME 4'
+    [E71] 'Liste des bénéficiaires des différents bonus'
+    [B73] 'MISSION'
+    [G73] 'PRIME DE LANGUE'
+    [B75] 'Noms prénoms'
+    [C75] 'Matricule'
+    [D75] 'Montant Prime'
+    [G75] 'Noms prénoms'
+    [H75] 'Matricule'
+    [I75] 'Montant Prime'

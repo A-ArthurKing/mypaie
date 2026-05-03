@@ -1,0 +1,328 @@
+/*
+ * Fichier : TargetMatrixSection.css
+ * Rôle    : Styles scopés de la section "Postes & Objectifs Cibles".
+ *           Toutes les classes sont préfixées .tm- pour éviter les conflits.
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets / VariablesOnglet / Sections
+ */
+
+/* #region ROOT */
+.tm-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* #endregion */
+
+/* #region ÉTAT VIDE */
+.tm-section--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 2.5rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    font-size: var(--text-sm);
+}
+
+.tm-section--empty i {
+    font-size: 1.8rem;
+    color: var(--color-warning);
+}
+
+/* #endregion */
+
+/* #region EN-TÊTE DE SECTION */
+.tm-section__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.tm-section__title {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+    margin: 0 0 4px 0;
+}
+
+.tm-section__subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* #endregion */
+
+/* #region LISTE DES CARTES POSTE */
+.tm-postes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.tm-poste-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: box-shadow var(--transition-base);
+}
+
+.tm-poste-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* En-tête de la carte poste */
+.tm-poste-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tm-poste-card__label-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tm-poste-card__icon {
+    color: var(--color-accent);
+    font-size: 1rem;
+}
+
+/* Champ de saisie inline du code poste */
+.tm-poste-card__code-input {
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    outline: none;
+    min-width: 220px;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.tm-poste-card__code-input:hover,
+.tm-poste-card__code-input:focus {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+}
+
+/* Bouton suppression du poste */
+.tm-poste-card__delete-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--color-error);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+    min-height: 44px;
+}
+
+.tm-poste-card__delete-btn:hover:not(:disabled) {
+    background: var(--color-error-soft);
+    border-color: var(--color-error);
+}
+
+.tm-poste-card__delete-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* #endregion */
+
+/* #region TABLEAU DES OBJECTIFS */
+.tm-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+}
+
+/* En-têtes du tableau */
+.tm-table th {
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.65rem 1rem;
+    text-align: center;
+    border-bottom: 2px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.tm-table__kpi-col {
+    text-align: left !important;
+    width: 200px;
+    min-width: 160px;
+}
+
+.tm-table__niveau-col {
+    min-width: 130px;
+}
+
+/* Lignes du corps */
+.tm-table tbody tr {
+    border-bottom: 1px solid var(--color-border-subtle);
+    transition: background var(--transition-fast);
+}
+
+.tm-table tbody tr:hover {
+    background: var(--color-surface-2);
+}
+
+.tm-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Ligne spéciale : montant de la prime (fond accent doux) */
+.tm-table__row--prime {
+    background: var(--color-accent-soft) !important;
+}
+
+.tm-table__row--prime:hover {
+    background: rgba(232, 83, 58, 0.18) !important;
+}
+
+/* Cellule de libellé du KPI */
+.tm-table__kpi-cell {
+    padding: 0.55rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-secondary);
+}
+
+.tm-table__row--prime .tm-table__kpi-cell {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+}
+
+/* Badge catégorie (ex : "Productivité") */
+.tm-table__kpi-cat {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    background: var(--color-surface-2);
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    border: 1px solid var(--color-border-subtle);
+}
+
+.tm-table__kpi-name {
+    color: var(--color-text-primary);
+    font-weight: var(--weight-medium);
+}
+
+/* Cellule de valeur (inputs) */
+.tm-table__value-cell {
+    padding: 0.4rem 0.75rem;
+    text-align: center;
+}
+
+/* Input numérique standard */
+.tm-table__input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    text-align: center;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    min-height: 36px;
+    box-sizing: border-box;
+}
+
+.tm-table__input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+/* Variante input pour la ligne Prime */
+.tm-table__input--prime {
+    font-weight: var(--weight-bold);
+    color: var(--color-accent);
+    border-color: var(--color-accent-border);
+    background: var(--color-surface);
+}
+
+.tm-table__input--prime:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+/* #endregion */
+
+/* #region PIED DE SECTION */
+.tm-section__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border-subtle);
+    flex-wrap: wrap;
+}
+
+/* #endregion */
+
+/* #region RESPONSIVE */
+@media (max-width: 768px) {
+    .tm-section {
+        padding: 1rem;
+    }
+
+    .tm-table__kpi-col {
+        width: 120px;
+        min-width: 100px;
+    }
+
+    .tm-table__niveau-col {
+        min-width: 100px;
+    }
+
+    .tm-section__footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tm-section__footer .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .tm-poste-card__code-input {
+        min-width: 140px;
+    }
+}
+
+/* #endregion */

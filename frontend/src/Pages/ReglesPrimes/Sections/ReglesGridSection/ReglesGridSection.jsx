@@ -14,7 +14,15 @@ const PERIODICITE_LABELS = {
   annuelle: 'Annuelle',
 };
 
-function RegleCard({ regle, onClick }) {
+function RegleCard({ regle, onClick, onEdit, onDelete }) {
+  // Construit les tags de structure (seulement ceux renseignés)
+  const structureTags = [
+    regle.libelle_projet    && { key: 'projet',    label: regle.libelle_projet,    icon: 'fa-folder' },
+    regle.libelle_operation && { key: 'operation', label: regle.libelle_operation, icon: 'fa-network-wired' },
+    regle.libelle_file      && { key: 'file',      label: regle.libelle_file,      icon: 'fa-layer-group' },
+    regle.libelle_activite  && { key: 'activite',  label: regle.libelle_activite,  icon: 'fa-tag' },
+  ].filter(Boolean);
+
   return (
     <div
       className={`regle-card ${regle.actif ? '' : 'regle-card--inactive'}`}
@@ -23,16 +31,46 @@ function RegleCard({ regle, onClick }) {
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick(regle.id)}
     >
+      <div className="regle-card__actions">
+        <button
+          className="regle-card__action-btn regle-card__action-btn--edit"
+          title="Modifier"
+          onClick={(e) => { e.stopPropagation(); onEdit(regle.id); }}
+        >
+          <i className="fa-solid fa-pencil"></i>
+        </button>
+        <button
+          className="regle-card__action-btn regle-card__action-btn--delete"
+          title="Supprimer"
+          onClick={(e) => { e.stopPropagation(); onDelete(regle); }}
+        >
+          <i className="fa-solid fa-trash"></i>
+        </button>
+      </div>
+
       <div className="regle-card__header">
-        <span className="regle-card__projet">{regle.projet || '—'}</span>
         <span className={`regle-card__badge regle-card__badge--${regle.actif ? 'actif' : 'inactif'}`}>
           {regle.actif ? 'Actif' : 'Inactif'}
         </span>
       </div>
+
       <h3 className="regle-card__nom">{regle.nom}</h3>
+
+      {structureTags.length > 0 && (
+        <div className="regle-card__structure-tags">
+          {structureTags.map(tag => (
+            <span key={tag.key} className={`regle-card__tag regle-card__tag--${tag.key}`}>
+              <i className={`fa-solid ${tag.icon}`}></i>
+              {tag.label}
+            </span>
+          ))}
+        </div>
+      )}
+
       {regle.description && (
         <p className="regle-card__description">{regle.description}</p>
       )}
+
       <div className="regle-card__footer">
         <span className="regle-card__periodicite">
           <i className="fa-regular fa-calendar"></i>{' '}
@@ -44,7 +82,7 @@ function RegleCard({ regle, onClick }) {
   );
 }
 
-export default function ReglesGridSection({ regles, loading, onCardClick }) {
+export default function ReglesGridSection({ regles, loading, onCardClick, onEdit, onDelete }) {
   if (loading) {
     return (
       <div className="regles-grid-section__empty">
@@ -69,7 +107,7 @@ export default function ReglesGridSection({ regles, loading, onCardClick }) {
   return (
     <div className="regles-grid-section__grid">
       {regles.map((regle) => (
-        <RegleCard key={regle.id} regle={regle} onClick={onCardClick} />
+        <RegleCard key={regle.id} regle={regle} onClick={onCardClick} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </div>
   );

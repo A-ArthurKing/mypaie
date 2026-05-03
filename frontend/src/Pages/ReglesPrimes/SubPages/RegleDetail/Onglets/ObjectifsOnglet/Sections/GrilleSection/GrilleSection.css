@@ -1,0 +1,110 @@
+.grille-section {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+.grille-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.grille-table th,
+.grille-table td {
+    border: 1px solid var(--color-border);
+    padding: 6px 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Ligne des points en haut */
+.grille-row-points {
+    background-color: white;
+}
+
+.grille-col-points-label {
+    text-align: left !important;
+    padding-left: 12px !important;
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--color-text-primary);
+    text-decoration: underline;
+    border-bottom: none !important;
+}
+
+.grille-cell-point {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    border-bottom: none !important;
+}
+
+/* En-têtes fixes (Statut / Prime) */
+.grille-col-statut,
+.grille-col-prime {
+    background-color: white;
+    color: var(--color-text-dark);
+    font-weight: 600;
+    min-width: 120px;
+}
+
+/* En-têtes utilisant les variables de l'application */
+.grille-col-main {
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.grille-col-cat {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.grille-col-ind {
+    background-color: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+/* Cellules de données */
+.grille-cell-statut {
+    background-color: var(--color-surface);
+}
+
+.statut-badge {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    border: 1px solid var(--color-accent-border);
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+.grille-cell-prime {
+    background-color: var(--color-accent-soft);
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.grille-cell-cible {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+/* Survol des lignes */
+.grille-row-data:hover td.grille-cell-cible {
+    background-color: var(--color-bg-light);
+}

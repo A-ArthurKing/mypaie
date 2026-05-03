@@ -5,25 +5,32 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './RegleDetail.css';
-import InfosSection from './Sections/InfosSection/InfosSection';
-import CriteresSection from './Sections/CriteresSection/CriteresSection';
-import AgentsSection from './Sections/AgentsSection/AgentsSection';
+import ObjectifsOnglet from './Onglets/ObjectifsOnglet/ObjectifsOnglet'
+import VariablesOnglet from './Onglets/VariablesOnglet/VariablesOnglet'
+import AgentsOnglet from './Onglets/AgentsOnglet/AgentsOnglet'
 
 const ONGLETS = [
-  { id: 'infos',    label: 'Informations',  icon: 'fa-solid fa-circle-info' },
-  { id: 'criteres', label: 'Critères',       icon: 'fa-solid fa-sliders' },
-  { id: 'agents',   label: 'Agents',         icon: 'fa-solid fa-users' },
+  { id: 'objectifs', label: 'Objectifs',     icon: 'fa-solid fa-bullseye' },
+  { id: 'variables', label: 'Variables',     icon: 'fa-solid fa-sliders' },
+  { id: 'agents',    label: 'Agents',        icon: 'fa-solid fa-users' },
 ];
 
 export default function RegleDetail() {
   const { regleId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [regle, setRegle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState(null);
-  const [ongletActif, setOngletActif] = useState('infos');
+
+  // L'onglet actif est lu depuis l'URL (?tab=...) ou 'objectifs' par défaut
+  const ongletActif = searchParams.get('tab') || 'objectifs';
+
+  const setOngletActif = (id) => {
+    setSearchParams({ tab: id });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -99,9 +106,9 @@ export default function RegleDetail() {
 
       {/* ── Contenu de l'onglet actif ── */}
       <div className="regle-detail__tab-content">
-        {ongletActif === 'infos'    && <InfosSection    regle={regle} />}
-        {ongletActif === 'criteres' && <CriteresSection regle={regle} />}
-        {ongletActif === 'agents'   && <AgentsSection   regle={regle} />}
+        {ongletActif === 'objectifs' && <ObjectifsOnglet regle={regle} />}
+        {ongletActif === 'variables' && <VariablesOnglet regle={regle} />}
+        {ongletActif === 'agents'    && <AgentsOnglet   regle={regle} />}
       </div>
     </div>
   );

@@ -142,6 +142,18 @@
     box-shadow: 0 0 0 2px var(--color-accent-soft);
 }
 
+.info-icon {
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    margin-left: 4px;
+    transition: color 0.2s;
+}
+
+.info-icon:hover {
+    color: var(--color-accent);
+}
+
 /* ── TABLE ── */
 
 .perf-filters__group {

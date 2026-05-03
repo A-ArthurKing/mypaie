@@ -147,6 +147,51 @@ Toute nouvelle carte ou section doit respecter le pattern visuel harmonisé :
 
 ---
 
+# 📋 11. Compte-rendu Obligatoire de Fin d'Implémentation
+
+## Règle
+**Après chaque implémentation** (feature, section, composant, endpoint, correction), l'IA doit **toujours** terminer sa réponse par un tableau de statut couvrant les 4 couches du système.
+
+## Format obligatoire
+
+```
+## ✅ Statut de l'implémentation : [Nom de la feature]
+
+| Couche          | Fichier(s) modifié(s)              | Statut        | Notes                                      |
+|-----------------|------------------------------------|---------------|--------------------------------------------|
+| 🖥 Frontend      | Composant.jsx / Composant.css      | ✅ Complet     | Description courte de ce qui a été fait    |
+| ⚙️ Backend / API | routes/xxx.py · services/yyy.py    | ✅ Existant    | Endpoint PATCH /api/... — aucun changement |
+| 🗄 Base de données | mysql/init/00_schema.sql          | ✅ Existant    | Colonne grille_objectifs JSON suffisante   |
+| 🧠 Logique métier | services/yyy.py · tools/sql.py    | ✅ Existant    | Formule Excel reverse-engineerée et stockée|
+```
+
+## Statuts autorisés
+- `✅ Complet` — implémenté et sans erreur
+- `✅ Existant` — aucun changement requis, la couche supporte déjà le besoin
+- `⚠️ Partiel` — implémenté mais une partie reste à faire (préciser dans Notes)
+- `❌ À faire` — couche identifiée comme nécessaire mais non encore implémentée
+- `🚫 N/A` — couche non concernée par cette implémentation
+
+## Règles supplémentaires
+- Ne jamais omettre une couche, même si elle n'a pas changé (écrire `✅ Existant` + `🚫 N/A`)
+- Les `Notes` doivent être assez précises pour qu'un autre développeur sache exactement ce qui a été fait ou ce qui reste à faire, sans lire le code
+- Si une couche est `⚠️ Partiel` ou `❌ À faire`, ajouter une ligne **"Prochaine étape :"** sous le tableau
+
+## Exemple complet
+
+```
+## ✅ Statut de l'implémentation : Section B — Paliers de Performance
+
+| Couche            | Fichier(s) modifié(s)                                   | Statut       | Notes                                                                 |
+|-------------------|---------------------------------------------------------|--------------|-----------------------------------------------------------------------|
+| 🖥 Frontend        | PaliersSection.jsx · PaliersSection.css                 | ✅ Complet    | Barre visuelle + tableau éditable + locked paliers + sauvegarde PATCH |
+| ⚙️ Backend / API   | regles_primes_routes.py · dw_api_regles_provider.py     | ✅ Existant   | PATCH /api/regles/:id/grille accepte tout JSON dans grille_objectifs  |
+| 🗄 Base de données  | mysql/init/00_schema.sql                                | ✅ Existant   | Colonne grille_objectifs JSON dans matrice_primes — aucun ALTER TABLE |
+| 🧠 Logique métier   | docs/analysis/GRILLE_PRIMES_ANALYSIS.md                 | ✅ Documentée | Formule IF(atteinte < seuil, 0, pts*mult) reverse-engineerée Excel    |
+```
+
+---
+
 # ✅ Workflow obligatoire
 
 1. Planifier

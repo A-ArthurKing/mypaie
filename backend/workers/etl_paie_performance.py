@@ -57,6 +57,7 @@ MAPPING_CONFIG = {
             "temps_appel_min": "$.in_call_min_nbr",
             "csat_score": "$.total_csat_num",
             "csat_count": "$.csat_nbr",
+            "in_hold_min": "$.in_hold_min_nbr",
         },
         # Champs JSON utilisés pour reconstruire la date de référence
         "week_field": "$.woy_iso_desc_en",          # "Week 14"
@@ -86,6 +87,7 @@ CREATE TABLE IF NOT EXISTS {TABLE_PAIE_REF} (
     temps_production   FLOAT64,
     temps_appel        FLOAT64,
     taux_conversion    FLOAT64,
+    tx_mea             FLOAT64,
     csat               FLOAT64,
     nb_csat            INT64,
     source_table       STRING,
@@ -116,6 +118,7 @@ SELECT
     SUM(temps_production)           AS temps_production,
     SUM(temps_appel)                AS temps_appel,
     SAFE_DIVIDE(SUM(nb_ventes), NULLIF(SUM(nb_appels),0)) AS taux_conversion,
+    AVG(tx_mea)                     AS tx_mea,
     SAFE_DIVIDE(SUM(csat * nb_csat), NULLIF(SUM(nb_csat),0)) AS csat,
     SUM(nb_csat)                    AS nb_csat,
     COUNT(DISTINCT semaine_iso)     AS nb_semaines
@@ -142,6 +145,7 @@ SELECT
     SUM(temps_production) AS temps_production,
     SUM(temps_appel)      AS temps_appel,
     SAFE_DIVIDE(SUM(nb_ventes), NULLIF(SUM(nb_appels),0)) AS taux_conversion,
+    AVG(tx_mea)           AS tx_mea,
     SAFE_DIVIDE(SUM(csat * nb_csat), NULLIF(SUM(nb_csat),0)) AS csat,
     SUM(nb_csat)          AS nb_csat
 FROM {TABLE_PAIE_REF}
@@ -153,6 +157,45 @@ GROUP BY matricule, projet, type_projet, annee_iso, semaine_iso, date_ref
 # les lignes d'une même semaine porteraient la même date_ref). Non pertinente.
 # #endregion
 
+def get_dynamic_kpi_mapping(client: bigquery.Client, base_fields: dict) -> dict:
+    """Récupère le mapping KPI depuis BigQuery."""
+    try:
+        query = f"SELECT source_name, standard_name FROM `{PROJECT_ID}.{DATASET_PAIE}.kpi_mapping`"
+        rows = list(client.query(query).result())
+        mapping_dict = {row["standard_name"].strip().lower(): row["source_name"].strip() for row in rows}
+        
+        # Associer les noms standards métier aux clés internes de notre base de données "paie_performance"
+        db_to_standard = {
+            "chiffre_affaire": "ca",
+            "nb_ventes": "nb ventes",
+            "nb_appels": "nb appels",
+            "temps_production_min": "temps production",
+            "temps_appel_min": "temps appel",
+            "csat_score": "score csat",
+            "csat_count": "nb csat",
+            "in_hold_min": "temps attente"
+        }
+        
+        new_fields = dict(base_fields)
+        for db_key, std_name in db_to_standard.items():
+            if std_name in mapping_dict:
+                raw_sources = mapping_dict[std_name]
+                # Si l'utilisateur a mis des virgules, on crée un COALESCE de JSON_EXTRACT
+                if "," in raw_sources:
+                    sources = [s.strip() for s in raw_sources.split(",") if s.strip()]
+                    extracts = [f"JSON_EXTRACT_SCALAR(METRICS, '$.{s}')" for s in sources]
+                    new_fields[db_key] = f"COALESCE({', '.join(extracts)})"
+                else:
+                    new_fields[db_key] = f"JSON_EXTRACT_SCALAR(METRICS, '$.{raw_sources}')"
+            else:
+                # Fallback config par défaut si pas de mapping
+                new_fields[db_key] = f"JSON_EXTRACT_SCALAR(METRICS, '{base_fields[db_key]}')"
+                
+        return new_fields
+    except Exception as e:
+        log.warning(f"Impossible de lire kpi_mapping, utilisation de la config par défaut : {e}")
+        return base_fields
+
 # #region ETL CORE
 def run_etl_pvcp(client: bigquery.Client) -> int:
     """
@@ -160,9 +203,9 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
     Retourne le nombre de lignes affectées.
     """
     cfg = MAPPING_CONFIG["PVCP_PERFORMANCE"]
-    f = cfg["fields"]
+    f = get_dynamic_kpi_mapping(client, cfg["fields"])
 
-    # Sélection du dernier snapshot — un re-import écrase intégralement les semaines
+    # Sélection du dernier snapshot
     snapshot_q = f"SELECT MAX(date_importation) AS d FROM {cfg['source_table']}"
     snapshot_date = list(client.query(snapshot_q).result())[0]["d"]
     if not snapshot_date:
@@ -170,8 +213,7 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
         return 0
     log.info(f"Snapshot source utilisé : {snapshot_date}")
 
-    # Requête de transformation : agrégation à la maille agent × opération × activité × semaine ISO
-    # Reconstruction de la date_ref depuis 'Week NN' + last_or_current_year_code
+    # Requête de transformation
     transform_sql = f"""
     WITH base AS (
         SELECT
@@ -182,7 +224,7 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
             FILE                   AS metier,
             ACTIVITE               AS activite,
             PROJET                 AS projet,
-            -- Extraction du n° de semaine ISO depuis "Week NN"
+            -- Extraction de la semaine ISO depuis "Week NN"
             SAFE_CAST(REGEXP_EXTRACT(JSON_EXTRACT_SCALAR(METRICS, '{cfg['week_field']}'), r'(\\d+)') AS INT64) AS semaine_iso,
             -- Année ISO : 'N' = année du snapshot, sinon année précédente
             CASE
@@ -190,13 +232,14 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
                     THEN EXTRACT(ISOYEAR FROM DATE(@snap))
                 ELSE EXTRACT(ISOYEAR FROM DATE(@snap)) - 1
             END AS annee_iso,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['chiffre_affaire']}') AS FLOAT64) AS chiffre_affaire,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['nb_ventes']}')       AS FLOAT64) AS nb_ventes,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['nb_appels']}')       AS FLOAT64) AS nb_appels,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['temps_production_min']}') AS FLOAT64) AS temps_production,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['temps_appel_min']}')      AS FLOAT64) AS temps_appel,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['csat_score']}') AS FLOAT64) AS csat_score,
-            SAFE_CAST(JSON_EXTRACT_SCALAR(METRICS, '{f['csat_count']}') AS FLOAT64) AS csat_count
+            SAFE_CAST({f['chiffre_affaire']} AS FLOAT64) AS chiffre_affaire,
+            SAFE_CAST({f['nb_ventes']}       AS FLOAT64) AS nb_ventes,
+            SAFE_CAST({f['nb_appels']}       AS FLOAT64) AS nb_appels,
+            SAFE_CAST({f['temps_production_min']} AS FLOAT64) AS temps_production,
+            SAFE_CAST({f['temps_appel_min']}      AS FLOAT64) AS temps_appel,
+            SAFE_CAST({f['in_hold_min']}          AS FLOAT64) AS in_hold_min,
+            SAFE_CAST({f['csat_score']} AS FLOAT64) AS csat_score,
+            SAFE_CAST({f['csat_count']} AS FLOAT64) AS csat_count
         FROM {cfg['source_table']}
         WHERE date_importation = @snap
           AND MATRICULE IS NOT NULL
@@ -220,6 +263,7 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
             CAST(SUM(nb_appels) AS INT64)  AS nb_appels,
             SUM(temps_production) AS temps_production,
             SUM(temps_appel)      AS temps_appel,
+            SAFE_DIVIDE(SUM(in_hold_min), NULLIF(SUM(temps_appel),0)) * 100 AS tx_mea,
             -- total_csat_num est déjà une somme de notes, donc on le somme directement
             SAFE_DIVIDE(SUM(csat_score), NULLIF(SUM(csat_count),0)) AS csat,
             CAST(SUM(csat_count) AS INT64) AS nb_csat
@@ -235,6 +279,7 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
         chiffre_affaire, nb_ventes, nb_appels,
         temps_production, temps_appel,
         SAFE_DIVIDE(nb_ventes, NULLIF(nb_appels,0)) AS taux_conversion,
+        tx_mea,
         csat, nb_csat,
         '{cfg['source_table'].strip("`")}' AS source_table,
         TIMESTAMP(@snap) AS snapshot_date,
@@ -264,6 +309,7 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
         temps_production = S.temps_production,
         temps_appel      = S.temps_appel,
         taux_conversion  = S.taux_conversion,
+        tx_mea           = S.tx_mea,
         csat             = S.csat,
         nb_csat          = S.nb_csat,
         source_table     = S.source_table,
@@ -273,13 +319,13 @@ def run_etl_pvcp(client: bigquery.Client) -> int:
         matricule, agent_nom, nomsirh, operation, metier, activite, projet, type_projet,
         annee_iso, semaine_iso, date_ref, mois,
         chiffre_affaire, nb_ventes, nb_appels, temps_production, temps_appel,
-        taux_conversion, csat, nb_csat,
+        taux_conversion, tx_mea, csat, nb_csat,
         source_table, snapshot_date, processed_at
     ) VALUES (
         S.matricule, S.agent_nom, S.nomsirh, S.operation, S.metier, S.activite, S.projet, S.type_projet,
         S.annee_iso, S.semaine_iso, S.date_ref, S.mois,
         S.chiffre_affaire, S.nb_ventes, S.nb_appels, S.temps_production, S.temps_appel,
-        S.taux_conversion, S.csat, S.nb_csat,
+        S.taux_conversion, S.tx_mea, S.csat, S.nb_csat,
         S.source_table, S.snapshot_date, S.processed_at
     )
     """

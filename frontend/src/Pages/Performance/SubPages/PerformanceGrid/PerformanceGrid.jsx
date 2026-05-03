@@ -4,10 +4,71 @@
  * Module  : mypaie / Pages / Performance / SubPages
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DateRangePicker from '../../../../Components/DateRangePicker/DateRangePicker'
+import KpiInfoModal from '../../../../Components/KpiInfoModal/KpiInfoModal'
 import './PerformanceGrid.css'
+
+// Dictionnaire des métadonnées pour la modale d'information
+const KPI_METADATA = {
+  conv: {
+    title: "Taux de Conversion",
+    formula: "(Nombre de ventes / Nombre d'appels) × 100",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "booking_nbr, in_call_nbr",
+    description: "Pourcentage d'appels ayant abouti à une vente."
+  },
+  mea: {
+    title: "Taux de Mise en Attente (Tx MEA)",
+    formula: "(Temps d'attente / Temps d'appel) × 100",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "in_hold_min_nbr, in_call_min_nbr",
+    description: "Ratio du temps que le client a passé en attente pendant l'appel."
+  },
+  ca: {
+    title: "Chiffre d'Affaires (CA)",
+    formula: "Somme des revenus générés",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "revenue_amt_eur",
+    description: "Total du chiffre d'affaires brut généré par les ventes."
+  },
+  csat: {
+    title: "Score CSAT",
+    formula: "Moyenne pondérée des scores de satisfaction",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "total_csat_num, csat_nbr",
+    description: "Note moyenne attribuée par les clients après l'interaction."
+  },
+  dmt: {
+    title: "Durée Moyenne de Traitement (DMT)",
+    formula: "Temps total d'appel / Nombre d'appels",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "in_call_min_nbr, in_call_nbr",
+    description: "Durée moyenne en minutes passée en ligne avec les clients."
+  },
+  logged: {
+    title: "Temps Connecté (Logged)",
+    formula: "Temps total de production / 60",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "agent_logged_time_min_nbr",
+    description: "Volume horaire total pendant lequel l'agent était connecté aux outils."
+  },
+  ventes: {
+    title: "Ventes Brutes",
+    formula: "Somme des réservations/contrats",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "booking_nbr",
+    description: "Volume total de ventes ou réservations enregistrées."
+  },
+  appels: {
+    title: "Appels Traités",
+    formula: "Somme des appels décrochés",
+    sourceTable: "dataset_pvcp.pvcp_data_outils_client_performance",
+    metrics: "in_call_nbr",
+    description: "Volume total d'appels entrants ou sortants traités par l'agent."
+  }
+};
 
 function PerformanceGrid({ 
   lignes, 
@@ -23,6 +84,14 @@ function PerformanceGrid({
 }) {
   const { projetId } = useParams()
   const navigate = useNavigate()
+  
+  const [infoModalData, setInfoModalData] = useState(null);
+
+  const handleOpenInfo = (e, key) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInfoModalData(KPI_METADATA[key]);
+  };
   
   const decodedProjet = useMemo(() => projetId ? decodeURIComponent(projetId) : null, [projetId])
 
@@ -134,30 +203,53 @@ function PerformanceGrid({
               <th className="num" title="Nombre de semaines travaillées agrégées">
                 {filtres.granularity === 'total' ? 'Semaines' : 'Unit'}
               </th>
-              <th className="num" title="Nombre total d'appels traités">Appels</th>
-              <th className="num" title="Nombre de ventes réalisées (Bookings)">Ventes</th>
-              <th className="num" title="Taux de conversion (Ventes / Appels * 100)">Conv. %</th>
-              <th className="num" title="Chiffre d'Affaires généré en Euros">CA (€)</th>
-              <th className="num" title="Score moyen de satisfaction client (sur 5)">CSAT</th>
-              <th className="num" title="Durée Moyenne de Traitement par appel (en minutes)">DMT</th>
-              <th className="num" title="Temps total connecté à l'outil (en heures)">Logged (h)</th>
+              <th className="num" title="Nombre total d'appels traités">
+                Appels <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'appels')}></i>
+              </th>
+              <th className="num" title="Nombre de ventes réalisées (Bookings)">
+                Ventes <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'ventes')}></i>
+              </th>
+              <th className="num" title="Taux de conversion (Ventes / Appels * 100)">
+                Conv. % <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'conv')}></i>
+              </th>
+              <th className="num" title="Taux de mise en attente (Temps attente / Temps appel * 100)">
+                Tx MEA % <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'mea')}></i>
+              </th>
+              <th className="num" title="Chiffre d'Affaires généré en Euros">
+                CA (€) <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'ca')}></i>
+              </th>
+              <th className="num" title="Score moyen de satisfaction client (sur 5)">
+                CSAT <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'csat')}></i>
+              </th>
+              <th className="num" title="Durée Moyenne de Traitement par appel (en minutes)">
+                DMT <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'dmt')}></i>
+              </th>
+              <th className="num" title="Temps total connecté à l'outil (en heures)">
+                Logged (h) <i className="fa-solid fa-circle-exclamation info-icon" onClick={(e) => handleOpenInfo(e, 'logged')}></i>
+              </th>
             </tr>
           </thead>
           <tbody>
             {lignesProjet.map((l, idx) => {
-              const calls = Number(l.in_call_nbr) || 0
-              const bookings = Number(l.booking_nbr) || 0
+              const calls = Number(l.in_call_nbr || l.nb_appels) || 0
+              const bookings = Number(l.booking_nbr || l.nb_ventes) || 0
               const ca = Number(l.chiffre_affaire) || 0
               const csat = l.metrics_full?.csat_moyen ?? l.csat_moyen
               
               // Utilisation du taux calculé par le backend si dispo
-              const convBackend = l.metrics_full?.taux_conversion_calc ?? l.taux_conversion_calc
+              // Dans les vues mensuelles/hebdo, c'est un ratio brut (ex: 0.04), on le multiplie par 100
+              let convBackend = l.metrics_full?.taux_conversion_calc ?? l.taux_conversion_calc ?? l.taux_conversion
+              if (filtres.granularity !== 'total' && convBackend) {
+                 convBackend = convBackend * 100
+              }
               const conv = convBackend !== null && convBackend !== undefined 
                 ? Number(convBackend).toFixed(1) 
                 : (calls > 0 ? ((bookings / calls) * 100).toFixed(1) : '0.0')
                 
-              const dmt = calls > 0 ? (Number(l.call_min || 0) / calls).toFixed(2) : '0.00'
-              const loggedH = (Number(l.logged_min || 0) / 60).toFixed(1)
+              const txMea = l.tx_mea !== null && l.tx_mea !== undefined ? Number(l.tx_mea).toFixed(1) : '0.0'
+                
+              const dmt = calls > 0 ? (Number(l.call_min || l.temps_appel || 0) / calls).toFixed(2) : '0.00'
+              const loggedH = (Number(l.logged_min || l.temps_production || 0) / 60).toFixed(1)
 
               // Date d'affichage pour les vues détaillées
               const periodeStr = filtres.granularity === 'month' ? l.mois : (filtres.granularity === 'week' ? `Sem. ${idx+1}` : null) 
@@ -187,6 +279,7 @@ function PerformanceGrid({
                       {conv}%
                     </span>
                   </td>
+                  <td className="num">{txMea}%</td>
                   <td className="num font-bold">{ca > 0 ? ca.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : '—'}</td>
                   <td className="num">{csat !== null && csat !== undefined ? Number(csat).toFixed(1) : '—'}</td>
                   <td className="num">{dmt}m</td>
@@ -228,6 +321,12 @@ function PerformanceGrid({
         </div>
       )}
 
+      {/* Modale d'information sur les KPIs */}
+      <KpiInfoModal 
+        isOpen={!!infoModalData} 
+        onClose={() => setInfoModalData(null)} 
+        data={infoModalData} 
+      />
     </div>
   )
 }

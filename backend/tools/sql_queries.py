@@ -124,6 +124,7 @@ def query_performance_detail(table_ref, where_str):
             MAX(r.date_ref) as date_ajout,
             SUM(r.chiffre_affaire) as chiffre_affaire,
             SAFE_DIVIDE(SUM(r.nb_ventes), NULLIF(SUM(r.nb_appels), 0)) * 100 as taux_conversion_calc,
+            AVG(r.tx_mea) as tx_mea,
             SAFE_DIVIDE(SUM(r.csat * r.nb_csat), NULLIF(SUM(r.nb_csat), 0)) as csat_moyen
         FROM raw_data r
         LEFT JOIN {mapping_ref} m ON UPPER(TRIM(r.projet)) = UPPER(TRIM(m.source_name))
