@@ -126,6 +126,117 @@ def delete_kpi_mapping(source_name: str):
         logger.error("Erreur BigQuery lors de la suppression du mapping KPI: %s", err)
         raise
 
+# --- MAPPING PROJETS DYNAMIQUE (MYSQL) ---
+
+def get_mysql_project_mappings() -> list:
+    """Récupère tous les mappings de projets depuis MySQL."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT m.*, p.nom as standard_nom 
+                FROM ref_projets_mapping m
+                LEFT JOIN ref_projets p ON m.id_projet = p.id
+                ORDER BY m.source_name
+            """
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            for r in rows:
+                if r.get("created_at"): r["created_at"] = str(r["created_at"])
+                if r.get("updated_at"): r["updated_at"] = str(r["updated_at"])
+            return rows
+    finally:
+        connection.close()
+
+def add_mysql_project_mapping(source_name: str, id_projet: int, description: str = None):
+    """Ajoute ou met à jour un mapping de projet dans MySQL."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                INSERT INTO ref_projets_mapping (source_name, id_projet, description)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    id_projet = VALUES(id_projet),
+                    description = VALUES(description)
+            """
+            cursor.execute(sql, (source_name, id_projet, description))
+            connection.commit()
+            return {"status": "success", "id": cursor.lastrowid}
+    finally:
+        connection.close()
+
+def delete_mysql_project_mapping(mapping_id: int):
+    """Supprime un mapping projet de MySQL."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM ref_projets_mapping WHERE id = %s", (mapping_id,))
+            connection.commit()
+            return {"status": "deleted"}
+    finally:
+        connection.close()
+
+# --- MAPPING KPIS DYNAMIQUE (MYSQL) ---
+
+def get_mysql_kpi_mappings() -> list:
+    """Récupère tous les mappings de KPIs depuis MySQL."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT m.*, k.libelle as standard_libelle, p.nom as projet_nom
+                FROM matrice_kpis_mapping m
+                LEFT JOIN matrice_kpis k ON m.standard_kpi_code = k.code
+                LEFT JOIN ref_projets p ON m.id_projet = p.id
+                ORDER BY m.univers, m.source_table
+            """
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            for r in rows:
+                if r.get("created_at"): r["created_at"] = str(r["created_at"])
+                if r.get("updated_at"): r["updated_at"] = str(r["updated_at"])
+            return rows
+    finally:
+        connection.close()
+
+def add_mysql_kpi_mapping(univers: str, source_table: str, source_column: str, standard_kpi_code: str, id_projet: int = None, description: str = None, is_formula: bool = False, formula: str = None):
+    """Ajoute ou met à jour un mapping de KPI dans MySQL."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                INSERT INTO matrice_kpis_mapping (univers, source_table, source_column, is_formula, formula, standard_kpi_code, id_projet, description)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    standard_kpi_code = VALUES(standard_kpi_code),
+                    is_formula = VALUES(is_formula),
+                    formula = VALUES(formula),
+                    description = VALUES(description)
+            """
+            cursor.execute(sql, (univers, source_table, source_column, 1 if is_formula else 0, formula, standard_kpi_code, id_projet, description))
+            connection.commit()
+            return {"status": "success", "id": cursor.lastrowid}
+    finally:
+        connection.close()
+
+def delete_mysql_kpi_mapping(mapping_id: int):
+    """Supprime un mapping KPI de MySQL."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM matrice_kpis_mapping WHERE id = %s", (mapping_id,))
+            connection.commit()
+            return {"status": "deleted"}
+    finally:
+        connection.close()
+
 def add_mapping(source_name: str, standard_name: str):
     """Ajoute ou met à jour un mapping de projet."""
     ensure_mapping_table_exists()
@@ -146,7 +257,6 @@ def add_mapping(source_name: str, standard_name: str):
     )
     
     try:
-        # Exécution de plusieurs requêtes nécessite d'autoriser le multi-statement, ce que BigQuery fait par défaut pour les requêtes standard.
         client.query(query, job_config=job_config).result()
         return {"source_name": source_name, "standard_name": standard_name, "status": "success"}
     except GoogleCloudError as err:

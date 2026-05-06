@@ -131,3 +131,62 @@ def get_performance_pvcp(
     except Exception as e:
         logger.error("Erreur Inattendue Performance : %s", e)
         raise e
+
+
+def get_perf_totaux_par_matricule(
+    date_debut: Optional[str],
+    date_fin: Optional[str],
+    matricules: list,
+) -> dict:
+    """
+    Retourne la DMT (en secondes) et le CVR Naturelle (%) agrégés par matricule.
+    DMT = SAFE_DIVIDE(SUM(temps_appel_min), SUM(nb_appels)) * 60
+    CVR = SAFE_DIVIDE(SUM(nb_ventes), SUM(nb_appels)) * 100
+    Résultat : { matricule_str: { "dmt": X, "cvr": Y }, ... }
+    """
+    if not matricules:
+        return {}
+
+    client = get_bigquery_client()
+    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.{BQ_TABLE_PAIE_PERF}`"
+
+    mat_literals = ", ".join(f"'{m}'" for m in matricules)
+    where_clauses = [f"matricule IN ({mat_literals})", "nb_appels > 0"]
+    query_params = []
+
+    if date_debut:
+        where_clauses.append("date_ref >= @date_debut")
+        query_params.append(bigquery.ScalarQueryParameter("date_debut", "DATE", date_debut))
+    if date_fin:
+        where_clauses.append("date_ref <= @date_fin")
+        query_params.append(bigquery.ScalarQueryParameter("date_fin", "DATE", date_fin))
+
+    where_str = "WHERE " + " AND ".join(where_clauses)
+    sql = f"""
+        SELECT
+            matricule,
+            SAFE_DIVIDE(SUM(temps_appel), SUM(nb_appels)) * 60              AS dmt_sec,
+            SAFE_DIVIDE(SUM(nb_ventes),   SUM(nb_appels)) * 100             AS cvr_pct,
+            AVG(tx_mea)                                                     AS tx_mea_avg,
+            AVG(chiffre_affaire)                                            AS avg_ca
+        FROM {table_ref}
+        {where_str}
+        GROUP BY matricule
+    """
+
+    try:
+        job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+        rows = list(client.query(sql, job_config=job_config).result())
+        result = {}
+        for r in rows:
+            mat = str(r["matricule"])
+            result[mat] = {
+                "dmt": round(r["dmt_sec"], 1) if r["dmt_sec"] is not None else None,
+                "cvr": round(r["cvr_pct"], 2) if r["cvr_pct"] is not None else None,
+                "tx_mea": round(r["tx_mea_avg"], 2) if r["tx_mea_avg"] is not None else None,
+                "avg_ca": round(r["avg_ca"], 2) if r["avg_ca"] is not None else None,
+            }
+        return result
+    except GoogleCloudError as e:
+        logger.error("Erreur BigQuery perf totaux par matricule : %s", e)
+        raise

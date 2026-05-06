@@ -10,6 +10,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+from tools.socket_io import socketio
 from routes.heures_agents.heures_agents_routes import heures_agents_bp
 from routes.notes_qualite.notes_qualite_routes import notes_qualite_bp
 from routes.performance.performance_routes import performance_bp
@@ -31,6 +32,9 @@ app = Flask(__name__)
 
 cors_origin = os.getenv("CORS_ORIGIN", "http://localhost:5569")
 CORS(app, resources={r"/api/*": {"origins": cors_origin}})
+
+# Initialisation de SocketIO avec l'application
+socketio.init_app(app, cors_allowed_origins=cors_origin)
 
 FLASK_PORT = int(os.getenv("FLASK_PORT", 5000))
 

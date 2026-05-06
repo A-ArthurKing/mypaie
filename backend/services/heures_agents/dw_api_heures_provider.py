@@ -196,6 +196,10 @@ def get_totaux_par_matricule(
     where_sql = "WHERE " + " AND ".join(where_clauses)
     sql = (
         f"SELECT matricule, "
+        f"  SEC_TO_TIME(SUM(TIME_TO_SEC(heure_hp))) AS total_hp, "
+        f"  SEC_TO_TIME(SUM(TIME_TO_SEC(heure_ht))) AS total_ht, "
+        f"  SEC_TO_TIME(SUM(TIME_TO_SEC(heure_hf))) AS total_hf, "
+        f"  SEC_TO_TIME(SUM(TIME_TO_SEC(heure_hc))) AS total_hc, "
         f"  SEC_TO_TIME(SUM(TIME_TO_SEC(heure_total))) AS total_heure "
         f"FROM {_TABLE} {where_sql} "
         f"GROUP BY matricule"
@@ -211,7 +215,13 @@ def get_totaux_par_matricule(
         result = {}
         for row in rows:
             mat = str(row["matricule"])
-            result[mat] = _time_str_to_ms(row["total_heure"])
+            result[mat] = {
+                "hp":    _time_str_to_ms(row["total_hp"]),
+                "ht":    _time_str_to_ms(row["total_ht"]),
+                "hf":    _time_str_to_ms(row["total_hf"]),
+                "hc":    _time_str_to_ms(row["total_hc"]),
+                "total": _time_str_to_ms(row["total_heure"]),
+            }
         return result
     except Exception as err:
         logger.error("Erreur MySQL lors du calcul des totaux par matricule: %s", err)

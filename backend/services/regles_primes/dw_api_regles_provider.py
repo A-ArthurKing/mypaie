@@ -23,11 +23,15 @@ def get_regle_by_id(regle_id: int) -> dict | None:
         connection = get_mysql_connection()
         with connection.cursor() as cursor:
             sql = """
-                SELECT id, code, libelle, projet, id_structure, sirh_filtre, periodicite, description,
-                       periode_debut, periode_fin, actif, created_at, updated_at,
-                       grille_objectifs
-                FROM matrice_primes
-                WHERE id = %s
+                SELECT 
+                    mp.id, mp.code, mp.libelle, mp.id_structure, mp.sirh_filtre, mp.periodicite, mp.description,
+                    mp.periode_debut, mp.periode_fin, mp.actif, mp.created_at, mp.updated_at,
+                    mp.grille_objectifs,
+                    rp.nom AS libelle_projet
+                FROM matrice_primes mp
+                LEFT JOIN ref_structure_map rsm ON rsm.id = mp.id_structure
+                LEFT JOIN ref_projets       rp  ON rp.id  = rsm.id_projet
+                WHERE mp.id = %s
             """
             cursor.execute(sql, (regle_id,))
             row = cursor.fetchone()
@@ -41,10 +45,22 @@ def get_regle_by_id(regle_id: int) -> dict | None:
                 except json.JSONDecodeError:
                     logger.warning("Erreur décodage JSON pour grille_objectifs de la règle %s", regle_id)
 
+            # 3. Récupérer la config active si elle existe
+            sql_config = "SELECT content FROM matrice_primes_configs WHERE matrice_id = %s AND est_active = 1 LIMIT 1"
+            cursor.execute(sql_config, (regle_id,))
+            config_row = cursor.fetchone()
+            if config_row:
+                config_content = json.loads(config_row["content"]) if isinstance(config_row["content"], str) else config_row["content"]
+                # Fusionner la config active dans grille_objectifs
+                if not grille_objectifs:
+                    grille_objectifs = {}
+                grille_objectifs.update(config_content)
+
             return {
                 "id": row["id"],
                 "code": row["code"],
                 "nom": row["libelle"],
+                "projet": row.get("libelle_projet"),
                 "id_structure": row.get("id_structure"),
                 "sirh_filtre": row.get("sirh_filtre"),
                 "periodicite": row["periodicite"],

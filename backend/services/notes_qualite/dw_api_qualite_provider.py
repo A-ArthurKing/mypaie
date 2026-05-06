@@ -160,44 +160,74 @@ def get_qualite_totaux_par_matricule(
     date_debut: Optional[str],
     date_fin: Optional[str],
     matricules: list,
+    nom_matricule_map: Optional[dict] = None,
 ) -> dict:
     """
-    Récupère la moyenne des scores qualité agrégée par matricule depuis la table paie_qualite.
-    Résultat : { matricule_str: avg_score, ... }
+    Récupère la moyenne des scores qualité agrégée par matricule depuis paie_qualite.
+
+    Priorité :
+      1. Matching par matricule (colonne non NULL en base).
+      2. Fallback par nom d'agent normalisé (LOWER(TRIM(agent))) quand
+         matricule IS NULL — nécessite le mapping optionnel { nom_norm: matricule }.
+
+    Retourne { matricule_str: moyenne_float, ... }
     """
-    if not matricules:
+    nom_matricule_map = nom_matricule_map or {}
+
+    if not matricules and not nom_matricule_map:
         return {}
 
+    from google.cloud import bigquery as bq
     client = get_bigquery_client()
-    # On utilise la nouvelle table consolidée pour la paie
     table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
-    where_clauses = ["matricule IN UNNEST(@matricules)"]
-    query_params = [
-        bigquery.ArrayQueryParameter("matricules", "STRING", [str(m) for m in matricules])
-    ]
+    # ─── Construction du prédicat d'identité (matricule OU nom d'agent) ─────
+    identity_parts = []
+    query_params   = []
+
+    if matricules:
+        identity_parts.append("(matricule IS NOT NULL AND matricule IN UNNEST(@matricules))")
+        query_params.append(bq.ArrayQueryParameter("matricules", "STRING", [str(m) for m in matricules]))
+
+    if nom_matricule_map:
+        agent_names = list(nom_matricule_map.keys())
+        identity_parts.append("(matricule IS NULL AND LOWER(TRIM(agent)) IN UNNEST(@agent_names))")
+        query_params.append(bq.ArrayQueryParameter("agent_names", "STRING", agent_names))
+
+    identity_clause = "(" + " OR ".join(identity_parts) + ")"
+    where_clauses = [identity_clause]
 
     if date_debut:
         where_clauses.append("date_evaluation >= @date_debut")
-        query_params.append(bigquery.ScalarQueryParameter("date_debut", "DATE", date_debut))
+        query_params.append(bq.ScalarQueryParameter("date_debut", "DATE", date_debut))
     if date_fin:
         where_clauses.append("date_evaluation <= @date_fin")
-        query_params.append(bigquery.ScalarQueryParameter("date_fin", "DATE", date_fin))
+        query_params.append(bq.ScalarQueryParameter("date_fin", "DATE", date_fin))
 
-    where_str = "WHERE " + " AND ".join(where_clauses)
-    query = f"""
-        SELECT matricule, ROUND(AVG(score_global), 2) as avg_score
+    sql = f"""
+        SELECT agent, matricule, ROUND(AVG(score_global), 2) AS moyenne
         FROM {table_ref}
-        {where_str}
-        GROUP BY matricule
+        WHERE {" AND ".join(where_clauses)}
+        GROUP BY agent, matricule
     """
 
     try:
-        job = client.query(query, job_config=bigquery.QueryJobConfig(query_parameters=query_params))
-        rows = job.result()
-        return {str(row["matricule"]): row["avg_score"] for row in rows}
-    except Exception as err:
-        logger.error("Erreur BigQuery lors du calcul des totaux qualite par matricule: %s", err)
+        job_config = bq.QueryJobConfig(query_parameters=query_params)
+        rows = [dict(r) for r in client.query(sql, job_config=job_config).result()]
+
+        result = {}
+        for r in rows:
+            mat = r.get("matricule")
+            if not mat:
+                # Fallback via le nom normalisé fourni par le frontend
+                nom_norm = (r.get("agent") or "").strip().lower()
+                mat = nom_matricule_map.get(nom_norm)
+            if mat:
+                result[str(mat)] = r["moyenne"]
+
+        return result
+    except GoogleCloudError as err:
+        logger.error("Erreur BigQuery totaux qualité par matricule: %s", err)
         raise
 
 def get_qualite_stats_global(
@@ -261,51 +291,8 @@ def get_qualite_stats_global(
         raise
 
 
-def get_qualite_totaux_par_matricule(
-    date_debut: Optional[str],
-    date_fin: Optional[str],
-    matricules: list,
-) -> dict:
-    """
-    Retourne la moyenne des scores qualité agrégée par matricule.
-    Utilise la table gcp_my_paie.paie_qualite pré-calculée.
-    Résultat : { matricule_str: moyenne_float, ... }
-    """
-    if not matricules:
-        return {}
-
-    from google.cloud import bigquery as bq
-    client = get_bigquery_client()
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.{BQ_TABLE_PAIE_QUALITE}`"
-
-    query_params = [
-        bq.ArrayQueryParameter("matricules", "STRING", matricules)
-    ]
-    where_clauses = ["matricule IN UNNEST(@matricules)"]
-
-    if date_debut:
-        where_clauses.append("date_evaluation >= @date_debut")
-        query_params.append(bq.ScalarQueryParameter("date_debut", "DATE", date_debut))
-    if date_fin:
-        where_clauses.append("date_evaluation <= @date_fin")
-        query_params.append(bq.ScalarQueryParameter("date_fin", "DATE", date_fin))
-
-    where_str = "WHERE " + " AND ".join(where_clauses)
-    sql = f"""
-        SELECT matricule, ROUND(AVG(score_global), 2) as moyenne
-        FROM {table_ref}
-        {where_str}
-        GROUP BY matricule
-    """
-
-    try:
-        job_config = bq.QueryJobConfig(query_parameters=query_params)
-        job = client.query(sql, job_config=job_config)
-        rows = [dict(row) for row in job.result()]
-        return {str(r["matricule"]): r["moyenne"] for r in rows}
-    except GoogleCloudError as err:
-        logger.error("Erreur BigQuery totaux qualité par matricule: %s", err)
-        raise
+# Alias — la fonction ci-dessus (définie plus haut) est la version canonique.
+# Cette redéfinition est supprimée pour éviter le shadowing.
 
 
 # #endregion

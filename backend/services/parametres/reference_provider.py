@@ -33,6 +33,17 @@ def get_all_references():
 
             cur.execute("SELECT id, id_projet, id_operation, id_file, id_activite FROM ref_structure_map")
             structure = cur.fetchall()
+
+            cur.execute("SELECT id, code, libelle, unite, univers, tech_key, source_db FROM matrice_kpis WHERE actif = 1 ORDER BY libelle")
+            kpis_raw = cur.fetchall()
+            
+            # Groupement des KPIs par univers
+            kpis_grouped = {}
+            for k in kpis_raw:
+                u = k['univers']
+                if u not in kpis_grouped:
+                    kpis_grouped[u] = []
+                kpis_grouped[u].append(k)
             
             return {
                 "projets": projets,
@@ -40,7 +51,8 @@ def get_all_references():
                 "files": files,
                 "activites": acts,
                 "statuts": statuts,
-                "structure": structure
+                "structure": structure,
+                "kpis": kpis_grouped
             }
     finally:
         conn.close()

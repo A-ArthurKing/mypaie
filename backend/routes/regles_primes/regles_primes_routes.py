@@ -45,7 +45,9 @@ def endpoint_post_regle_config(regle_id):
 @regles_primes_bp.route("/api/regles/<int:regle_id>/configs/<int:config_id>/activate", methods=["POST"])
 def endpoint_activate_config(regle_id, config_id):
     try:
-        return jsonify(set_active_config(regle_id, config_id)), 200
+        res = set_active_config(regle_id, config_id)
+        emit_update("regle_configs_updated", {"regle_id": regle_id})
+        return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -55,14 +57,18 @@ def endpoint_update_grilles_order(regle_id):
         from services.regles_primes.dw_api_regles_provider import update_grilles_order
         data = request.json
         orders = data.get("orders", [])
-        return jsonify(update_grilles_order(regle_id, orders)), 200
+        res = update_grilles_order(regle_id, orders)
+        emit_update("regle_configs_updated", {"regle_id": regle_id})
+        return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @regles_primes_bp.route("/api/regles/<int:regle_id>/grilles/<grille_uuid>", methods=["DELETE"])
 def endpoint_delete_grille(regle_id, grille_uuid):
     try:
-        return jsonify(delete_grille(regle_id, grille_uuid)), 200
+        res = delete_grille(regle_id, grille_uuid)
+        emit_update("regle_configs_updated", {"regle_id": regle_id})
+        return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -106,6 +112,7 @@ def endpoint_update_regle_grille(regle_id):
             return jsonify({"error": "Le champ grille_objectifs est requis."}), 400
         
         result = update_regle_grille(regle_id, data["grille_objectifs"])
+        emit_update("regle_updated", {"regle_id": regle_id})
         return jsonify(result), 200
     except Exception as err:
         logger.error("Erreur endpoint PATCH /api/regles/%s/grille : %s", regle_id, err)
@@ -121,6 +128,7 @@ def endpoint_update_regle(regle_id):
         if not data:
             return jsonify({"error": "Aucune donnée fournie."}), 400
         result = update_regle(regle_id, data)
+        emit_update("regle_updated", {"regle_id": regle_id})
         return jsonify(result), 200
     except Exception as err:
         logger.error("Erreur endpoint PUT /api/regles/%s : %s", regle_id, err)
@@ -134,6 +142,7 @@ def endpoint_delete_regle(regle_id):
     """
     try:
         result = delete_regle(regle_id)
+        emit_update("regle_deleted", {"regle_id": regle_id})
         return jsonify(result), 200
     except Exception as err:
         logger.error("Erreur endpoint DELETE /api/regles/%s : %s", regle_id, err)
@@ -150,6 +159,7 @@ def endpoint_create_regle():
         if not data:
             return jsonify({"error": "Aucune donnée fournie."}), 400
         result = create_regle(data)
+        emit_update("regle_created")
         return jsonify(result), 201
     except Exception as err:
         logger.error("Erreur endpoint POST /api/regles : %s", err)

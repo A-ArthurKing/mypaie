@@ -55,18 +55,32 @@ def endpoint_qualite():
 def endpoint_qualite_totaux():
     """
     Retourne la moyenne des notes qualité agrégée par matricule.
-    Paramètres query : date_debut, date_fin, matricules (CSV)
+    Paramètres query :
+      - date_debut, date_fin
+      - matricules  : CSV de matricules
+      - agents_map  : JSON optionnel { nom_normalise: matricule } pour fallback
+                      quand matricule IS NULL dans paie_qualite
     """
+    import json as _json
     date_debut = request.args.get("date_debut")
     date_fin   = request.args.get("date_fin")
     matricules_raw = request.args.get("matricules", "")
     matricules = [m.strip() for m in matricules_raw.split(",") if m.strip()]
 
-    if not matricules:
+    # Mapping optionnel nom_agent_normalisé → matricule (fallback si matricule IS NULL en BQ)
+    nom_matricule_map = {}
+    agents_map_raw = request.args.get("agents_map", "")
+    if agents_map_raw:
+        try:
+            nom_matricule_map = _json.loads(agents_map_raw)
+        except (ValueError, TypeError):
+            logger.warning("agents_map JSON invalide — fallback par nom désactivé.")
+
+    if not matricules and not nom_matricule_map:
         return jsonify({"error": "Le paramètre 'matricules' est requis."}), 400
 
     try:
-        result = get_qualite_totaux_par_matricule(date_debut, date_fin, matricules)
+        result = get_qualite_totaux_par_matricule(date_debut, date_fin, matricules, nom_matricule_map)
         return jsonify({"data": result}), 200
     except Exception as err:
         logger.error("Erreur endpoint /api/qualite/totaux : %s", err)

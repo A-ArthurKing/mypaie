@@ -78,9 +78,9 @@ def endpoint_projets():
 @heures_agents_bp.route("/api/heures/totaux", methods=["GET"])
 def endpoint_totaux():
     """
-    Retourne le total des heures (heure_total) agrégé par matricule.
+    Retourne le détail des heures (hp, ht, hf, hc, total) agrégé par matricule.
     Paramètres query : date_debut, date_fin, matricules (CSV : '10773,11056,9410')
-    Réponse : { "data": { "10773": 612000000, "11056": 432000000, ... } }
+    Réponse : { "data": { "10773": { "hp": 100, "ht": 200, ... }, ... } }
     """
     date_debut  = request.args.get("date_debut")
     date_fin    = request.args.get("date_fin")
