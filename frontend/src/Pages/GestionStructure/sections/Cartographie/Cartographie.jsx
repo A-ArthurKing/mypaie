@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import './StructureExplorer.css';
+import './Cartographie.css';
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal';
 import { useToast } from '../../../../Shared/Contexts/ToastContext';
 

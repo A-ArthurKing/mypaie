@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './GestionStructure.css';
 import { useSocket } from '../../Shared/Contexts/SocketContext';
 import HeaderSection from './sections/HeaderSection/HeaderSection';
-import StructureExplorer from './sections/StructureExplorer/StructureExplorer';
-import LibraryTab from './tabs/LibraryTab/LibraryTab';
-import MappingProjets from '../Parametres/Onglets/MappingProjets/MappingProjets';
+import Cartographie from './sections/Cartographie/Cartographie';
+import Referentiels from './tabs/Referentiels/Referentiels';
+import MappingProjets from './tabs/MappingProjets/MappingProjets';
 
 export default function GestionStructure() {
   const [refs, setRefs] = useState({ projets: [], operations: [], files: [], activites: [], structure: [] });
@@ -70,9 +70,9 @@ export default function GestionStructure() {
             Chargement de la structure...
           </div>
         ) : activeTab === 'cartographie' ? (
-          <StructureExplorer refs={refs} onRefresh={fetchRefs} />
+          <Cartographie refs={refs} onRefresh={fetchRefs} />
         ) : activeTab === 'referentiels' ? (
-          <LibraryTab refs={refs} onRefresh={fetchRefs} />
+          <Referentiels refs={refs} onRefresh={fetchRefs} />
         ) : (
           <MappingProjets />
         )}
