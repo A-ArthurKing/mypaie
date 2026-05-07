@@ -1,3 +1,11 @@
+/*
+ * Fichier : MappingKpis.jsx
+ * Rôle    : Onglet de mapping des indicateurs KPI — lie les colonnes BigQuery
+ *           aux KPIs standards de la plateforme.
+ * Dépend  : HeaderSection, MappingFormSection, MappingTableSection,
+ *           QuickAddKpiModal, SocketContext, ToastContext
+ * Module  : mypaie / Pages / Parametres / Onglets / MappingKpis
+ */
 import { useState, useEffect } from 'react'
 import { useToast } from '../../../../Shared/Contexts/ToastContext'
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal'

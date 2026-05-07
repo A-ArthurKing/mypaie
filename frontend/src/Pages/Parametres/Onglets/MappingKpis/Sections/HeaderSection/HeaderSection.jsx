@@ -1,3 +1,10 @@
+/*
+ * Fichier : HeaderSection.jsx
+ * Rôle    : Bandeau d'en-tête visuel de l'onglet Mapping KPIs
+ *           (icône, titre, description).
+ * Dépend  : MappingKpis.css (classes mk-header)
+ * Module  : mypaie / Pages / Parametres / Onglets / MappingKpis
+ */
 import React from 'react';
 
 export default function HeaderSection() {

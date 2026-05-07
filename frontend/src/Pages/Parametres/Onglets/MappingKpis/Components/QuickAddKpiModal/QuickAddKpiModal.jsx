@@ -1,3 +1,10 @@
+/*
+ * Fichier : QuickAddKpiModal.jsx
+ * Rôle    : Modal rapide de création d'un KPI standard (code, libellé, unité)
+ *           directement depuis le formulaire de mapping.
+ * Dépend  : QuickAddKpiModal.css, /api/parametres/kpis
+ * Module  : mypaie / Pages / Parametres / Onglets / MappingKpis
+ */
 import React, { useState } from 'react';
 import './QuickAddKpiModal.css';
 

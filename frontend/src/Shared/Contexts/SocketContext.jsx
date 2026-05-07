@@ -1,3 +1,10 @@
+/*
+ * Fichier : SocketContext.jsx
+ * Rôle    : Contexte React pour la connexion Socket.IO partagée.
+ *           Fournit le socket à toute l'application via useSocket().
+ * Dépend  : socket.io-client, /backend (port 5001)
+ * Module  : mypaie / Shared / Contexts
+ */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 

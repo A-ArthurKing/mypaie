@@ -1,3 +1,10 @@
+/*
+ * Fichier : MappingFormSection.jsx
+ * Rôle    : Formulaire de création et d'édition d'un mapping projet
+ *           (source BigQuery → projet / file / activité standard).
+ * Dépend  : Props injectées par MappingProjets.jsx
+ * Module  : mypaie / Pages / GestionStructure / tabs / MappingProjets
+ */
 export default function MappingFormSection({ 
   tables, columns, uniqueValues, projects, files, activities,
   sourceTable, setSourceTable, 

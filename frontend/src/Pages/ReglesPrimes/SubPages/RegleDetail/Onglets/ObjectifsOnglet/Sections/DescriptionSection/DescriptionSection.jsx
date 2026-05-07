@@ -1,3 +1,10 @@
+/*
+ * Fichier : DescriptionSection.jsx
+ * Rôle    : Affiche la description textuelle d'une règle de prime
+ *           dans l'onglet Objectifs (masqué si vide).
+ * Dépend  : DescriptionSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
+ */
 import React from 'react';
 import './DescriptionSection.css';
 

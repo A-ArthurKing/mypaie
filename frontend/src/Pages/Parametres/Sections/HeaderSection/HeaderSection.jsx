@@ -1,3 +1,9 @@
+/*
+ * Fichier : HeaderSection.jsx
+ * Rôle    : Bandeau d'en-tête de la page Paramètres (titre + sous-titre).
+ * Dépend  : HeaderSection.css
+ * Module  : mypaie / Pages / Parametres / Sections
+ */
 import React from 'react';
 import './HeaderSection.css';
 

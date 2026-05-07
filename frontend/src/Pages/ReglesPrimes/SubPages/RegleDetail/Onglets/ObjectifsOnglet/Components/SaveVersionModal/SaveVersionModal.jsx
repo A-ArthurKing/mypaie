@@ -1,3 +1,10 @@
+/*
+ * Fichier : SaveVersionModal.jsx
+ * Rôle    : Modal de sauvegarde d'une version de configuration d'objectifs
+ *           avec libellé personnalisé et pré-remplissage dynamique.
+ * Dépend  : SaveVersionModal.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
+ */
 import React, { useState, useEffect } from 'react';
 import './SaveVersionModal.css';
 

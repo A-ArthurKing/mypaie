@@ -1,3 +1,10 @@
+/*
+ * Fichier : ConfirmationModal.jsx
+ * Rôle    : Modal de confirmation générique réutilisable (danger ou warning)
+ *           avec texte de bouton personnalisable.
+ * Dépend  : ConfirmationModal.css
+ * Module  : mypaie / Components
+ */
 import React from 'react';
 import './ConfirmationModal.css';
 

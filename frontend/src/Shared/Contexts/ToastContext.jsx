@@ -1,3 +1,10 @@
+/*
+ * Fichier : ToastContext.jsx
+ * Rôle    : Contexte React pour l'affichage de toasts depuis n'importe quel
+ *           composant via useToast() — gestion de la file et de l'expiration.
+ * Dépend  : ToastContainer
+ * Module  : mypaie / Shared / Contexts
+ */
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import ToastContainer from '../Components/Toast/ToastContainer';
 

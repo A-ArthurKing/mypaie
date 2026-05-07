@@ -1,3 +1,10 @@
+/*
+ * Fichier : EditAgentModal.jsx
+ * Rôle    : Modal d'édition d'un agent existant — modifie le niveau,
+ *           le projet et la BU associés à l'agent.
+ * Dépend  : EditAgentModal.css, /api/agents/:id
+ * Module  : mypaie / Pages / GestionAgents / components
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import './EditAgentModal.css';
 

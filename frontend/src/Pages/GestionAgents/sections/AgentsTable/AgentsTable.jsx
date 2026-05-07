@@ -1,3 +1,10 @@
+/*
+ * Fichier : AgentsTable.jsx
+ * Rôle    : Tableau des agents avec normalisation pour la recherche accent-insensible,
+ *           actions d'édition et de suppression par ligne.
+ * Dépend  : AgentsTable.css
+ * Module  : mypaie / Pages / GestionAgents / sections
+ */
 import React from 'react';
 import './AgentsTable.css';
 

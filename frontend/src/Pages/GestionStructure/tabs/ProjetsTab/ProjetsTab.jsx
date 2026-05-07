@@ -1,3 +1,10 @@
+/*
+ * Fichier : ProjetsTab.jsx
+ * Rôle    : Onglet CRUD des projets et BUs (composant historique,
+ *           fonctionnellement superposé par Referentiels.jsx).
+ * Dépend  : ConfirmationModal, ToastContext
+ * Module  : mypaie / Pages / GestionStructure / tabs
+ */
 import React, { useState } from 'react';
 import './ProjetsTab.css';
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal';

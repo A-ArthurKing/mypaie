@@ -1,3 +1,10 @@
+/*
+ * Fichier : KpiGridSection.jsx
+ * Rôle    : Grille des KPIs configurés pour la règle — affiche la périodicité,
+ *           la pondération et les seuils de chaque indicateur.
+ * Dépend  : KpiGridSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
+ */
 import React from 'react';
 import './KpiGridSection.css';
 

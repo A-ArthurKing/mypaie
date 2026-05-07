@@ -1,3 +1,10 @@
+/*
+ * Fichier : ToolbarSection.jsx
+ * Rôle    : Barre de recherche et filtre par statut de l'onglet Agents
+ *           d'une règle de prime.
+ * Dépend  : ToolbarSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / AgentsOnglet
+ */
 import React from 'react';
 import './ToolbarSection.css';
 

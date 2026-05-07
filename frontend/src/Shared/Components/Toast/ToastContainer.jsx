@@ -1,3 +1,10 @@
+/*
+ * Fichier : ToastContainer.jsx
+ * Rôle    : Conteneur de notifications toast — affiche les messages
+ *           succès / erreur / warning / info avec icônes et auto-disparition.
+ * Dépend  : Toast.css
+ * Module  : mypaie / Shared / Components
+ */
 import React from 'react';
 import './Toast.css';
 

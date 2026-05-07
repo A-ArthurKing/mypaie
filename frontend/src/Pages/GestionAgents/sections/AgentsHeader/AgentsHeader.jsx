@@ -1,3 +1,10 @@
+/*
+ * Fichier : AgentsHeader.jsx
+ * Rôle    : En-tête de la page Gestion des Agents — affiche le titre,
+ *           le sous-titre et le compteur d'agents filtrés.
+ * Dépend  : AgentsHeader.css
+ * Module  : mypaie / Pages / GestionAgents / sections
+ */
 import React from 'react';
 import './AgentsHeader.css';
 

@@ -1,3 +1,10 @@
+/*
+ * Fichier : ToolbarSection.jsx
+ * Rôle    : Barre de recherche par KPI de l'onglet Variables
+ *           pour filtrer les critères de calcul affichés.
+ * Dépend  : ToolbarSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / VariablesOnglet
+ */
 import React from 'react';
 import './ToolbarSection.css';
 

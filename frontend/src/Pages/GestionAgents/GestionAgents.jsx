@@ -1,3 +1,11 @@
+/*
+ * Fichier : GestionAgents.jsx
+ * Rôle    : Page de gestion des agents — liste, recherche, filtres, CRUD
+ *           avec assignation des niveaux et de la structure projet.
+ * Dépend  : AgentsHeader, AgentsToolbar, AgentsTable, AddAgentModal, EditAgentModal,
+ *           ConfirmationModal, SocketContext, ToastContext
+ * Module  : mypaie / Pages / GestionAgents
+ */
 import React, { useState, useEffect } from 'react';
 import './GestionAgents.css';
 import AgentsHeader      from './sections/AgentsHeader/AgentsHeader';

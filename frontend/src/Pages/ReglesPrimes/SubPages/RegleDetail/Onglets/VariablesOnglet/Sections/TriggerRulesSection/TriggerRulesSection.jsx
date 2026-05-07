@@ -1,3 +1,10 @@
+/*
+ * Fichier : TriggerRulesSection.jsx
+ * Rôle    : Configuration des déclencheurs de perte de prime
+ *           (ex. réclamation client → totalité de la prime perdue).
+ * Dépend  : TriggerRulesSection.css, /api/regles/:id/triggers
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / VariablesOnglet
+ */
 import React, { useState, useEffect } from 'react';
 import './TriggerRulesSection.css';
 

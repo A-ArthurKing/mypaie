@@ -1,3 +1,10 @@
+/*
+ * Fichier : MappingProjets.jsx
+ * Rôle    : Onglet « Mapping des projets » — lie les noms bruts de projets BigQuery
+ *           aux projets, files et activités standards de la plateforme.
+ * Dépend  : HeaderSection, MappingFormSection, MappingTableSection, SocketContext, ToastContext
+ * Module  : mypaie / Pages / GestionStructure / tabs
+ */
 import { useState, useEffect } from 'react'
 import { useToast } from '../../../../Shared/Contexts/ToastContext'
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal'

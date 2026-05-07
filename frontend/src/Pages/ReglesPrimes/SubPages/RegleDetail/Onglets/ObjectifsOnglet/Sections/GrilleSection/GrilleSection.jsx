@@ -1,3 +1,10 @@
+/*
+ * Fichier : GrilleSection.jsx
+ * Rôle    : Affiche la grille de notation croisant catégories et statuts
+ *           pour visualiser les seuils d'attribution de la prime.
+ * Dépend  : GrilleSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
+ */
 import React from 'react';
 import './GrilleSection.css';
 

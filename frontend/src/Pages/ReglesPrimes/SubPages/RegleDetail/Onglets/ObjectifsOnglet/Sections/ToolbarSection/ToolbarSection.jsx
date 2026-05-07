@@ -1,7 +1,12 @@
+/*
+ * Fichier : ToolbarSection.jsx
+ * Rôle    : Barre d'outils de l'onglet Objectifs — navigation entre les
+ *           configurations de grille, actions d'activation, édition et suppression.
+ * Dépend  : ToolbarSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
+ */
 import React from 'react';
 import './ToolbarSection.css';
-
-export default function ToolbarSection({ title, configs, activeConfigId, onSelectConfig, onActivateConfig, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
   const activeConfig = configs.find(c => c.id === activeConfigId);
 
   return (

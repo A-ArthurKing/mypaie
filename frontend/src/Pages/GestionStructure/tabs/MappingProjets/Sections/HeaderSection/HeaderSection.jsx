@@ -1,8 +1,13 @@
+/*
+ * Fichier : HeaderSection.jsx
+ * Rôle    : Bandeau d'en-tête visuel de l'onglet Mapping des projets
+ *           (icône, titre, description).
+ * Dépend  : MappingProjets.css (classes mp-header)
+ * Module  : mypaie / Pages / GestionStructure / tabs / MappingProjets
+ */
 import React from 'react';
 
 export default function HeaderSection() {
-  return (
-    <div className="mp-header">
       <div className="mp-header__content">
         <div className="mp-header__icon">
           <i className="fa-solid fa-code-merge"></i>

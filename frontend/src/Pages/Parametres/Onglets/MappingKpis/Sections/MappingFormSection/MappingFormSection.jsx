@@ -1,3 +1,10 @@
+/*
+ * Fichier : MappingFormSection.jsx
+ * Rôle    : Formulaire de création et d'édition d'un mapping KPI
+ *           (colonne source BigQuery → KPI standard).
+ * Dépend  : Props injectées par MappingKpis.jsx
+ * Module  : mypaie / Pages / Parametres / Onglets / MappingKpis
+ */
 import React, { useState, useEffect } from 'react';
 
 export default function MappingFormSection({ 

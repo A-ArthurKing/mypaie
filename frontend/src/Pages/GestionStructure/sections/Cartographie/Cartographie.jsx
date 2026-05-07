@@ -1,3 +1,10 @@
+/*
+ * Fichier : Cartographie.jsx
+ * Rôle    : Onglet « Cartographie des projets » — vue arborescente interactive
+ *           Projet → BU → File → Activité, avec BUs pliables et CRUD en ligne.
+ * Dépend  : ConfirmationModal, ToastContext, /api/parametres/structure
+ * Module  : mypaie / Pages / GestionStructure / sections
+ */
 import React, { useState, useMemo } from 'react';
 import './Cartographie.css';
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal';

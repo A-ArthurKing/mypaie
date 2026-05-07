@@ -1,3 +1,10 @@
+/*
+ * Fichier : MappingTableSection.jsx
+ * Rôle    : Tableau listant les règles de mapping KPI existantes
+ *           avec actions d'édition et de suppression.
+ * Dépend  : Props injectées par MappingKpis.jsx
+ * Module  : mypaie / Pages / Parametres / Onglets / MappingKpis
+ */
 import React from 'react';
 
 export default function MappingTableSection({ 

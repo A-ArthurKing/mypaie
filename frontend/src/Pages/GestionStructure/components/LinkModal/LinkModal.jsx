@@ -1,3 +1,10 @@
+/*
+ * Fichier : LinkModal.jsx
+ * Rôle    : Modal générique de sélection pour lier un élément (File ou Activité)
+ *           à une BU dans la vue Cartographie.
+ * Dépend  : LinkModal.css
+ * Module  : mypaie / Pages / GestionStructure / components
+ */
 import React, { useState } from 'react';
 import './LinkModal.css';
 

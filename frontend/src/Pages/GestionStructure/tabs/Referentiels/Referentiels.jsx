@@ -1,3 +1,10 @@
+/*
+ * Fichier : Referentiels.jsx
+ * Rôle    : Onglet « Référentiels » — tableau hiérarchique Projet → BU → File → Activité
+ *           avec panneau d'ajout CRUD pour chaque niveau.
+ * Dépend  : ConfirmationModal, ToastContext, /api/parametres/structure
+ * Module  : mypaie / Pages / GestionStructure / tabs
+ */
 import React, { useState, useMemo } from 'react';
 import './Referentiels.css';
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal';

@@ -1,3 +1,10 @@
+/*
+ * Fichier : WeightingSection.jsx
+ * Rôle    : Configuration des pondérations des indicateurs d'une règle
+ *           (poids relatif et type bonus/malus par KPI).
+ * Dépend  : WeightingSection.css, /api/regles/:id/weighting
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / VariablesOnglet
+ */
 import React, { useState, useEffect } from 'react';
 import './WeightingSection.css';
 

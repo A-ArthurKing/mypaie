@@ -1,3 +1,10 @@
+/*
+ * Fichier : KpiInfoModal.jsx
+ * Rôle    : Modal d'affichage des détails et formules d'un KPI
+ *           (supporte un seul objet ou une liste de formules).
+ * Dépend  : KpiInfoModal.css
+ * Module  : mypaie / Components
+ */
 import React from 'react';
 import './KpiInfoModal.css';
 

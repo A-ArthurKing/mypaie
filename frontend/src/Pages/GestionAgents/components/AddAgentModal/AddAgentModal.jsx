@@ -1,3 +1,10 @@
+/*
+ * Fichier : AddAgentModal.jsx
+ * Rôle    : Modal de création d'un nouvel agent avec saisie du matricule,
+ *           nom, prénom et assignation à un projet / BU / file.
+ * Dépend  : AddAgentModal.css, /api/agents, /api/parametres/references
+ * Module  : mypaie / Pages / GestionAgents / components
+ */
 import React, { useState, useRef } from 'react';
 import './AddAgentModal.css';
 

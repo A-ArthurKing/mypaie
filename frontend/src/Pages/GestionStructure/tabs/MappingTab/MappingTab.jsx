@@ -1,3 +1,10 @@
+/*
+ * Fichier : MappingTab.jsx
+ * Rôle    : Onglet de liaison manuelle Projet → BU → File → Activité
+ *           dans la table ref_structure_map.
+ * Dépend  : ConfirmationModal, ToastContext, /api/parametres/structure
+ * Module  : mypaie / Pages / GestionStructure / tabs
+ */
 import React, { useState } from 'react';
 import './MappingTab.css';
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal';

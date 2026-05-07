@@ -1,3 +1,10 @@
+/*
+ * Fichier : GrilleEditorModal.jsx
+ * Rôle    : Modal d'édition d'une grille de notation — configuration des paliers,
+ *           couleurs et seuils de déclenchement via Socket.IO.
+ * Dépend  : SocketContext, GrilleEditorModal.css, PaliersSection.css
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
+ */
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../../../../../../../Shared/Contexts/SocketContext';
 import './GrilleEditorModal.css';

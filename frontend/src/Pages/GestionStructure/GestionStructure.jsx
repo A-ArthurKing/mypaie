@@ -1,3 +1,10 @@
+/*
+ * Fichier : GestionStructure.jsx
+ * Rôle    : Page principale de gestion de la structure organisationnelle.
+ *           Orchestre les 3 onglets : Cartographie, Référentiels et Mapping des projets.
+ * Dépend  : SocketContext, sections/Cartographie, tabs/Referentiels, tabs/MappingProjets
+ * Module  : mypaie / Pages / GestionStructure
+ */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './GestionStructure.css';
 import { useSocket } from '../../Shared/Contexts/SocketContext';

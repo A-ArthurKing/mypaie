@@ -1,3 +1,10 @@
+/*
+ * Fichier : AgentsToolbar.jsx
+ * Rôle    : Barre de filtres de la liste des agents — filtre par projet,
+ *           BU, niveau et recherche textuelle libre.
+ * Dépend  : AgentsToolbar.css
+ * Module  : mypaie / Pages / GestionAgents / sections
+ */
 import React from 'react';
 import './AgentsToolbar.css';
 

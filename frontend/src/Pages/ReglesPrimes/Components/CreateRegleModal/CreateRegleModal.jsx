@@ -1,5 +1,11 @@
+/*
+ * Fichier : CreateRegleModal.jsx
+ * Rôle    : Modal de création, duplication et édition d'une règle de primes
+ *           avec sélection de la structure, de la périodicité et du statut.
+ * Dépend  : SocketContext, ToastContext, CreateRegleModal.css
+ * Module  : mypaie / Pages / ReglesPrimes / Components
+ */
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSocket } from '../../../../Shared/Contexts/SocketContext';
 import { useToast } from '../../../../Shared/Contexts/ToastContext';
 import './CreateRegleModal.css';
 

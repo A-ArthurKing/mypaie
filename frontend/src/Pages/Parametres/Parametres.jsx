@@ -1,3 +1,10 @@
+/*
+ * Fichier : Parametres.jsx
+ * Rôle    : Page Paramètres — achémine vers les onglets de configuration
+ *           (Mapping Indicateurs KPIs).
+ * Dépend  : HeaderSection, TabsSection, MappingKpis
+ * Module  : mypaie / Pages / Parametres
+ */
 import { Routes, Route, Navigate } from 'react-router-dom'
 import HeaderSection from './Sections/HeaderSection/HeaderSection'
 import TabsSection from './Sections/TabsSection/TabsSection'

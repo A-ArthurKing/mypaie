@@ -1,3 +1,10 @@
+/*
+ * Fichier : main.jsx
+ * Rôle    : Point d'entrée React — monte l'arbre de composants dans le DOM
+ *           et enveloppe l'app des providers globaux (Socket, Toast).
+ * Dépend  : App, SocketProvider, ToastProvider
+ * Module  : mypaie / root
+ */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './root.css'

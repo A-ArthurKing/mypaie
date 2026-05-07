@@ -1,3 +1,10 @@
+/*
+ * Fichier : MappingTableSection.jsx
+ * Rôle    : Tableau listant les règles de mapping projets existantes
+ *           avec actions d'édition et de suppression.
+ * Dépend  : Props injectées par MappingProjets.jsx
+ * Module  : mypaie / Pages / GestionStructure / tabs / MappingProjets
+ */
 import React from 'react';
 
 export default function MappingTableSection({ 

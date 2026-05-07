@@ -1,3 +1,10 @@
+/*
+ * Fichier : HeaderSection.jsx
+ * Rôle    : Bandeau descriptif en haut de la page Gestion de la Structure
+ *           (icône, titre, sous-titre).
+ * Dépend  : GestionStructure.css (classes gs-header)
+ * Module  : mypaie / Pages / GestionStructure / sections
+ */
 import React from 'react';
 
 export default function HeaderSection() {

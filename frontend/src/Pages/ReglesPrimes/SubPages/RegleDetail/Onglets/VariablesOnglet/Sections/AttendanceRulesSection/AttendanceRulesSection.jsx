@@ -1,3 +1,10 @@
+/*
+ * Fichier : AttendanceRulesSection.jsx
+ * Rôle    : Configuration des règles d'absence impactant la prime
+ *           (seuils d'absences et de retards pour perte partielle ou totale).
+ * Dépend  : AttendanceRulesSection.css, /api/regles/:id/attendance
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / VariablesOnglet
+ */
 import React, { useState, useEffect } from 'react';
 import './AttendanceRulesSection.css';
 
