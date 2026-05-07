@@ -6,12 +6,6 @@ export default function TabsSection() {
   return (
     <nav className="parametres-tabs">
       <NavLink 
-        to="/parametres/mapping-projets" 
-        className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
-      >
-        <i className="fa-solid fa-code-merge" /> Mapping Projets
-      </NavLink>
-      <NavLink 
         to="/parametres/mapping-kpis" 
         className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
       >

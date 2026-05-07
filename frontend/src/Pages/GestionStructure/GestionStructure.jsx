@@ -4,6 +4,7 @@ import { useSocket } from '../../Shared/Contexts/SocketContext';
 import HeaderSection from './sections/HeaderSection/HeaderSection';
 import StructureExplorer from './sections/StructureExplorer/StructureExplorer';
 import LibraryTab from './tabs/LibraryTab/LibraryTab';
+import MappingProjets from '../Parametres/Onglets/MappingProjets/MappingProjets';
 
 export default function GestionStructure() {
   const [refs, setRefs] = useState({ projets: [], operations: [], files: [], activites: [], structure: [] });
@@ -53,6 +54,13 @@ export default function GestionStructure() {
           <i className="fa-solid fa-book-bookmark"></i>
           Référentiels
         </button>
+        <button
+          className={`gs-tab-btn ${activeTab === 'mapping' ? 'gs-tab-btn--active' : ''}`}
+          onClick={() => setActiveTab('mapping')}
+        >
+          <i className="fa-solid fa-code-merge"></i>
+          Mapping des projets
+        </button>
       </nav>
 
       <div className="gs-content">
@@ -63,8 +71,10 @@ export default function GestionStructure() {
           </div>
         ) : activeTab === 'cartographie' ? (
           <StructureExplorer refs={refs} onRefresh={fetchRefs} />
-        ) : (
+        ) : activeTab === 'referentiels' ? (
           <LibraryTab refs={refs} onRefresh={fetchRefs} />
+        ) : (
+          <MappingProjets />
         )}
       </div>
     </div>

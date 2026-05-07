@@ -168,6 +168,7 @@
     background: linear-gradient(90deg, #1e293b, #334155);
     color: white;
     user-select: none;
+    -webkit-user-select: none;
 }
 
 .se-bu-chevron {

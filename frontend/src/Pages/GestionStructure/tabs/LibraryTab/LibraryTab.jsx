@@ -13,10 +13,6 @@ export default function LibraryTab({ refs, onRefresh }) {
   const [newFile, setNewFile] = useState('');
   const [newActivity, setNewActivity] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [newOperation, setNewOperation] = useState({ libelle: '', id_projet: '' });
-  const [newFile, setNewFile] = useState('');
-  const [newActivity, setNewActivity] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const handlePost = async (path, body, successMsg) => {
     try {
