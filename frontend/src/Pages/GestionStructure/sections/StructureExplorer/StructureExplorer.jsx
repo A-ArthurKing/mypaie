@@ -13,6 +13,15 @@ export default function StructureExplorer({ refs, onRefresh }) {
   const [addingBu, setAddingBu] = useState(false);
   const [linkFileForBu, setLinkFileForBu] = useState({});
   const [linkActForKey, setLinkActForKey] = useState({});
+  const [collapsedBus, setCollapsedBus] = useState(new Set());
+
+  const toggleBuCollapse = (buId) => {
+    setCollapsedBus(prev => {
+      const next = new Set(prev);
+      if (next.has(buId)) next.delete(buId); else next.add(buId);
+      return next;
+    });
+  };
 
   const selectedProject = projets.find(p => p.id === selectedProjectId);
 
@@ -236,14 +245,15 @@ export default function StructureExplorer({ refs, onRefresh }) {
                   <div key={bu.id} className="se-bu-card">
 
                     {/* BU Header */}
-                    <div className="se-bu-header">
+                    <div className="se-bu-header" onClick={() => toggleBuCollapse(bu.id)} style={{ cursor: 'pointer' }}>
                       <div className="se-bu-title">
+                        <i className={`fa-solid fa-chevron-${collapsedBus.has(bu.id) ? 'right' : 'down'} se-bu-chevron`}></i>
                         <i className="fa-solid fa-building"></i>
                         <strong>{bu.libelle}</strong>
                       </div>
                       <button
                         className="se-icon-btn danger-white"
-                        onClick={() => setDeleteTarget({ type: 'operations', id: bu.id, label: 'la BU', name: bu.libelle })}
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: 'operations', id: bu.id, label: 'la BU', name: bu.libelle }); }}
                         title="Supprimer cette BU"
                       >
                         <i className="fa-solid fa-trash-can"></i>
@@ -251,6 +261,7 @@ export default function StructureExplorer({ refs, onRefresh }) {
                     </div>
 
                     {/* Files linked to this BU */}
+                    {!collapsedBus.has(bu.id) && (
                     <div className="se-files-area">
                       {buFiles.length === 0 && (
                         <div className="se-empty-inline">Aucun file lié à cette BU</div>
@@ -348,6 +359,7 @@ export default function StructureExplorer({ refs, onRefresh }) {
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 );
               })}

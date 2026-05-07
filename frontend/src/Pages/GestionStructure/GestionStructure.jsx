@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './GestionStructure.css';
 import { useSocket } from '../../Shared/Contexts/SocketContext';
 import HeaderSection from './sections/HeaderSection/HeaderSection';
@@ -10,9 +10,10 @@ export default function GestionStructure() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('cartographie');
   const socket = useSocket();
+  const isFirstLoad = useRef(true);
 
   const fetchRefs = useCallback(async () => {
-    setLoading(true);
+    if (isFirstLoad.current) setLoading(true);
     try {
       const res = await fetch('/api/parametres/references');
       const data = await res.json();
@@ -21,6 +22,7 @@ export default function GestionStructure() {
       console.error('Erreur chargement structure', e);
     } finally {
       setLoading(false);
+      isFirstLoad.current = false;
     }
   }, []);
 

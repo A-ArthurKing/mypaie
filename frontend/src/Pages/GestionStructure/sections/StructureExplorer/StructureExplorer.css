@@ -167,6 +167,13 @@
     padding: 11px 14px;
     background: linear-gradient(90deg, #1e293b, #334155);
     color: white;
+    user-select: none;
+}
+
+.se-bu-chevron {
+    font-size: 0.72rem !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: transform 0.15s;
 }
 
 .se-bu-title {
