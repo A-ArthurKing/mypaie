@@ -5,10 +5,11 @@
  * Dépend  : SocketContext, GrilleEditorModal.css, PaliersSection.css
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSocket } from '../../../../../../../../Shared/Contexts/SocketContext';
+import KpiInfoModal from '../../../../../../../../Components/KpiInfoModal/KpiInfoModal';
 import './GrilleEditorModal.css';
-import '../../../VariablesOnglet/Sections/PaliersSection/PaliersSection.css';
+import '../../../CadrePresenceOnglet/Sections/PaliersSection/PaliersSection.css';
 
 // Palette partagée avec PaliersSection
 const COULEURS_DISPONIBLES = ['#f87171', '#fb923c', '#f59e0b', '#a3e635', '#38bdf8', '#818cf8', '#22c55e'];
@@ -24,6 +25,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
   const [activeStep, setActiveStep] = useState(1); // 1: Statuts, 2: Indicateurs, 3: Valeurs, 4: Paliers
   const [newCatName, setNewCatName] = useState('');
   const [kpiRefs, setKpiRefs] = useState({});
+  const [kpiInfoModal, setKpiInfoModal] = useState({ isOpen: false, data: null });
   const socket = useSocket();
   const [data, setData] = useState({
     categories: [],
@@ -87,6 +89,46 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
       }
     }
   }, [initialData, isOpen]);
+
+  // Somme des poids Bonus/Malus pour anticiper le dépassement de 100 pts
+  const totalPoidsBonus = useMemo(() =>
+    data.indicateurs
+      .filter(i => !i.type_ponderation || i.type_ponderation === 'bonus' || i.type_ponderation === 'malus')
+      .reduce((sum, i) => sum + (parseFloat(i.poids) || 0), 0),
+    [data.indicateurs]
+  );
+
+  /** Retrouve le KPI ref depuis tech_key dans kpiRefs (tous univers) */
+  const getKpiRef = (techKey) => {
+    for (const group of Object.values(kpiRefs)) {
+      const found = group.find(k => k.tech_key === techKey);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  /** Extrait les noms de colonnes depuis une formule SQL (ex: table.col → col) */
+  const getFormulaMetrics = (formula) => {
+    if (!formula) return '';
+    const cols = formula.match(/\w+\.([\w]+)/g);
+    if (cols) return [...new Set(cols.map(c => c.split('.')[1]))].join(', ');
+    return formula;
+  };
+
+  /** Ouvre KpiInfoModal pour un KPI formule */
+  const openFormulaModal = (kpiRef) => {
+    if (!kpiRef?.formula) return;
+    setKpiInfoModal({
+      isOpen: true,
+      data: {
+        title: kpiRef.libelle || kpiRef.tech_key,
+        formula: kpiRef.formula,
+        sourceTable: kpiRef.source_db || 'BigQuery (Perf)',
+        metrics: getFormulaMetrics(kpiRef.formula),
+        description: kpiRef.description || undefined,
+      },
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -420,6 +462,32 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
 
               <div className="gem-indicators-mgmt">
                 <h4 className="gem-mgmt-title">2. Rattacher les indicateurs aux catégories</h4>
+
+                {/* Compteur de points Bonus/Malus en temps réel */}
+                <div className={`gem-weight-counter${totalPoidsBonus > 100 ? ' gem-weight-counter--over' : totalPoidsBonus >= 90 ? ' gem-weight-counter--near' : totalPoidsBonus === 100 ? ' gem-weight-counter--perfect' : ''}`}>
+                  <div className="gem-weight-counter__info">
+                    <span className="gem-weight-counter__icon">
+                      {totalPoidsBonus > 100
+                        ? <i className="fa-solid fa-triangle-exclamation"></i>
+                        : totalPoidsBonus === 100
+                          ? <i className="fa-solid fa-circle-check"></i>
+                          : <i className="fa-solid fa-scale-balanced"></i>}
+                    </span>
+                    <span className="gem-weight-counter__text">
+                      Points Bonus / Malus&nbsp;:&nbsp;
+                      <strong>{totalPoidsBonus}</strong> / 100
+                      {totalPoidsBonus > 100 && <span className="gem-weight-counter__hint hint--over"> — Dépassement de {totalPoidsBonus - 100} pt{totalPoidsBonus - 100 > 1 ? 's' : ''} !</span>}
+                      {totalPoidsBonus === 100 && <span className="gem-weight-counter__hint hint--perfect"> — Parfait ✓</span>}
+                      {totalPoidsBonus < 100 && totalPoidsBonus > 0 && <span className="gem-weight-counter__hint"> — {100 - totalPoidsBonus} pt{100 - totalPoidsBonus > 1 ? 's' : ''} restant{100 - totalPoidsBonus > 1 ? 's' : ''}</span>}
+                    </span>
+                  </div>
+                  <div className="gem-weight-counter__bar-wrap">
+                    <div
+                      className="gem-weight-counter__fill"
+                      style={{ width: `${Math.min(totalPoidsBonus, 100)}%` }}
+                    />
+                  </div>
+                </div>
                 
                 {data.categories.length === 0 && (
                   <div className="gem-info-box">Veuillez d'abord créer au moins une catégorie ci-dessus.</div>
@@ -431,27 +499,43 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                       <i className="fa-solid fa-folder-open"></i> {cat}
                     </div>
                     <div className="gem-cat-group-content">
-                      {data.indicateurs.filter(i => i.categorie === cat).map(ind => (
+                      {data.indicateurs.filter(i => i.categorie === cat).map(ind => {
+                        const kpiRefInd = getKpiRef(ind.metric_key);
+                        const indIsFormula = kpiRefInd?.is_formula;
+                        const indFormula = kpiRefInd?.formula;
+                        return (
                         <div key={ind.id} className="gem-row">
                           <div className="gem-input-group" style={{ flex: '1 1 300px' }}>
                             <label>Source de donnée (DW) & Nom</label>
-                            <select 
-                              value={ind.metric_key || ''} 
-                              onChange={(e) => updateIndicator(ind.id, 'metric_key', e.target.value)}
-                            >
-                              <option value="">-- Choisir une métrique --</option>
-                              {Object.entries(kpiRefs).map(([univers, list]) => (
-                                <optgroup key={univers} label={univers}>
-                                  {list.map(k => (
-                                    <option key={`${univers}-${k.id || k.tech_key}`} value={k.tech_key}>
-                                      {k.mapping_count > 0 ? '🔗 ' : '⚠️ '} 
-                                      {k.libelle} 
-                                      {k.mapping_count > 0 ? '' : ' (Non lié)'}
-                                    </option>
-                                  ))}
-                                </optgroup>
-                              ))}
-                            </select>
+                            <div className="gem-select-formula-wrap">
+                              <select 
+                                value={ind.metric_key || ''} 
+                                onChange={(e) => updateIndicator(ind.id, 'metric_key', e.target.value)}
+                              >
+                                <option value="">-- Choisir une métrique --</option>
+                                {Object.entries(kpiRefs).map(([univers, list]) => (
+                                  <optgroup key={univers} label={univers}>
+                                    {list.map(k => (
+                                      <option key={`${univers}-${k.id || k.tech_key}`} value={k.tech_key}>
+                                        {k.mapping_count > 0 ? '🔗 ' : '⚠️ '} 
+                                        {k.libelle} 
+                                        {k.mapping_count > 0 ? '' : ' (Non lié)'}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                ))}
+                              </select>
+                              {indIsFormula && (
+                                <button
+                                  type="button"
+                                  className="gem-formula-btn gem-formula-btn--inline"
+                                  onClick={() => openFormulaModal(kpiRefInd)}
+                                  title="Voir la formule"
+                                >
+                                  ƒ
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           <div className="gem-input-group" style={{ flex: '0 0 150px' }}>
@@ -487,7 +571,8 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                             <i className="fa-solid fa-trash"></i>
                           </button>
                         </div>
-                      ))}
+                        );
+                      })}
                       <button className="btn gem-btn-xs gem-btn-outline-alt" onClick={() => addIndicator(cat)}>
                         + Ajouter un indicateur dans {cat}
                       </button>
@@ -530,18 +615,35 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                 <thead>
                   <tr>
                     <th>Statut</th>
-                    {data.indicateurs.map(ind => (
-                      <th key={ind.id}>
-                        <div className="gem-th-stack">
-                          <span className="gem-th-name">{ind.nom}</span>
-                          <span className={`gem-th-type tag-${ind.type_ponderation || 'bonus'}`}>
-                            {ind.type_ponderation === 'eliminatoire' ? 'BLOQUANT' : 
-                             ind.type_ponderation === 'coefficient' ? 'COEFF %' : 
-                             ind.type_ponderation === 'malus' ? 'PENALITÉ' : 'BONUS'}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
+                    {data.indicateurs.map(ind => {
+                      const kpiRef = getKpiRef(ind.metric_key);
+                      const isFormula = kpiRef?.is_formula;
+                      const formula = kpiRef?.formula;
+                      return (
+                        <th key={ind.id}>
+                          <div className="gem-th-stack">
+                            <div className="gem-th-name-row">
+                              <span className="gem-th-name">{ind.nom}</span>
+                              {isFormula && (
+                                <button
+                                  type="button"
+                                  className="gem-formula-btn"
+                                  onClick={() => openFormulaModal(kpiRef)}
+                                  title="Voir la formule"
+                                >
+                                  ƒ
+                                </button>
+                              )}
+                            </div>
+                            <span className={`gem-th-type tag-${ind.type_ponderation || 'bonus'}`}>
+                              {ind.type_ponderation === 'eliminatoire' ? 'BLOQUANT' : 
+                               ind.type_ponderation === 'coefficient' ? 'COEFF %' : 
+                               ind.type_ponderation === 'malus' ? 'PENALITÉ' : 'BONUS'}
+                            </span>
+                          </div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -839,6 +941,11 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
           )}
         </div>
       </div>
+      <KpiInfoModal
+        isOpen={kpiInfoModal.isOpen}
+        onClose={() => setKpiInfoModal({ isOpen: false, data: null })}
+        data={kpiInfoModal.data}
+      />
     </div>
   );
 }

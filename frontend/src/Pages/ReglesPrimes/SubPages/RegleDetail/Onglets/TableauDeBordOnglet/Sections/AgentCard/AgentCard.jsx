@@ -155,7 +155,22 @@ const AgentCard = ({
               return (
                 <div key={kpi.id} className="agent-card__kpi-row">
                   <span className="agent-card__kpi-dot" style={{ background: color }}></span>
-                  <span className="agent-card__kpi-name" title={kpi.nom}>{kpi.nom}</span>
+                  <span className="agent-card__kpi-name" title={kpi.nom}>
+                    {kpi.nom}
+                    {kpi.is_formula && kpi.formula && (
+                      <button
+                        type="button"
+                        className="agent-card__kpi-formula-btn"
+                        title="Voir la formule de calcul"
+                        onClick={() => handleShowFormula({
+                          title:       kpi.kpi_libelle || kpi.nom,
+                          formula:     kpi.formula,
+                          sourceTable: kpi.source_db || 'BigQuery (Perf)',
+                          metrics:     kpi.formula.match(/\.(\w+)/g)?.map(m => m.slice(1)).filter((v,i,a)=>a.indexOf(v)===i).join(', ') || kpi.metricKey,
+                        })}
+                      >ƒ</button>
+                    )}
+                  </span>
                   <span className="agent-card__kpi-reel">
                     {anyLoading ? '...' : reelStr ?? '—'}
                   </span>
@@ -182,7 +197,7 @@ const AgentCard = ({
       {/* ─── 3. Assiduité ─── */}
       <div className="agent-card__assiduite">
         <div className="agent-card__section-title">Assiduité</div>
-        
+
         <div className="agent-card__assiduite-main">
           <div className="agent-card__counts-grid">
             {[
@@ -192,26 +207,20 @@ const AgentCard = ({
               { field: 'cp_css',     label: 'CP/CSS', color: 'var(--color-success)', icon: 'fa-umbrella-beach' },
             ].map(({ field, label, color, icon }) => (
               <div key={field} className="agent-card__count-item">
-                <i className={`fa-solid ${icon}`} style={{ color: color }}></i>
-                <div className="agent-card__count-stack">
-                  <span className="label">{label}</span>
-                  <span className="val" style={{ color }}>{data[field] || 0}</span>
-                </div>
+                <i className={`fa-solid ${icon}`} style={{ color }}></i>
+                <span className="agent-card__count-label">{label}</span>
+                <span className="agent-card__count-val" style={{ color }}>{data[field] || 0}</span>
               </div>
             ))}
           </div>
 
           <div className="agent-card__jours-summary">
             <div className="agent-card__jour-stat">
-              <span className="agent-card__jour-label">
-                N.T <i className="fa-solid fa-circle-info" onClick={() => handleShowFormula('jours_non_travailles')}></i>
-              </span>
+              <span className="agent-card__jour-label">N.T <i className="fa-solid fa-circle-info" onClick={() => handleShowFormula('jours_non_travailles')}></i></span>
               <span className="agent-card__jour-val">{assiduite.jours_non_travailles}</span>
             </div>
             <div className="agent-card__jour-stat">
-              <span className="agent-card__jour-label">
-                Trav. <i className="fa-solid fa-circle-info" onClick={() => handleShowFormula('jours_travailles')}></i>
-              </span>
+              <span className="agent-card__jour-label">Trav. <i className="fa-solid fa-circle-info" onClick={() => handleShowFormula('jours_travailles')}></i></span>
               <span className="agent-card__jour-val highlight">{assiduite.jours_travailles}</span>
             </div>
             <div className="agent-card__jour-stat">

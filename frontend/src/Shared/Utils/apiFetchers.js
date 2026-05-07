@@ -95,6 +95,21 @@ export async function fetchPerformancePvcp(filtres, limit = 20, offset = 0) {
   return { data: body.data ?? [], total: body.total ?? 0 };
 }
 // #endregion
+// #region FETCHERS — RÈGLES DE PRIMES
+export async function fetchRegles() {
+  return fetchJson(`${API_BASE}/regles`);
+}
+
+export async function fetchRegle(id) {
+  return fetchJson(`${API_BASE}/regles/${id}`);
+}
+
+export async function fetchRegleConfigs(regleId) {
+  const body = await fetchJson(`${API_BASE}/regles/${regleId}/configs`);
+  return body.data ?? [];
+}
+// #endregion
+
 // #region HELPERS DATE — Format ISO court (YYYY-MM-DD)
 export function formatDateOnly(d) {
   if (!d) return "";

@@ -133,16 +133,82 @@ def get_performance_pvcp(
         raise e
 
 
+# ─── Moteur de formules dynamiques ──────────────────────────────────────────
+
+import re as _re
+
+# Seuls les caractères arithmétiques et noms de colonnes sont autorisés
+_SAFE_FORMULA_RE = _re.compile(r'^[\w\s\.\+\-\*/\(\)]+$')
+
+def _get_formula_kpi_mappings() -> list:
+    """
+    Charge depuis MySQL les KPIs basés sur une formule (is_formula=1).
+    Retourne une liste de dicts {formula, tech_key}.
+    """
+    try:
+        import pymysql
+        from config.db_mysql_connector import get_mysql_connection
+        conn = get_mysql_connection()
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("""
+                SELECT m.formula, k.tech_key
+                FROM matrice_kpis_mapping m
+                JOIN matrice_kpis k ON k.code = m.standard_kpi_code
+                WHERE m.is_formula = 1
+                  AND m.formula IS NOT NULL
+                  AND m.formula != ''
+                  AND k.actif = 1
+                  AND k.tech_key IS NOT NULL
+                GROUP BY k.tech_key
+            """)
+            return cur.fetchall()
+    except Exception as e:
+        logger.warning("Impossible de charger les formules KPI dynamiques : %s", e)
+        return []
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def _evaluate_formula(formula: str, row_ctx: dict):
+    """
+    Évalue une formule arithmétique de façon sécurisée.
+    Les références table.colonne sont normalisées en colonne seule.
+    Ex: 'paie_performance.chiffre_affaire / paie_performance.nb_ventes'
+         → eval('chiffre_affaire / nb_ventes', ctx)
+    """
+    # Normaliser : table.colonne → colonne
+    expr = _re.sub(r'\b[a-zA-Z_]\w*\.([a-zA-Z_]\w*)\b', r'\1', formula).strip()
+    # Vérification de sécurité : aucun caractère non autorisé
+    if not _SAFE_FORMULA_RE.match(expr):
+        logger.warning("Formule rejetée (caractères non autorisés) : %s", formula)
+        return None
+    try:
+        result = eval(  # noqa: S307 – contexte restreint, formules admin uniquement
+            expr,
+            {"__builtins__": {}},
+            {k: (v if v is not None else 0) for k, v in row_ctx.items()}
+        )
+        return round(float(result), 4) if result is not None else None
+    except (ZeroDivisionError, TypeError, NameError, SyntaxError) as e:
+        logger.debug("Erreur évaluation formule '%s' : %s", formula, e)
+        return None
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 def get_perf_totaux_par_matricule(
     date_debut: Optional[str],
     date_fin: Optional[str],
     matricules: list,
 ) -> dict:
     """
-    Retourne la DMT (en secondes) et le CVR Naturelle (%) agrégés par matricule.
-    DMT = SAFE_DIVIDE(SUM(temps_appel_min), SUM(nb_appels)) * 60
-    CVR = SAFE_DIVIDE(SUM(nb_ventes), SUM(nb_appels)) * 100
-    Résultat : { matricule_str: { "dmt": X, "cvr": Y }, ... }
+    Retourne les métriques de performance agrégées par matricule.
+    Inclut les métriques hardcodées (DMT, CVR…) ET toutes les formules
+    dynamiques définies dans matrice_kpis_mapping (is_formula=1).
+    Résultat : { matricule_str: { "dmt": X, "cvr": Y, "avg_nbr": Z, … } }
     """
     if not matricules:
         return {}
@@ -165,14 +231,29 @@ def get_perf_totaux_par_matricule(
     sql = f"""
         SELECT
             matricule,
+            -- Métriques calculées standard
             SAFE_DIVIDE(SUM(temps_appel), SUM(nb_appels)) * 60              AS dmt_sec,
             SAFE_DIVIDE(SUM(nb_ventes),   SUM(nb_appels)) * 100             AS cvr_pct,
             AVG(tx_mea)                                                     AS tx_mea_avg,
-            AVG(chiffre_affaire)                                            AS avg_ca
+            AVG(chiffre_affaire)                                            AS avg_ca,
+            SAFE_DIVIDE(SUM(csat * nb_csat), NULLIF(SUM(nb_csat), 0))      AS csat_moyen,
+            SAFE_DIVIDE(SUM(chiffre_affaire), NULLIF(SUM(nb_ventes), 0))   AS avg_nbr,
+            -- Agrégats bruts exposés au moteur de formules
+            SUM(nb_ventes)                                                  AS nb_ventes_total,
+            SUM(nb_appels)                                                  AS nb_appels_total,
+            SUM(nb_csat)                                                    AS nb_csat_total,
+            SUM(chiffre_affaire)                                            AS sum_chiffre_affaire,
+            SUM(temps_production)                                           AS sum_temps_production,
+            SUM(temps_appel)                                                AS sum_temps_appel,
+            SUM(csat)                                                       AS sum_csat,
+            AVG(taux_conversion)                                            AS avg_taux_conversion
         FROM {table_ref}
         {where_str}
         GROUP BY matricule
     """
+
+    # Charger les formules dynamiques depuis MySQL (une seule fois par appel)
+    formula_mappings = _get_formula_kpi_mappings()
 
     try:
         job_config = bigquery.QueryJobConfig(query_parameters=query_params)
@@ -180,12 +261,41 @@ def get_perf_totaux_par_matricule(
         result = {}
         for r in rows:
             mat = str(r["matricule"])
-            result[mat] = {
-                "dmt": round(r["dmt_sec"], 1) if r["dmt_sec"] is not None else None,
-                "cvr": round(r["cvr_pct"], 2) if r["cvr_pct"] is not None else None,
-                "tx_mea": round(r["tx_mea_avg"], 2) if r["tx_mea_avg"] is not None else None,
-                "avg_ca": round(r["avg_ca"], 2) if r["avg_ca"] is not None else None,
+
+            # Métriques hardcodées
+            entry = {
+                "dmt":       round(r["dmt_sec"], 1)       if r["dmt_sec"]    is not None else None,
+                "cvr":       round(r["cvr_pct"], 2)       if r["cvr_pct"]    is not None else None,
+                "tx_mea":    round(r["tx_mea_avg"], 2)    if r["tx_mea_avg"] is not None else None,
+                "avg_ca":    round(r["avg_ca"], 2)        if r["avg_ca"]     is not None else None,
+                "csat_moyen":round(r["csat_moyen"], 2)    if r["csat_moyen"] is not None else None,
+                "avg_nbr":   round(r["avg_nbr"], 2)       if r["avg_nbr"]    is not None else None,
+                "nb_ventes": int(r["nb_ventes_total"])    if r["nb_ventes_total"] is not None else None,
+                "nb_appels": int(r["nb_appels_total"])    if r["nb_appels_total"] is not None else None,
+                "nb_csat":   int(r["nb_csat_total"])      if r["nb_csat_total"]   is not None else None,
             }
+
+            # Contexte brut pour le moteur de formules (noms = colonnes BigQuery)
+            formula_ctx = {
+                "chiffre_affaire":  r["sum_chiffre_affaire"],
+                "nb_ventes":        r["nb_ventes_total"],
+                "nb_appels":        r["nb_appels_total"],
+                "temps_production": r["sum_temps_production"],
+                "temps_appel":      r["sum_temps_appel"],
+                "csat":             r["sum_csat"],
+                "nb_csat":          r["nb_csat_total"],
+                "tx_mea":           r["tx_mea_avg"],
+                "taux_conversion":  r["avg_taux_conversion"],
+            }
+
+            # Évaluation dynamique de chaque formule → stockée sous son tech_key
+            for fm in formula_mappings:
+                tech_key = fm.get("tech_key")
+                formula  = fm.get("formula")
+                if tech_key and formula and tech_key not in entry:
+                    entry[tech_key] = _evaluate_formula(formula, formula_ctx)
+
+            result[mat] = entry
         return result
     except GoogleCloudError as e:
         logger.error("Erreur BigQuery perf totaux par matricule : %s", e)

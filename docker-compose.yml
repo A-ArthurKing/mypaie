@@ -98,6 +98,8 @@ services:
       - ./frontend:/app
       # Empêcher d'écraser les node_modules du conteneur par ceux du host
       - /app/node_modules
+      # Empêcher que le dist/ local ne pollue le container (builds locaux)
+      - /app/dist
     ports:
       # Vite utilisera le 5569 (accessible depuis ton host sur localhost:5569)
       - "5569:5569"

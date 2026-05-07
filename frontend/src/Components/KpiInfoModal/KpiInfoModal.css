@@ -1,88 +1,136 @@
+/* =============================================
+   KpiInfoModal — Design moderne v2
+   ============================================= */
+
 .kim-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--color-overlay);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: var(--z-max);
+    animation: kimFadeIn 0.18s ease;
+}
+
+@keyframes kimFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .kim-content {
     background: var(--color-surface);
-    border-radius: var(--radius-lg, 16px);
-    width: 90%;
-    max-width: 500px;
-    box-shadow: var(--shadow-lg);
+    border-radius: 16px;
+    width: 92%;
+    max-width: 520px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
     overflow: hidden;
     border: 1px solid var(--color-border-subtle);
+    animation: kimSlideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+
+
+@keyframes kimSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Header ─────────────────────────────────── */
 .kim-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    background-color: var(--color-surface-2);
+    padding: 18px 20px 16px;
+    background: var(--color-surface-2);
     border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .kim-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .kim-icon-title {
     color: var(--color-accent);
-    font-size: 1.25rem;
-    background: var(--color-accent-soft);
-    width: 36px;
-    height: 36px;
+    font-size: 1rem;
+    background: rgba(var(--color-accent-rgb, 255, 107, 0), 0.12);
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 10px;
+    border: 1px solid rgba(var(--color-accent-rgb, 255, 107, 0), 0.2);
+    flex-shrink: 0;
 }
 
 .kim-header h2 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1rem;
     color: var(--color-text-primary);
     font-weight: 700;
     letter-spacing: -0.01em;
 }
 
 .kim-btn-close {
-    background: var(--color-surface-hover);
-    border: none;
-    font-size: 1.1rem;
+    background: transparent;
+    border: 1px solid var(--color-border-subtle);
+    font-size: 0.9rem;
     color: var(--color-text-muted);
     cursor: pointer;
-    transition: all 0.2s;
-    width: 32px;
-    height: 32px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .kim-btn-close:hover {
-    background: var(--color-error-soft);
-    color: var(--color-error);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
+/* ── Body ────────────────────────────────────── */
 .kim-body {
-    padding: 24px;
+    padding: 22px 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.kim-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.kim-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kim-body::-webkit-scrollbar-thumb {
+    background: var(--color-border-subtle);
+    border-radius: 2px;
 }
 
 .kim-detail-item {
@@ -92,69 +140,148 @@
 }
 
 .kim-detail-label {
-    font-size: 0.7rem;
-    font-weight: 800;
+    font-size: 0.65rem;
+    font-weight: 700;
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     display: flex;
     align-items: center;
     gap: 8px;
+    margin: 10px 0;
 }
 
-.kim-formula-box {
-    background-color: var(--color-bg-content);
-    padding: 16px;
-    border-radius: 12px;
+.kim-detail-label i {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    font-size: 1rem;
-    color: var(--color-text-primary);
-    font-family: var(--font-mono);
-    line-height: 1.5;
-    position: relative;
+    font-size: 0.62rem;
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+/* ── Formula box ─────────────────────────────── */
+.kim-formula-box {
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 10px;
     overflow: hidden;
 }
 
-.kim-formula-box code {
-    background: transparent;
-    padding: 0;
-    color: inherit;
-    font-family: inherit;
+.kim-formula-code {
+    padding: 14px 16px;
+    font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+    font-size: 0.82rem;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--color-text-primary);
 }
 
+/* Tokens de coloration syntaxique */
+.kim-fml-table {
+    color: #3b82f6;
+}
+
+.kim-fml-dot {
+    color: var(--color-text-muted);
+    opacity: 0.5;
+}
+
+.kim-fml-col {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+.kim-fml-op {
+    color: #8b5cf6;
+    font-weight: 700;
+    padding: 0 4px;
+}
+
+.kim-fml-num {
+    color: #10b981;
+}
+
+.kim-fml-plain {
+    color: var(--color-text-primary);
+}
+
+/* ── Source badge ────────────────────────────── */
 .kim-badge-source {
     display: inline-flex;
     align-items: center;
-    background-color: var(--color-surface-2);
-    color: var(--color-text-secondary);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    border: 1px solid var(--color-border-subtle);
-    font-weight: 600;
-}
-
-.kim-metrics-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.kim-badge-metric {
-    background-color: var(--color-error-soft);
-    color: var(--color-error);
-    padding: 4px 10px;
+    gap: 6px;
+    background: rgba(124, 184, 255, 0.08);
+    color: #7cb8ff;
+    padding: 5px 12px;
     border-radius: 6px;
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    border: 1px solid var(--color-error-soft);
+    border: 1px solid rgba(124, 184, 255, 0.2);
     font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
+/* ── Metric badges ───────────────────────────── */
+.kim-metrics-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.kim-badge-metric {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(249, 168, 37, 0.08);
+    color: #f9a825;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    border: 1px solid rgba(249, 168, 37, 0.2);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.kim-badge-metric::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #f9a825;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+/* ── Description ─────────────────────────────── */
 .kim-description-text {
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    line-height: 1.65;
     color: var(--color-text-secondary);
-    padding: 0 4px;
+    padding: 10px 12px;
+    background: var(--color-surface-2);
+    border-radius: 8px;
+    border-left: 3px solid var(--color-accent);
+}
+
+/* ── Séparateur multi-formule ────────────────── */
+.kim-separator {
+    border: none;
+    border-top: 1px solid var(--color-border-subtle);
+    margin: 4px 0;
+}
+
+.kim-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 4px;
 }

@@ -7,6 +7,20 @@
  */
 import React from 'react';
 import './ToolbarSection.css';
+
+export default function ToolbarSection({
+  title,
+  configs = [],
+  activeConfigId,
+  onSelectConfig,
+  onActivateConfig,
+  onEdit,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}) {
   const activeConfig = configs.find(c => c.id === activeConfigId);
 
   return (

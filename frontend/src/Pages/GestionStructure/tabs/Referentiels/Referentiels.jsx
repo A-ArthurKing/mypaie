@@ -82,10 +82,14 @@ export default function LibraryTab({ refs, onRefresh }) {
   /* ── Build flat table rows: Projet → BU → File → Activité ── */
   const tableRows = useMemo(() => {
     const rows = [];
+    let projectIdx = 0;
+    let lastProjectId = null;
     for (const projet of projets) {
+      if (lastProjectId !== null && projet.id !== lastProjectId) projectIdx++;
+      lastProjectId = projet.id;
       const projectBus = operations.filter(op => op.id_projet === projet.id);
       if (projectBus.length === 0) {
-        rows.push({ projet, bu: null, file: null, activite: null });
+        rows.push({ projet, bu: null, file: null, activite: null, projectIdx });
         continue;
       }
       for (const bu of projectBus) {
@@ -94,7 +98,7 @@ export default function LibraryTab({ refs, onRefresh }) {
         )];
         const buFiles = files.filter(f => fileIds.includes(f.id));
         if (buFiles.length === 0) {
-          rows.push({ projet, bu, file: null, activite: null });
+          rows.push({ projet, bu, file: null, activite: null, projectIdx });
           continue;
         }
         for (const file of buFiles) {
@@ -102,12 +106,12 @@ export default function LibraryTab({ refs, onRefresh }) {
             s => s.id_operation === bu.id && s.id_file === file.id && s.id_activite
           );
           if (actMappings.length === 0) {
-            rows.push({ projet, bu, file, activite: null });
+            rows.push({ projet, bu, file, activite: null, projectIdx });
             continue;
           }
           for (const mapping of actMappings) {
             const activite = activites.find(a => a.id === mapping.id_activite) || null;
-            rows.push({ projet, bu, file, activite });
+            rows.push({ projet, bu, file, activite, projectIdx });
           }
         }
       }
@@ -225,7 +229,10 @@ export default function LibraryTab({ refs, onRefresh }) {
                 const showFile = showBu || !prev || prev.file?.id !== row.file?.id;
 
                 return (
-                  <tr key={idx} className={showProjet ? 'lt-tr-project-top' : showBu ? 'lt-tr-bu-top' : ''}>
+                  <tr key={idx} className={[
+                    row.projectIdx % 2 === 0 ? 'lt-row-even-group' : 'lt-row-odd-group',
+                    showProjet ? 'lt-row-project-start' : (showBu ? 'lt-row-bu-start' : ''),
+                  ].filter(Boolean).join(' ')}>
 
                     <td className={`lt-td ${showProjet ? 'lt-cell-top' : 'lt-cell-cont'}`}>
                       {showProjet && (

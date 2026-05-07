@@ -249,17 +249,21 @@ def add_standard_kpi(code: str, libelle: str, univers: str, unite: str = None, d
     connection = get_mysql_connection()
     try:
         with connection.cursor() as cursor:
+            clean_code = code.upper().strip()
+            # tech_key dérivé automatiquement depuis le code si non fourni
+            derived_tech_key = clean_code.lower()
             sql = """
-                INSERT INTO matrice_kpis (code, libelle, univers, unite, description)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO matrice_kpis (code, libelle, univers, unite, description, tech_key)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     libelle = VALUES(libelle),
                     unite = VALUES(unite),
-                    description = VALUES(description)
+                    description = VALUES(description),
+                    tech_key = COALESCE(tech_key, VALUES(tech_key))
             """
-            cursor.execute(sql, (code.upper().strip(), libelle, univers, unite, description))
+            cursor.execute(sql, (clean_code, libelle, univers, unite, description, derived_tech_key))
             connection.commit()
-            return {"status": "success", "code": code.upper().strip()}
+            return {"status": "success", "code": clean_code}
     finally:
         connection.close()
 

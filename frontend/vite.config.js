@@ -11,6 +11,11 @@ export default defineConfig({
   server: {
     port: 5569,
     host: true, // Écouter sur toutes les interfaces (important pour Docker)
+    watch: {
+      // Nécessaire sur Windows + Docker : les événements fs ne traversent pas le volume monté
+      usePolling: true,
+      interval: 300,
+    },
     proxy: {
       // Redirige tous les appels /api/* vers le serveur Flask Python
       // "backend" est le nom du service dans docker-compose.yml

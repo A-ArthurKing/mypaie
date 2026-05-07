@@ -5,7 +5,7 @@
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import './ObjectifsOnglet.css';
 import KpiGridSection from './Sections/KpiGridSection/KpiGridSection';
 import DescriptionSection from './Sections/DescriptionSection/DescriptionSection';
@@ -16,67 +16,62 @@ import SaveVersionModal from './Components/SaveVersionModal/SaveVersionModal';
 import ConfirmationModal from '../../../../../../Components/ConfirmationModal/ConfirmationModal';
 import { useSocket } from '../../../../../../Shared/Contexts/SocketContext';
 import { useToast } from '../../../../../../Shared/Contexts/ToastContext';
+import useApiSWR from '../../../../../../Shared/Hooks/useApiSWR';
+import { fetchRegleConfigs } from '../../../../../../Shared/Utils/apiFetchers';
+import { clearCacheKey, TTL } from '../../../../../../Shared/Utils/cacheStorage';
 
 export default function ObjectifsOnglet({ regle }) {
   const addToast = useToast();
+  const socket = useSocket();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isNewMode, setIsNewMode] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [pendingGrille, setPendingGrille] = useState(null);
-  const [pendingGrilleUuid, setPendingGrilleUuid] = useState(null); // Pour savoir si on sauvegarde une nouvelle version d'une grille existante
-  
-  const [configs, setConfigs] = useState([]);
-  const [loadingConfigs, setLoadingConfigs] = useState(true);
-  const [selectedVersions, setSelectedVersions] = useState({}); // { grilleUuid: configId }
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // { uuid, nom }
-  const socket = useSocket();
+  const [pendingGrilleUuid, setPendingGrilleUuid] = useState(null);
+  const [selectedVersions, setSelectedVersions] = useState({});
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  const fetchConfigs = async () => {
-    try {
-      const res = await fetch(`/api/regles/${regle.id}/configs`);
-      const data = await res.json();
-      const list = data.data || [];
-      setConfigs(list);
-      
-      // Initialiser les versions sélectionnées (priorité à l'active, sinon la plus récente)
-      const initialSelected = {};
-      const grillesMap = {};
-      list.forEach(c => {
-        const uuid = c.grille_uuid || 'default';
-        if (!grillesMap[uuid]) grillesMap[uuid] = [];
-        grillesMap[uuid].push(c);
-      });
+  const configsCacheKey = regle?.id ? `regle:${regle.id}:configs` : null;
 
-      Object.entries(grillesMap).forEach(([uuid, versions]) => {
-        const active = versions.find(v => v.est_active);
-        initialSelected[uuid] = active ? active.id : versions[0].id;
-      });
-      setSelectedVersions(initialSelected);
-    } catch (e) {
-      console.error("Erreur chargement configs", e);
-    } finally {
-      setLoadingConfigs(false);
-    }
+  const { data: configs = [], loading: loadingConfigs, revalidate: revalidateConfigs } = useApiSWR(
+    configsCacheKey,
+    () => fetchRegleConfigs(regle.id),
+    { ttl: TTL.HEAVY }
+  );
+
+  // Synchronise selectedVersions quand configs change
+  useMemo(() => {
+    if (!configs?.length) return;
+    const initialSelected = {};
+    const grillesMap = {};
+    configs.forEach(c => {
+      const uuid = c.grille_uuid || 'default';
+      if (!grillesMap[uuid]) grillesMap[uuid] = [];
+      grillesMap[uuid].push(c);
+    });
+    Object.entries(grillesMap).forEach(([uuid, versions]) => {
+      const active = versions.find(v => v.est_active);
+      initialSelected[uuid] = active ? active.id : versions[0].id;
+    });
+    setSelectedVersions(initialSelected);
+  }, [configs]);
+
+  // Invalidate + revalidate helper
+  const refreshConfigs = () => {
+    clearCacheKey(configsCacheKey);
+    revalidateConfigs();
   };
 
-  useEffect(() => {
-    if (regle?.id) fetchConfigs();
-  }, [regle?.id]);
-
   // Real-time updates
-  useEffect(() => {
+  useState(() => {
     if (!socket || !regle?.id) return;
-
     const handleUpdate = (data) => {
       if (data && data.regle_id && String(data.regle_id) !== String(regle.id)) return;
-      console.log('[RealTime] Mise à jour des configs de grille détectée');
-      fetchConfigs();
+      refreshConfigs();
     };
-
     socket.on('regle_configs_updated', handleUpdate);
-
-    return () => socket.off('regle_configs_updated');
-  }, [socket, regle?.id]);
+    return () => socket.off('regle_configs_updated', handleUpdate);
+  });
 
   if (!regle) return null;
 
@@ -110,7 +105,7 @@ export default function ObjectifsOnglet({ regle }) {
         setIsEditorOpen(false);
         setIsNewMode(false);
         setPendingGrilleUuid(null);
-        fetchConfigs();
+        refreshConfigs();
         addToast('Grille enregistrée avec succès', 'success');
       }
     } catch (e) {
@@ -123,7 +118,7 @@ export default function ObjectifsOnglet({ regle }) {
       const res = await fetch(`/api/regles/${regle.id}/configs/${configId}/activate`, {
         method: 'POST'
       });
-      if (res.ok) fetchConfigs();
+      if (res.ok) refreshConfigs();
     } catch (e) {
       addToast("Erreur lors de l'activation", 'error');
     }
@@ -135,7 +130,7 @@ export default function ObjectifsOnglet({ regle }) {
       const res = await fetch(`/api/regles/${regle.id}/grilles/${deleteConfirm.uuid}`, { method: 'DELETE' });
       if (res.ok) {
         setDeleteConfirm(null);
-        fetchConfigs();
+        refreshConfigs();
       } else {
         addToast("Erreur lors de la suppression de la grille", 'error');
       }
@@ -163,7 +158,7 @@ export default function ObjectifsOnglet({ regle }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orders })
       });
-      if (res.ok) fetchConfigs();
+      if (res.ok) refreshConfigs();
     } catch (e) {
       addToast("Erreur lors du déplacement de la grille", 'error');
     }
@@ -172,7 +167,7 @@ export default function ObjectifsOnglet({ regle }) {
   // Grouper les configs pour l'affichage
   const grillesGroups = {};
   // On s'assure que configs est trié par grille_ordre s'il existe
-  const sortedConfigs = [...configs].sort((a, b) => (a.grille_ordre || 0) - (b.grille_ordre || 0));
+  const sortedConfigs = [...(configs || [])].sort((a, b) => (a.grille_ordre || 0) - (b.grille_ordre || 0));
   
   sortedConfigs.forEach(c => {
     const uuid = c.grille_uuid || 'default';
@@ -235,7 +230,7 @@ export default function ObjectifsOnglet({ regle }) {
         isOpen={isEditorOpen}
         onClose={() => { setIsEditorOpen(false); setIsNewMode(false); setPendingGrilleUuid(null); }}
         onSave={(data) => handleSaveGrille(data, pendingGrilleUuid)}
-        initialData={isNewMode ? null : (configs.find(c => c.id === selectedVersions[pendingGrilleUuid])?.content)}
+        initialData={isNewMode ? null : ((configs || []).find(c => c.id === selectedVersions[pendingGrilleUuid])?.content)}
       />
 
       <SaveVersionModal

@@ -339,6 +339,36 @@
     border-top: 1px solid var(--color-border-subtle);
 }
 
+.tp-footer .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+
+.tp-footer .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.tp-footer .btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover, #e05e00);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18);
+}
+
+.tp-footer .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 /* #endregion */
 
 /* #region RESPONSIVE */

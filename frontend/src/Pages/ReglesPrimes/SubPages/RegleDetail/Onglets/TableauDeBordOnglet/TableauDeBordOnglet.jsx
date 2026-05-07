@@ -1,12 +1,12 @@
 ﻿/*
- * Fichier : AgentsOnglet.jsx
- * Rôle    : Onglet "Agents" — liste les agents SIRH rattachés à la règle
+ * Fichier : TableauDeBordOnglet.jsx
+ * Rôle    : Onglet "Tableau de bord" — liste les agents SIRH rattachés à la règle
  *           (filtrés par projet/opération) avec recherche et filtre.
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import './AgentsOnglet.css';
+import './TableauDeBordOnglet.css';
 import ToolbarSection from './Sections/ToolbarSection/ToolbarSection';
 import AgentCard from './Sections/AgentCard/AgentCard';
 import KpiInfoModal from '../../../../../../Components/KpiInfoModal/KpiInfoModal';
@@ -56,6 +56,7 @@ const METRIC_DIRECTION = {
   csat_moyen:           'higher_better',
   csat:                 'higher_better',
   nb_csat:              'higher_better',
+  avg_nbr:              'higher_better',
   logged_min:           'higher_better',
   temps_production:     'higher_better',
   temps_appel:          'higher_better',
@@ -87,7 +88,7 @@ function resolveMetricKey(ind) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function AgentsOnglet({ regle }) {
+export default function TableauDeBordOnglet({ regle }) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -96,6 +97,7 @@ export default function AgentsOnglet({ regle }) {
   const [showFormulaModal, setShowFormulaModal] = useState(false);
   const [modalData, setModalData] = useState(null);
   const [statutRefs, setStatutRefs] = useState([]);
+  const [kpiRefsFlat, setKpiRefsFlat] = useState({});
 
   // État local pour gérer les modifications temporaires (optimistic UI)
   const [localAgentsData, setLocalAgentsData] = useState({});
@@ -135,10 +137,18 @@ export default function AgentsOnglet({ regle }) {
   }, [selectedMonth]);
 
   useEffect(() => {
-    // Charger les statuts
+    // Charger les statuts + refs KPIs
     fetch('/api/parametres/references')
       .then(res => res.json())
-      .then(data => setStatutRefs(data.statuts || []))
+      .then(data => {
+        setStatutRefs(data.statuts || []);
+        // Flatten kpis grouped by univers → { tech_key: kpiRef }
+        const flat = {};
+        Object.values(data.kpis || {}).forEach(group => {
+          group.forEach(k => { if (k.tech_key) flat[k.tech_key] = k; });
+        });
+        setKpiRefsFlat(flat);
+      })
       .catch(err => console.error("Erreur statuts:", err));
 
     if (!regle?.id) return;
@@ -245,6 +255,7 @@ export default function AgentsOnglet({ regle }) {
       case 'csat':                 return perfData.csat_moyen ?? null;
       case 'csat_moyen':           return perfData.csat_moyen ?? null;
       case 'nb_csat':              return perfData.nb_csat ?? null;
+      case 'avg_nbr':              return perfData.avg_nbr ?? null;
       case 'temps_production':     return perfData.temps_production ?? null;
       case 'logged_min':           return perfData.temps_production ?? null;
       case 'temps_appel':          return perfData.temps_appel ?? null;
@@ -264,8 +275,12 @@ export default function AgentsOnglet({ regle }) {
       case 'avg_ca':               return perfData.avg_ca ?? null;
       case 'qualite':              return qualiteMap[m] ?? null;
       case 'heures':               return hourData.total != null ? hourData.total / 3600000 : null;
-      
-      default:                     return null;
+
+      // Fallback dynamique : métriques calculées par le moteur de formules backend
+      // Tout tech_key retourné par l'API est automatiquement disponible ici
+      default:
+        if (metricKey && perfData[metricKey] !== undefined) return perfData[metricKey] ?? null;
+        return null;
     }
   };
 
@@ -539,7 +554,11 @@ export default function AgentsOnglet({ regle }) {
         taux_atteinte,
         points_max: (type_ponderation === 'bonus' || type_ponderation === 'malus') ? weight : 0,
         points_gagnes,
-        impact_desc
+        impact_desc,
+        is_formula: kpiRefsFlat[metricKey]?.is_formula || false,
+        formula:    kpiRefsFlat[metricKey]?.formula    || null,
+        source_db:  kpiRefsFlat[metricKey]?.source_db  || null,
+        kpi_libelle: kpiRefsFlat[metricKey]?.libelle   || ind.nom,
       };
     });
 
@@ -574,9 +593,37 @@ export default function AgentsOnglet({ regle }) {
     }).catch(err => console.error("Erreur sauvegarde agent:", err));
   };
 
+  const globalStats = useMemo(() => {
+    if (!agents.length) return null;
+    let eligible = 0;
+    let nonEligible = 0;
+    let totalMasse = 0;
+
+    agents.forEach(a => {
+      const data = localAgentsData[a.matricule] || { statut: 'Confirmé', sanction: 'Non' };
+      const isElig = data.sanction !== 'Oui';
+      if (isElig) eligible++; else nonEligible++;
+
+      const kpiResults = calculateKpiResults(a.matricule, data.statut, data.sanction);
+      const assiduite  = calculateAssiduite(a.matricule);
+      const results    = calculateMontantFinal(a.matricule, data.statut, data.sanction, kpiResults, assiduite);
+      totalMasse += (results.prime || 0) + (results.super_bonus || 0) + (results.total_extra || 0);
+    });
+
+    const avgPrime = eligible > 0 ? totalMasse / eligible : 0;
+    return { total: agents.length, eligible, nonEligible, totalMasse, avgPrime };
+  }, [agents, localAgentsData, heuresMap, qualiteMap, dmtMap]);
+
   const filtered = agents.filter(a => {
     const fullName = `${a.prenom} ${a.nom} ${a.matricule}`.toLowerCase();
-    return fullName.includes(searchAgent.toLowerCase());
+    const matchSearch = fullName.includes(searchAgent.toLowerCase());
+    if (!matchSearch) return false;
+
+    if (filterStatut === 'tous') return true;
+
+    const data = localAgentsData[a.matricule] || { sanction: a.sanction };
+    const isEligible = data.sanction !== 'Oui';
+    return filterStatut === 'eligible' ? isEligible : !isEligible;
   });
 
   /** Formate une valeur DMT (en secondes) selon l'unité choisie */
@@ -589,7 +636,14 @@ export default function AgentsOnglet({ regle }) {
   };
 
   /** Gère l'affichage sélectif des formules dans la modale */
-  const handleShowFormula = (type) => {
+  const handleShowFormula = (typeOrData) => {
+    // Accepte un objet formula directement (KPI dynamiques)
+    if (typeof typeOrData === 'object' && typeOrData !== null) {
+      setModalData(typeOrData);
+      setShowFormulaModal(true);
+      return;
+    }
+    const type = typeOrData;
     const allFormulas = {
       prime_brute: {
         title: "Montant de la prime hors Super Bonus",
@@ -638,8 +692,39 @@ export default function AgentsOnglet({ regle }) {
     setShowFormulaModal(true);
   };
 
+  const fmtDH = (v) => v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' DH';
+
   return (
     <div className="agents-onglet">
+      {!loading && !error && globalStats && (
+        <div className="tdb-stats-bar">
+          <div className="tdb-stat">
+            <i className="fa-solid fa-users"></i>
+            <span className="tdb-stat__value">{globalStats.total}</span>
+            <span className="tdb-stat__label">Agents</span>
+          </div>
+          <div className="tdb-stat tdb-stat--success">
+            <i className="fa-solid fa-circle-check"></i>
+            <span className="tdb-stat__value">{globalStats.eligible}</span>
+            <span className="tdb-stat__label">Éligibles</span>
+          </div>
+          <div className="tdb-stat tdb-stat--danger">
+            <i className="fa-solid fa-ban"></i>
+            <span className="tdb-stat__value">{globalStats.nonEligible}</span>
+            <span className="tdb-stat__label">Non éligibles</span>
+          </div>
+          <div className="tdb-stat tdb-stat--accent tdb-stat--wide">
+            <i className="fa-solid fa-money-bill-wave"></i>
+            <span className="tdb-stat__value">{fmtDH(globalStats.totalMasse)}</span>
+            <span className="tdb-stat__label">Masse totale des primes</span>
+          </div>
+          <div className="tdb-stat tdb-stat--wide">
+            <i className="fa-solid fa-chart-line"></i>
+            <span className="tdb-stat__value">{fmtDH(globalStats.avgPrime)}</span>
+            <span className="tdb-stat__label">Prime moy. / éligible</span>
+          </div>
+        </div>
+      )}
       <ToolbarSection
         searchAgent={searchAgent}
         setSearchAgent={setSearchAgent}

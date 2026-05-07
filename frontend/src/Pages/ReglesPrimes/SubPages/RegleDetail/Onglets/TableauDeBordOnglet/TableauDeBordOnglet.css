@@ -4,6 +4,68 @@
     gap: 16px;
 }
 
+/* ─── Barre de stats globales ─── */
+.tdb-stats-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tdb-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    min-width: 90px;
+    flex: 1;
+}
+
+.tdb-stat--wide {
+    min-width: 150px;
+    flex: 2;
+}
+
+.tdb-stat i {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-bottom: 2px;
+}
+
+.tdb-stat__value {
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.tdb-stat__label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+}
+
+.tdb-stat--success i,
+.tdb-stat--success .tdb-stat__value {
+    color: var(--color-success);
+}
+
+.tdb-stat--danger i,
+.tdb-stat--danger .tdb-stat__value {
+    color: var(--color-error);
+}
+
+.tdb-stat--accent i,
+.tdb-stat--accent .tdb-stat__value {
+    color: var(--color-accent);
+}
+
 /* États (loading, error, empty) */
 .agents-onglet__state {
     display: flex;
@@ -67,7 +129,7 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    background: var(--color-bg-app);
+    background: white;
     padding: 6px 16px;
     border-radius: var(--radius-pill);
     border: 1px solid var(--color-border);
@@ -76,7 +138,8 @@
 
 .agents-onglet__month-picker:hover {
     border-color: var(--color-accent-border);
-    background: var(--color-surface);
+    background: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .agents-onglet__month-picker>i {
@@ -184,7 +247,7 @@
         border-radius: var(--radius-md);
     }
 
-    .agents-onglet__month-picker > i {
+    .agents-onglet__month-picker>i {
         display: none;
     }
 
@@ -201,11 +264,10 @@
         border-radius: var(--radius-sm);
         border: 1px solid var(--color-border);
     }
-    
+
     .agents-table__dmt-unit-toggle {
         width: 100%;
         margin-left: 0;
         height: 38px;
     }
 }
-

@@ -47,7 +47,7 @@
 }
 
 .agent-card__profil {
-    background: #fafafa;
+    background: white;
     border-right: 1px solid var(--color-border-subtle);
 }
 
@@ -79,6 +79,11 @@
     margin-bottom: 4px;
     padding-bottom: 6px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.agent-card__result .agent-card__section-title {
+    color: white;
+    border-bottom-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ─── Section 1 : Profil ─── */
@@ -205,7 +210,7 @@
     align-items: center;
     gap: 8px;
     padding: 6px 10px;
-    background: var(--color-bg-app);
+    background: white;
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
@@ -263,11 +268,39 @@
 }
 
 .agent-card__kpi-name {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+}
+
+.agent-card__kpi-formula-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.agent-card__kpi-formula-btn:hover {
+    background: #ff8800;
+    transform: scale(1.18);
 }
 
 .agent-card__kpi-reel,
@@ -384,28 +417,30 @@
 .agent-card__assiduite-main {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
 }
 
+/* 4 items on a single row */
 .agent-card__counts-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
 }
 
 .agent-card__count-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 3px;
     background: var(--color-bg-app);
-    padding: 8px 12px;
-    border-radius: var(--radius-md);
+    padding: 6px 4px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
 }
 
 .agent-card__count-item i {
-    font-size: 0.9rem;
-    opacity: 0.7;
+    font-size: 0.75rem;
+    opacity: 0.85;
 }
 
 .agent-card__count-stack {
@@ -415,16 +450,18 @@
 }
 
 .agent-card__count-label {
-    font-size: 0.58rem;
+    font-size: 0.6rem;
     font-weight: 700;
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    line-height: 1;
 }
 
 .agent-card__count-val {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 900;
+    line-height: 1;
 }
 
 .agent-card__jours-summary {
@@ -432,7 +469,7 @@
     grid-template-columns: repeat(3, 1fr);
     background: white;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-xs);
 }
@@ -441,7 +478,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px 4px;
+    padding: 5px 4px;
     border-right: 1px solid var(--color-border-subtle);
 }
 
@@ -486,15 +523,15 @@
     margin-top: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding-top: 14px;
+    gap: 6px;
+    padding-top: 8px;
 }
 
 .agent-card__malus-indicator {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 5px 10px;
     border-radius: var(--radius-md);
 }
 
@@ -555,60 +592,75 @@
 
 /* ─── Section 4 : Paie ─── */
 .agent-card__result {
-    background: var(--color-bg-app);
+    background: var(--color-bg-sidebar);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 6px;
+}
+
+.agent-card__result .agent-card__prime-label,
+.agent-card__result .agent-card__prime-unit,
+.agent-card__result .agent-card__pts-label,
+.agent-card__result .agent-card__prime-value,
+.agent-card__result .agent-card__prime-zero,
+.agent-card__result .agent-card__sb-value {
+    color: white;
 }
 
 .agent-card__prime-details {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed var(--color-border);
+    gap: 6px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
 }
 
 .agent-card__prime-row {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
+    gap: 8px;
 }
 
 .agent-card__prime-label {
-    font-size: 0.62rem;
-    font-weight: 800;
-    color: var(--color-text-muted);
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
     display: flex;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
 }
 
 .agent-card__prime-value {
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--color-text-primary);
+    font-size: 0.88rem;
+    font-weight: 900;
+    color: white;
+    white-space: nowrap;
 }
 
 .agent-card__prime-unit {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 600;
-    color: var(--color-text-muted);
+    color: rgba(255, 255, 255, 0.5);
     margin-left: 2px;
 }
 
 .agent-card__prime-zero {
-    font-size: 1rem;
+    font-size: 0.88rem;
     font-weight: 800;
-    color: var(--color-text-disabled);
+    color: rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
 }
 
 .agent-card__sb-value {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 800;
-    color: var(--color-text-disabled);
+    color: rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
 }
 
 .agent-card__sb-value.has-bonus {
@@ -619,13 +671,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 4px;
+    padding: 4px 2px 0;
 }
 
 .agent-card__pts-label {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     font-weight: 700;
-    color: var(--color-text-muted);
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
 }
 
 .agent-card__pts-val {
@@ -635,6 +688,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    white-space: nowrap;
 }
 
 .agent-card__prime-row--extra {
@@ -663,45 +717,46 @@
 .agent-card__total-prime {
     margin-top: auto;
     background: var(--color-accent);
+    border: none;
     color: white;
-    padding: 14px 10px;
+    padding: 10px 12px 8px;
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    box-shadow: 0 6px 16px var(--color-accent-soft);
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    justify-content: center;
+    gap: 4px;
+    transition: box-shadow 0.15s ease;
     cursor: default;
 }
 
 .agent-card__total-prime:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px var(--color-accent-soft);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
 .agent-card__total-label {
-    font-size: 0.58rem;
+    font-size: 0.55rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    opacity: 0.85;
+    color: rgba(255, 255, 255, 0.7);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .agent-card__total-value {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 900;
     letter-spacing: -0.02em;
     line-height: 1;
+    color: white;
 }
 
 .agent-card__total-value span {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    opacity: 0.7;
+    color: rgba(255, 255, 255, 0.7);
     margin-left: 2px;
 }
 

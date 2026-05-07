@@ -4,12 +4,15 @@
  * Module  : mypaie / Pages / ReglesPrimes / SubPages
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './RegleDetail.css';
 import ObjectifsOnglet from './Onglets/ObjectifsOnglet/ObjectifsOnglet'
-import VariablesOnglet from './Onglets/VariablesOnglet/VariablesOnglet'
-import AgentsOnglet from './Onglets/AgentsOnglet/AgentsOnglet'
+import VariablesOnglet from './Onglets/CadrePresenceOnglet/CadrePresenceOnglet'
+import AgentsOnglet from './Onglets/TableauDeBordOnglet/TableauDeBordOnglet'
+import useApiSWR from '../../../../Shared/Hooks/useApiSWR';
+import { fetchRegle } from '../../../../Shared/Utils/apiFetchers';
+import { clearCacheKey, TTL } from '../../../../Shared/Utils/cacheStorage';
 
 const ONGLETS = [
   { id: 'objectifs', label: 'Objectifs & Scoring', icon: 'fa-solid fa-bullseye' },
@@ -21,9 +24,16 @@ export default function RegleDetail() {
   const { regleId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [regle, setRegle] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [erreur, setErreur] = useState(null);
+
+  const cacheKey = `regle:${regleId}`;
+
+  const { data: regle, loading, error, revalidate } = useApiSWR(
+    regleId ? cacheKey : null,
+    () => fetchRegle(regleId),
+    { ttl: TTL.HEAVY }
+  );
+
+  const erreur = error?.message ?? null;
 
   // L'onglet actif est lu depuis l'URL (?tab=...) ou 'objectifs' par défaut
   const ongletActif = searchParams.get('tab') || 'objectifs';
@@ -32,22 +42,10 @@ export default function RegleDetail() {
     setSearchParams({ tab: id });
   };
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/regles/${regleId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Règle introuvable');
-        return res.json();
-      })
-      .then((data) => {
-        setRegle(data);
-        setLoading(false);
-      })
-      .catch((e) => {
-        setErreur(e.message);
-        setLoading(false);
-      });
-  }, [regleId]);
+  const handleRefresh = () => {
+    clearCacheKey(cacheKey);
+    revalidate();
+  };
 
   if (loading) {
     return (
@@ -106,9 +104,9 @@ export default function RegleDetail() {
 
       {/* ── Contenu de l'onglet actif ── */}
       <div className="regle-detail__tab-content">
-        {ongletActif === 'objectifs' && <ObjectifsOnglet regle={regle} />}
-        {ongletActif === 'variables' && <VariablesOnglet regle={regle} />}
-        {ongletActif === 'agents'    && <AgentsOnglet   regle={regle} />}
+        {ongletActif === 'objectifs' && <ObjectifsOnglet regle={regle} onRefresh={handleRefresh} />}
+        {ongletActif === 'variables' && <VariablesOnglet regle={regle} onRefresh={handleRefresh} />}
+        {ongletActif === 'agents'    && <AgentsOnglet   regle={regle} onRefresh={handleRefresh} />}
       </div>
     </div>
   );

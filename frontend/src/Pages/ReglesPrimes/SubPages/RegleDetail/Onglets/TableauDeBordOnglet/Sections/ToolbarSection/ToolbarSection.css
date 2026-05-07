@@ -2,70 +2,66 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 24px;
-    margin-bottom: 24px;
-    padding: 16px 24px;
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 20px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 8px 14px;
+    background: var(--color-bg-card, white);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
 }
 
 /* ── Recherche ── */
 .agents-onglet__search-wrapper {
     position: relative;
     flex: 1;
-    max-width: 400px;
+    max-width: 320px;
 }
 
 .agents-onglet__search-icon {
     position: absolute;
-    left: 16px;
+    left: 10px;
     top: 50%;
     transform: translateY(-50%);
-    color: #9ca3af;
-    font-size: 1rem;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
     pointer-events: none;
-    transition: all 0.3s ease;
 }
 
 .agents-onglet__search {
     width: 100%;
-    height: 46px;
-    padding: 0 44px;
-    border: 2px solid #f3f4f6;
-    border-radius: 14px;
-    font-size: 0.95rem;
+    height: 34px;
+    padding: 0 32px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.82rem;
     font-weight: 500;
-    color: #111827;
-    background-color: #f9fafb;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-app);
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .agents-onglet__search:focus {
     outline: none;
     border-color: var(--color-accent);
-    background-color: white;
-    box-shadow: 0 0 0 4px var(--color-accent-soft);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
-.agents-onglet__search:focus + .agents-onglet__search-icon {
+.agents-onglet__search:focus~.agents-onglet__search-icon {
     color: var(--color-accent);
-    transform: translateY(-50%) scale(1.1);
 }
 
 .agents-onglet__search-clear {
     position: absolute;
-    right: 12px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    background: #f3f4f6;
+    background: transparent;
     border: none;
-    color: #6b7280;
+    color: var(--color-text-muted);
     cursor: pointer;
-    width: 28px;
-    height: 28px;
-    border-radius: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -75,42 +71,41 @@
 .agents-onglet__search-clear:hover {
     background-color: #fee2e2;
     color: #ef4444;
-    transform: translateY(-50%) rotate(90deg);
 }
 
 /* ── Filtres (Segmented Control) ── */
 .agents-onglet__filters {
     display: flex;
-    background-color: #f3f4f6;
-    border-radius: 12px;
-    padding: 4px;
-    gap: 4px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: var(--color-bg-app);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid var(--color-border);
 }
 
 .agents-onglet__filter-btn {
-    padding: 10px 24px;
+    padding: 5px 14px;
     background: transparent;
     border: none;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #6b7280;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s;
     white-space: nowrap;
-    position: relative;
 }
 
 .agents-onglet__filter-btn:hover:not(.agents-onglet__filter-btn--active) {
-    color: #111827;
-    background-color: rgba(0, 0, 0, 0.04);
+    color: var(--color-text-primary);
+    background-color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .agents-onglet__filter-btn--active {
-    background-color: white;
-    color: var(--color-accent);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background-color: var(--color-accent);
+    color: white;
+    box-shadow: 0 2px 8px var(--color-accent-soft);
 }
 
 /* ── Responsive ── */

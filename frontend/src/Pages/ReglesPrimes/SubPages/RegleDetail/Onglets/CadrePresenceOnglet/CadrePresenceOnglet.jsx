@@ -1,6 +1,6 @@
 /*
- * Fichier     : VariablesOnglet.jsx
- * Rôle        : Onglet "Variables" du détail d'une règle de prime.
+ * Fichier     : CadrePresenceOnglet.jsx
+ * Rôle        : Onglet "Cadre & Présence" du détail d'une règle de prime.
  *               Orchestre les sections de configuration environnementale :
  *               1. TempsProrataSection    — Jours ouvrés, base horaire, calcul prorata
  *               2. AttendanceRulesSection — Règles d'assiduité (absences/retards)
@@ -12,13 +12,13 @@
 
 import React from 'react';
 import { useToast } from '../../../../../../Shared/Contexts/ToastContext';
-import './VariablesOnglet.css';
+import './CadrePresenceOnglet.css';
 import AccordionSection from './Components/AccordionSection/AccordionSection';
 import TempsProrataSection from './Sections/TempsProrataSection/TempsProrataSection';
 import AttendanceRulesSection from './Sections/AttendanceRulesSection/AttendanceRulesSection';
 import TriggerRulesSection from './Sections/TriggerRulesSection/TriggerRulesSection';
 
-export default function VariablesOnglet({ regle }) {
+export default function CadrePresenceOnglet({ regle, onRefresh }) {
   const addToast = useToast();
 
   // Persiste une mise à jour partielle de grille_objectifs via l'API puis recharge la page
@@ -30,7 +30,7 @@ export default function VariablesOnglet({ regle }) {
         body: JSON.stringify({ grille_objectifs: newGrille })
       });
       if (res.ok) {
-        window.location.reload();
+        onRefresh?.();
       }
     } catch (e) {
       console.error("Erreur lors de l'enregistrement des variables", e);
@@ -52,6 +52,7 @@ export default function VariablesOnglet({ regle }) {
     const hasData = regle?.grille_objectifs?.[key] != null;
     return {
       label:      hasData ? 'Configuré' : 'Non configuré',
+    
       statusType: hasData ? 'success'   : 'warning',
     };
   };

@@ -15,11 +15,12 @@ import RegleDetail from './SubPages/RegleDetail/RegleDetail';
 import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal';
 import { useSocket } from '../../Shared/Contexts/SocketContext';
 import { useToast } from '../../Shared/Contexts/ToastContext';
+import useApiSWR from '../../Shared/Hooks/useApiSWR';
+import { fetchRegles } from '../../Shared/Utils/apiFetchers';
+import { clearCacheKey, TTL } from '../../Shared/Utils/cacheStorage';
 
 export default function ReglesPrimes() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [regles, setRegles] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [duplicateTarget, setDuplicateTarget] = useState(null);
@@ -27,23 +28,13 @@ export default function ReglesPrimes() {
   const socket = useSocket();
   const addToast = useToast();
 
-  const fetchRegles = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/regles');
-      if (!res.ok) throw new Error('Erreur API');
-      const data = await res.json();
-      setRegles(data);
-    } catch (e) {
-      setRegles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const CACHE_KEY = 'regles:list';
 
-  useEffect(() => {
-    fetchRegles();
-  }, [fetchRegles]);
+  const { data: regles = [], loading, revalidate } = useApiSWR(
+    CACHE_KEY,
+    fetchRegles,
+    { ttl: TTL.HEAVY }
+  );
 
   // Real-time updates
   useEffect(() => {
@@ -51,7 +42,8 @@ export default function ReglesPrimes() {
 
     const handleUpdate = () => {
       console.log('[RealTime] Mise à jour des règles détectée');
-      fetchRegles();
+      clearCacheKey(CACHE_KEY);
+      revalidate();
     };
 
     socket.on('regle_created', handleUpdate);
@@ -63,13 +55,18 @@ export default function ReglesPrimes() {
       socket.off('regle_updated', handleUpdate);
       socket.off('regle_deleted', handleUpdate);
     };
-  }, [socket, fetchRegles]);
+  }, [socket, revalidate]);
+
+  const invalidateAndRefresh = useCallback(() => {
+    clearCacheKey(CACHE_KEY);
+    revalidate();
+  }, [revalidate]);
 
   const handleSaveSuccess = () => {
     setIsModalOpen(false);
     setEditTarget(null);
     setDuplicateTarget(null);
-    fetchRegles();
+    invalidateAndRefresh();
   };
 
   const handleCloseModal = () => {
@@ -84,7 +81,7 @@ export default function ReglesPrimes() {
       const res = await fetch(`/api/regles/${deleteTarget.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Erreur lors de la suppression');
       setDeleteTarget(null);
-      fetchRegles();
+      invalidateAndRefresh();
       addToast('Règle supprimée avec succès', 'success');
     } catch (err) {
       setDeleteTarget(null);
@@ -108,9 +105,8 @@ export default function ReglesPrimes() {
             }}
             onDuplicate={async (id) => {
               try {
-                const res = await fetch(`/api/regles/${id}`);
-                const data = await res.json();
-                setDuplicateTarget(data);
+                const regle = regles.find(r => r.id === id);
+                setDuplicateTarget(regle || await fetch(`/api/regles/${id}`).then(r => r.json()));
                 setIsModalOpen(true);
               } catch (e) {
                 console.error("Erreur chargement règle à dupliquer", e);

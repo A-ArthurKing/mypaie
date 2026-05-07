@@ -217,11 +217,12 @@
 }
 
 .lt-cell-top {
-    border-top: 1px solid var(--color-border-subtle);
+    /* faint separator for file-level changes within a BU */
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .lt-cell-cont {
-    border-top: 1px solid transparent;
+    border-top: none;
 }
 
 .lt-cell-inner {
@@ -248,13 +249,45 @@
     font-weight: 600;
 }
 
-/* Row background grouping */
-.lt-tr-project-top td:first-child {
-    background: rgba(var(--accent-rgb, 237, 137, 54), 0.04);
+/* ── Row grouping — alternating project bands ── */
+.lt-row-even-group td {
+    background: rgba(237, 137, 54, 0.05);
+}
+
+.lt-row-odd-group td {
+    background: #ffffff;
+}
+
+/* Left accent stripe — identifie visuellement chaque groupe projet */
+.lt-row-even-group td:first-child {
+    border-left: 4px solid var(--color-accent);
+}
+
+.lt-row-odd-group td:first-child {
+    border-left: 4px solid #b0bbd4;
+}
+
+/* Séparateur fort entre groupes projets */
+.lt-row-project-start td {
+    border-top: 2px solid #a8b4cc !important;
+}
+
+.lt-row-project-start:first-child td {
+    border-top: none !important;
+}
+
+/* Séparateur dashed entre BUs à l'intérieur d'un même projet */
+.lt-row-bu-start td {
+    border-top: 1px dashed #d0d7e8;
+}
+
+/* Hover */
+.lt-table tbody tr:hover td {
+    filter: brightness(0.97);
 }
 
 .lt-table tbody tr:hover .lt-cell-inner {
-    background: var(--color-surface-hover, #f8f9fa);
+    background: transparent;
 }
 
 .lt-cell-empty {
