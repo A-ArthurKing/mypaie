@@ -41,7 +41,7 @@ const METRIC_DIRECTION = {
   dmt:                  'lower_better',   // plus court = mieux
   taux_conversion_calc: 'higher_better',
   taux_conversion:      'higher_better',
-  tx_mea:               'higher_better',
+  tx_mea:               'lower_better',
   chiffre_affaire:      'higher_better',
   note_globale:         'higher_better',
   heure_hp:             'higher_better',
@@ -481,7 +481,7 @@ export default function TableauDeBordOnglet({ regle }) {
 
       let objectif    = parseTargetValue(rawObj);
       const reel      = metricKey ? getRealValue(metricKey, agentMatricule) : null;
-      const direction = METRIC_DIRECTION[metricKey] || 'higher_better';
+      const direction = ind.direction || METRIC_DIRECTION[metricKey] || 'higher_better';
       const weight    = parseFloat(ind.poids) || 0;
 
       if (objectif !== null && (ind.type === 'pourcentage' || ['cvr', 'tx_mea', 'qualite'].includes(metricKey))) {

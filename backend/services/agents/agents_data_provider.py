@@ -6,8 +6,12 @@ Module  : mypaie / backend / services / agents
 
 import logging
 from config.db_mysql_connector import get_mysql_connection
+from tools.cache import get_cached, set_cached, invalidate
 
 logger = logging.getLogger(__name__)
+
+_CACHE_KEY_AGENTS = "agents:gestion"
+_CACHE_TTL_AGENTS = 300  # 5 minutes
 
 def get_agents_manual_data(matrice_id: int) -> list:
     """
@@ -59,7 +63,13 @@ def save_agent_manual_data(matrice_id: int, matricule: str, data: dict):
 def get_all_agents_gestion() -> list:
     """
     Récupère la liste de tous les agents pour la page de gestion globale.
+    Résultat mis en cache 5 min — invalidé automatiquement sur toute mutation.
     """
+    cached = get_cached(_CACHE_KEY_AGENTS)
+    if cached is not None:
+        logger.debug("Cache HIT [%s]", _CACHE_KEY_AGENTS)
+        return cached
+
     connection = None
     try:
         connection = get_mysql_connection()
@@ -84,7 +94,9 @@ def get_all_agents_gestion() -> list:
                 ORDER BY e.nom, e.prenom
             """
             cursor.execute(sql)
-            return cursor.fetchall()
+            result = cursor.fetchall()
+        set_cached(_CACHE_KEY_AGENTS, result, _CACHE_TTL_AGENTS)
+        return result
     except Exception as e:
         logger.error(f"Erreur get_all_agents_gestion : {e}")
         return []
@@ -103,6 +115,7 @@ def update_agent_global_statut(matricule: str, id_statut: int):
             sql = "UPDATE ref_employes SET id_statut = %s WHERE matricule = %s"
             cursor.execute(sql, (id_statut, matricule))
             connection.commit()
+        invalidate(_CACHE_KEY_AGENTS)
     except Exception as e:
         logger.error(f"Erreur update_agent_global_statut : {e}")
         raise e
@@ -146,7 +159,9 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
                 WHERE e.matricule = %s
             """
             cursor.execute(sql_get, (matricule,))
-            return cursor.fetchone()
+            result = cursor.fetchone()
+        invalidate(_CACHE_KEY_AGENTS)
+        return result
     except Exception as e:
         logger.error(f"Erreur add_agent : {e}")
         raise e
@@ -191,7 +206,9 @@ def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_st
                 WHERE e.matricule = %s
             """
             cursor.execute(sql_get, (matricule,))
-            return cursor.fetchone()
+            result = cursor.fetchone()
+        invalidate(_CACHE_KEY_AGENTS)
+        return result
     except Exception as e:
         logger.error(f"Erreur update_agent : {e}")
         raise e
@@ -210,6 +227,7 @@ def delete_agent(matricule: str):
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM ref_employes WHERE matricule = %s", (matricule,))
             connection.commit()
+        invalidate(_CACHE_KEY_AGENTS)
     except Exception as e:
         logger.error(f"Erreur delete_agent : {e}")
         raise e

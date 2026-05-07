@@ -82,15 +82,16 @@ function DateRangePicker({ startDate, endDate, onChange, placeholder = "Sélecti
         <div className="dr-picker__footer">
           <div className="dr-picker__manual">
             <div className="dr-picker__manual-field">
-              <span>Du</span>
+              <span>DU</span>
               <input 
                 type="date" 
                 value={formatDateForInput(internalStart)}
                 onChange={(e) => handleManualChange('start', e.target.value)}
               />
             </div>
+            <span className="dr-picker__manual-sep">→</span>
             <div className="dr-picker__manual-field">
-              <span>Au</span>
+              <span>AU</span>
               <input 
                 type="date" 
                 value={formatDateForInput(internalEnd)}

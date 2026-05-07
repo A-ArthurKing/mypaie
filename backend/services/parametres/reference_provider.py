@@ -7,11 +7,27 @@ Module  : mypaie / backend / services / parametres
 import logging
 import pymysql
 from config.db_mysql_connector import get_mysql_connection
+from tools.cache import get_cached, set_cached, invalidate
 
 logger = logging.getLogger(__name__)
 
+_CACHE_KEY = "parametres:references"
+_CACHE_TTL  = 300  # 5 minutes
+
+
+def invalidate_references_cache() -> None:
+    """Invalide le cache des référentiels — à appeler après toute mutation structure ou KPI."""
+    invalidate(_CACHE_KEY)
+
+
 def get_all_references():
-    """Récupère l'ensemble des référentiels et la table de structure (Cerveau)."""
+    """Récupère l'ensemble des référentiels et la table de structure (Cerveau). Résultat mis en cache 5 min."""
+    cached = get_cached(_CACHE_KEY)
+    if cached is not None:
+        logger.debug("Cache HIT [%s]", _CACHE_KEY)
+        return cached
+
+    result = None
     conn = get_mysql_connection()
     try:
         # Utilisation de DictCursor pour avoir des objets {col: val}
@@ -51,14 +67,15 @@ def get_all_references():
             kpis_grouped = {}
             for k in kpis_raw:
                 # Fallback : si tech_key est NULL en base, on dérive depuis le code
+                # On normalise : minuscules + espaces/tirets → underscores
                 if not k.get('tech_key'):
-                    k['tech_key'] = k['code'].lower()
+                    k['tech_key'] = k['code'].lower().replace(' ', '_').replace('-', '_')
                 u = k['univers']
                 if u not in kpis_grouped:
                     kpis_grouped[u] = []
                 kpis_grouped[u].append(k)
             
-            return {
+            result = {
                 "projets": projets,
                 "operations": ops,
                 "files": files,
@@ -69,3 +86,6 @@ def get_all_references():
             }
     finally:
         conn.close()
+
+    set_cached(_CACHE_KEY, result, _CACHE_TTL)
+    return result

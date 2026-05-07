@@ -13,6 +13,7 @@ export default function MappingTableSection({
   error, 
   handleEdit, 
   handleDelete,
+  handleRenameKpi,
   kpiRefs
 }) {
   
@@ -20,7 +21,7 @@ export default function MappingTableSection({
   const getReadableStandard = (univers, code) => {
     if (!kpiRefs || !kpiRefs[univers]) return code;
     const found = kpiRefs[univers].find(item => item.code === code);
-    return found ? found.libelle : code;
+    return found ? found : { code, libelle: code, unite: null };
   };
 
   if (loading) {
@@ -106,21 +107,42 @@ export default function MappingTableSection({
                     <i className="fa-solid fa-arrow-right-long"></i>
                   </td>
                   <td className="mk-cell-standard">
-                    <span className="mk-badge-standard">
-                      <i className="fa-solid fa-bullseye"></i>
-                      <strong>{getReadableStandard(item.univers, item.standard_kpi_code)}</strong>
-                      <small>{item.standard_kpi_code}</small>
-                    </span>
+                    {(() => {
+                      const kpi = getReadableStandard(item.univers, item.standard_kpi_code);
+                      return (
+                        <span className="mk-badge-standard">
+                          <i className="fa-solid fa-bullseye"></i>
+                          <strong>{typeof kpi === 'object' ? kpi.libelle : kpi}</strong>
+                          <small>{item.standard_kpi_code}</small>
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="mk-cell-desc">
                     {item.description || <span className="mk-nil">—</span>}
                   </td>
                   <td className="mk-cell-actions">
                     <div className="mk-actions-group">
+                      {handleRenameKpi && (() => {
+                        const kpi = getReadableStandard(item.univers, item.standard_kpi_code);
+                        return (
+                          <button
+                            className="mk-action-btn mk-action-btn--rename"
+                            onClick={() => handleRenameKpi(
+                              typeof kpi === 'object'
+                                ? { ...kpi, univers: item.univers }
+                                : { code: item.standard_kpi_code, libelle: item.standard_kpi_code, unite: '%', univers: item.univers }
+                            )}
+                            title="Renommer la destination (KPI Standard)"
+                          >
+                            <i className="fa-solid fa-tag" />
+                          </button>
+                        );
+                      })()}
                       <button 
                         className="mk-action-btn mk-action-btn--edit" 
                         onClick={() => handleEdit(item)}
-                        title="Modifier"
+                        title="Modifier le mapping"
                       >
                         <i className="fa-solid fa-pencil" />
                       </button>

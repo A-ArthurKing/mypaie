@@ -42,6 +42,7 @@ export default function MappingKpis() {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const [renameKpiModal, setRenameKpiModal] = useState({ isOpen: false, kpi: null })
   const socket = useSocket()
 
   const fetchData = async () => {
@@ -196,6 +197,10 @@ export default function MappingKpis() {
     }
   }
 
+  const handleRenameKpi = (kpi) => {
+    setRenameKpiModal({ isOpen: true, kpi })
+  }
+
   return (
     <div className="mk-tab-container">
       <HeaderSection />
@@ -226,6 +231,7 @@ export default function MappingKpis() {
           loadingCols={loadingCols}
           projects={projects}
           onQuickAdd={() => setShowQuickAdd(true)}
+          onRenameKpi={handleRenameKpi}
         />
 
         <MappingTableSection 
@@ -234,6 +240,7 @@ export default function MappingKpis() {
           error={error}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
+          handleRenameKpi={handleRenameKpi}
           kpiRefs={kpiRefs}
         />
       </div>
@@ -242,6 +249,19 @@ export default function MappingKpis() {
         isOpen={showQuickAdd}
         onClose={() => setShowQuickAdd(false)}
         univers={univers}
+      />
+
+      <QuickAddKpiModal
+        isOpen={renameKpiModal.isOpen}
+        onClose={(saved) => {
+          setRenameKpiModal({ isOpen: false, kpi: null })
+          if (saved) {
+            addToast('KPI standard mis à jour', 'success')
+            fetchData()
+          }
+        }}
+        univers={renameKpiModal.kpi?.univers || univers}
+        editKpi={renameKpiModal.kpi}
       />
       
       {itemToDelete && (

@@ -20,7 +20,7 @@ import useApiSWR from '../../../../../../Shared/Hooks/useApiSWR';
 import { fetchRegleConfigs } from '../../../../../../Shared/Utils/apiFetchers';
 import { clearCacheKey, TTL } from '../../../../../../Shared/Utils/cacheStorage';
 
-export default function ObjectifsOnglet({ regle }) {
+export default function ObjectifsOnglet({ regle, onRefresh }) {
   const addToast = useToast();
   const socket = useSocket();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -106,6 +106,7 @@ export default function ObjectifsOnglet({ regle }) {
         setIsNewMode(false);
         setPendingGrilleUuid(null);
         refreshConfigs();
+        if (onRefresh) onRefresh(); // Invalide regle:{id} → grille_objectifs à jour dans TableauDeBord
         addToast('Grille enregistrée avec succès', 'success');
       }
     } catch (e) {

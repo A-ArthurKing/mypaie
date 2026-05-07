@@ -39,6 +39,7 @@ def endpoint_post_regle_config(regle_id):
             data.get("grille_uuid"),
             data.get("grille_nom")
         )
+        emit_update("regle_configs_updated", {"regle_id": regle_id})
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500

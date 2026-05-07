@@ -16,17 +16,35 @@ import EditAgentModal    from './components/EditAgentModal/EditAgentModal';
 import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal';
 import { useSocket } from '../../Shared/Contexts/SocketContext';
 import { useToast } from '../../Shared/Contexts/ToastContext';
+import useApiSWR from '../../Shared/Hooks/useApiSWR';
+import { TTL } from '../../Shared/Utils/cacheStorage';
+
+const REFS_FALLBACK = { projets: [], operations: [], files: [], activites: [], statuts: [], structure: [] };
 
 export default function Agents() {
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: agents = [],
+    loading,
+    revalidate: revalidateAgents,
+    mutate: mutateAgents,
+  } = useApiSWR(
+    'agents:gestion',
+    () => fetch('/api/agents/gestion').then(r => r.json()).then(d => d.data || []),
+    { ttl: TTL.STATS, fallbackData: [] }
+  );
+
+  const { data: refs = REFS_FALLBACK } = useApiSWR(
+    'parametres:references',
+    () => fetch('/api/parametres/references').then(r => r.json()),
+    { ttl: TTL.DROPDOWNS, revalidateOnFocus: false, fallbackData: REFS_FALLBACK }
+  );
+
   const [search, setSearch] = useState('');
   const [projetFilter, setProjetFilter] = useState('');
   const [operationFilter, setOperationFilter] = useState('');
   const [fileFilter, setFileFilter] = useState('');
   const [activiteFilter, setActiviteFilter] = useState('');
   const [statutFilter, setStatutFilter] = useState('');
-  const [refs, setRefs] = useState({ projets: [], operations: [], files: [], activites: [], statuts: [], structure: [] });
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAgent, setEditingAgent] = useState(null);
@@ -35,35 +53,13 @@ export default function Agents() {
   const socket = useSocket();
   const addToast = useToast();
 
-  const fetchAgents = () => {
-    fetch('/api/agents/gestion')
-      .then(res => res.json())
-      .then(data => {
-        setAgents(data.data || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Erreur agents:', err);
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetch('/api/parametres/references')
-      .then(res => res.json())
-      .then(data => setRefs(data))
-      .catch(err => console.error('Erreur refs:', err));
-
-    fetchAgents();
-  }, []);
-
-  // Real-time updates
+  // Real-time updates — invalide le cache SWR et recharge les données fraîches
   useEffect(() => {
     if (!socket) return;
 
     const handleUpdate = () => {
       console.log('[RealTime] Mise à jour agents détectée');
-      fetchAgents();
+      revalidateAgents();
     };
 
     socket.on('agent_created', handleUpdate);
@@ -75,15 +71,15 @@ export default function Agents() {
       socket.off('agent_updated', handleUpdate);
       socket.off('agent_deleted', handleUpdate);
     };
-  }, [socket]);
+  }, [socket, revalidateAgents]);
 
   const handleAgentAdded = newAgent => {
-    if (newAgent) setAgents(prev => [...prev, newAgent]);
+    if (newAgent) mutateAgents(prev => [...(prev || []), newAgent]);
   };
 
   const handleAgentUpdated = updatedAgent => {
     if (updatedAgent)
-      setAgents(prev => prev.map(a => a.matricule === updatedAgent.matricule ? updatedAgent : a));
+      mutateAgents(prev => (prev || []).map(a => a.matricule === updatedAgent.matricule ? updatedAgent : a));
   };
 
   const handleDeleteConfirm = () => {
@@ -93,7 +89,7 @@ export default function Agents() {
       .then(res => res.json())
       .then(data => {
         if (data.error) throw new Error(data.error);
-        setAgents(prev => prev.filter(a => a.matricule !== deleteTarget.matricule));
+        mutateAgents(prev => (prev || []).filter(a => a.matricule !== deleteTarget.matricule));
         setDeleteTarget(null);
         addToast('Agent supprimé avec succès', 'success');
       })

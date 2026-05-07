@@ -10,7 +10,7 @@ from services.parametres.mapping_provider import (
     get_mappings, add_mapping, delete_mapping,
     get_kpi_mappings, add_kpi_mapping, delete_kpi_mapping,
     get_mysql_kpi_mappings, add_mysql_kpi_mapping, delete_mysql_kpi_mapping,
-    add_standard_kpi,
+    add_standard_kpi, update_standard_kpi,
     get_mysql_project_mappings, add_mysql_project_mapping, delete_mysql_project_mapping
 )
 from services.parametres.structure_provider import (
@@ -20,13 +20,19 @@ from services.parametres.structure_provider import (
     add_activity, update_activity, delete_activity,
     add_structure_mapping, delete_structure_mapping
 )
-from services.parametres.reference_provider import get_all_references
+from services.parametres.reference_provider import get_all_references, invalidate_references_cache
 from services.parametres.dw_api_introspection_provider import list_bigquery_tables, list_table_columns, get_unique_column_values
 from tools.socket_io import emit_update
 
 logger = logging.getLogger(__name__)
 
 parametres_bp = Blueprint("parametres", __name__)
+
+
+def _emit_structure_update():
+    """Invalide le cache référentiels ET émet l'évènement temps-réel."""
+    invalidate_references_cache()
+    emit_update("structure_updated")
 
 # --- INTROSPECTION BIGQUERY ---
 
@@ -68,8 +74,28 @@ def endpoint_add_standard_kpi():
         
     try:
         res = add_standard_kpi(code, libelle, univers, unite)
+        invalidate_references_cache()
         emit_update("kpi_standards_updated")
         return jsonify(res), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@parametres_bp.route("/api/parametres/kpis-standards/<code>", methods=["PATCH"])
+def endpoint_update_standard_kpi(code):
+    """Met à jour le libellé et l'unité d'un KPI standard existant."""
+    data = request.json or {}
+    libelle = data.get("libelle")
+    unite = data.get("unite")
+    if not libelle:
+        return jsonify({"error": "Le libellé est requis"}), 400
+    try:
+        res = update_standard_kpi(code, libelle, unite)
+        invalidate_references_cache()
+        emit_update("kpi_standards_updated")
+        return jsonify(res), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -181,7 +207,7 @@ def endpoint_add_project():
     data = request.json or {}
     try:
         res = add_project(data.get("nom"), data.get("code"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -194,7 +220,7 @@ def endpoint_manage_project(id):
         else:
             data = request.json or {}
             res = update_project(id, data.get("nom"), data.get("code"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -204,7 +230,7 @@ def endpoint_add_operation():
     data = request.json or {}
     try:
         res = add_operation(data.get("id_projet"), data.get("libelle"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -217,7 +243,7 @@ def endpoint_manage_operation(id):
         else:
             data = request.json or {}
             res = update_operation(id, data.get("libelle"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -227,7 +253,7 @@ def endpoint_add_file():
     data = request.json or {}
     try:
         res = add_file(data.get("libelle"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -240,7 +266,7 @@ def endpoint_manage_file(id):
         else:
             data = request.json or {}
             res = update_file(id, data.get("libelle"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -250,7 +276,7 @@ def endpoint_add_activity():
     data = request.json or {}
     try:
         res = add_activity(data.get("libelle"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -263,7 +289,7 @@ def endpoint_manage_activity(id):
         else:
             data = request.json or {}
             res = update_activity(id, data.get("libelle"))
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -278,7 +304,7 @@ def endpoint_add_structure_mapping():
             data.get("id_file"), 
             data.get("id_activite")
         )
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -287,7 +313,7 @@ def endpoint_add_structure_mapping():
 def endpoint_delete_structure_mapping(id):
     try:
         res = delete_structure_mapping(id)
-        emit_update("structure_updated")
+        _emit_structure_update()
         return jsonify(res), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

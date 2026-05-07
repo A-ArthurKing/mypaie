@@ -17,7 +17,7 @@ export default function MappingFormSection({
   idProjet, setIdProjet,
   description, setDescription, 
   isSubmitting, handleSubmit,
-  kpiRefs, tables, columns, loadingCols, projects, onQuickAdd
+  kpiRefs, tables, columns, loadingCols, projects, onQuickAdd, onRenameKpi
 }) {
 
   /**
@@ -232,7 +232,7 @@ export default function MappingFormSection({
           {/* KPI Standard */}
           <div className={`mk-field ${isFormula ? 'mk-field--full' : ''}`}>
             <label>{isFormula ? '6' : '6'}. Destination (KPI Standard)</label>
-            <div className="mk-input-wrapper">
+            <div className={`mk-input-wrapper${standardKpiCode ? ' mk-input-wrapper--with-actions' : ''}`}>
               <i className="fa-solid fa-bullseye"></i>
               <select
                 value={standardKpiCode}
@@ -240,13 +240,25 @@ export default function MappingFormSection({
                 required
               >
                 <option value="">-- Sélectionner un KPI Standard --</option>
-                {/* On ne montre que les KPIs de l'univers sélectionné pour guider l'utilisateur */}
                 {kpiRefs[univers]?.map(k => (
                   <option key={k.code} value={k.code}>
                     {k.libelle} [{k.code}]
                   </option>
                 ))}
               </select>
+              {standardKpiCode && onRenameKpi && (() => {
+                const selectedKpi = kpiRefs[univers]?.find(k => k.code === standardKpiCode);
+                return (
+                  <button
+                    type="button"
+                    className="mk-rename-kpi-btn"
+                    title="Renommer ce KPI standard"
+                    onClick={() => onRenameKpi({ ...(selectedKpi || { code: standardKpiCode, libelle: standardKpiCode, unite: '%' }), univers })}
+                  >
+                    <i className="fa-solid fa-tag"></i>
+                  </button>
+                );
+              })()}
               <button 
                 type="button" 
                 className="mk-quick-add-btn" 

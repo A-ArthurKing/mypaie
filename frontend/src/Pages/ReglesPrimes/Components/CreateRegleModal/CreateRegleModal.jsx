@@ -6,6 +6,7 @@
  * Module  : mypaie / Pages / ReglesPrimes / Components
  */
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSocket } from '../../../../Shared/Contexts/SocketContext';
 import { useToast } from '../../../../Shared/Contexts/ToastContext';
 import './CreateRegleModal.css';
 

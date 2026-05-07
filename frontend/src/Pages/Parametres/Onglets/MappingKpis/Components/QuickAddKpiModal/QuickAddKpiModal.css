@@ -112,3 +112,23 @@
     background: var(--color-accent-hover);
     transform: translateY(-1px);
 }
+
+/* ── Mode édition ── */
+.qak-readonly {
+    background: var(--color-bg-light, #f9fafb) !important;
+    color: var(--color-text-muted) !important;
+    cursor: not-allowed;
+    border-style: dashed !important;
+}
+
+.qak-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.qak-hint i {
+    margin-right: 4px;
+    font-size: 0.7rem;
+}

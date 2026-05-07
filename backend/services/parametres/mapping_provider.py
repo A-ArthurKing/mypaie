@@ -251,7 +251,8 @@ def add_standard_kpi(code: str, libelle: str, univers: str, unite: str = None, d
         with connection.cursor() as cursor:
             clean_code = code.upper().strip()
             # tech_key dérivé automatiquement depuis le code si non fourni
-            derived_tech_key = clean_code.lower()
+            # Normalisation : minuscules + espaces/tirets → underscores
+            derived_tech_key = clean_code.lower().replace(' ', '_').replace('-', '_')
             sql = """
                 INSERT INTO matrice_kpis (code, libelle, univers, unite, description, tech_key)
                 VALUES (%s, %s, %s, %s, %s, %s)
@@ -266,6 +267,22 @@ def add_standard_kpi(code: str, libelle: str, univers: str, unite: str = None, d
             return {"status": "success", "code": clean_code}
     finally:
         connection.close()
+
+def update_standard_kpi(code: str, libelle: str, unite: str = None):
+    """Met à jour le libellé et l'unité d'un KPI standard existant."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = "UPDATE matrice_kpis SET libelle = %s, unite = %s WHERE code = %s"
+            cursor.execute(sql, (libelle, unite, code.upper().strip()))
+            if cursor.rowcount == 0:
+                raise ValueError(f"KPI '{code}' introuvable.")
+            connection.commit()
+            return {"status": "success", "code": code.upper().strip()}
+    finally:
+        connection.close()
+
 
 def add_mapping(source_name: str, standard_name: str):
     """Ajoute ou met à jour un mapping de projet."""

@@ -165,7 +165,8 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
         type: 'entier', 
         poids: 10, 
         metric_key: '',
-        type_ponderation: 'bonus' // Nouveau : bonus, malus, eliminatoire, coefficient
+        type_ponderation: 'bonus',
+        direction: 'higher_better' // sens d'optimisation : higher_better | lower_better
       }]
     }));
   };
@@ -193,12 +194,16 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
             if (m) found = m;
           });
 
+          // Direction par défaut selon la métrique connue
+          const KNOWN_LOWER_BETTER = ['dmt', 'tx_mea', 'temps_appel'];
           if (found) {
             updated.nom = found.libelle;
             // Mapping des types d'unités vers les types d'affichage
             if (found.unite === '%') updated.type = 'pourcentage';
             else if (found.unite === 'EUR' || found.unite === 'DH') updated.type = 'devise';
             else updated.type = 'entier';
+            // Auto-remplir la direction
+            updated.direction = KNOWN_LOWER_BETTER.includes(value) ? 'lower_better' : 'higher_better';
           }
         }
         
@@ -536,6 +541,17 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                                 </button>
                               )}
                             </div>
+                          </div>
+
+                          <div className="gem-input-group" style={{ flex: '0 0 130px' }}>
+                            <label>Sens objectif</label>
+                            <select
+                              value={ind.direction || 'higher_better'}
+                              onChange={(e) => updateIndicator(ind.id, 'direction', e.target.value)}
+                            >
+                              <option value="higher_better">↑ Plus = Mieux</option>
+                              <option value="lower_better">↓ Moins = Mieux</option>
+                            </select>
                           </div>
 
                           <div className="gem-input-group" style={{ flex: '0 0 150px' }}>
