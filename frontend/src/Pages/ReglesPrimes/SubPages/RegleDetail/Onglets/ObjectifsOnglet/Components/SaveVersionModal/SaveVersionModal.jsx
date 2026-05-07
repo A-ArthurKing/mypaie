@@ -68,9 +68,10 @@ export default function SaveVersionModal({ isOpen, onClose, onConfirm, initialVa
 
           <div className="save-version-modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>
-              Annuler
+              <i className="fa-solid fa-xmark"></i> Annuler
             </button>
             <button type="submit" className="btn btn-primary" disabled={!libelle.trim() || (isNewGrille && !grilleNom.trim())}>
+              <i className={`fa-solid ${isNewGrille ? 'fa-plus' : 'fa-floppy-disk'}`}></i>
               {isNewGrille ? 'Créer la grille' : 'Sauvegarder'}
             </button>
           </div>

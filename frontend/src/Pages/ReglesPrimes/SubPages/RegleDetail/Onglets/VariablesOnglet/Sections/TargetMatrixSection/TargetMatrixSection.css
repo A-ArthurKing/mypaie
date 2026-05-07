@@ -280,6 +280,21 @@
     box-shadow: 0 0 0 2px var(--color-accent-soft);
 }
 
+.tm-table__row--sb {
+    background-color: rgba(245, 158, 11, 0.03);
+}
+
+.tm-table__input--sb {
+    border-color: rgba(245, 158, 11, 0.2);
+    color: #b45309;
+    font-weight: var(--weight-bold);
+}
+
+.tm-table__input--sb:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
 /* #endregion */
 
 /* #region PIED DE SECTION */

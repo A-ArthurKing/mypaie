@@ -176,12 +176,11 @@ def ensure_tables(client: bigquery.Client) -> None:
     log.info(f"Table '{TABLE_MAPPING}' vérifiée.")
 
     # Suppression de l'ancienne table paie_qualite si elle existe (mise à jour schéma)
-    drop_sql = f"DROP TABLE IF EXISTS {TABLE_DEST_REF}"
-    client.query(drop_sql).result()
-    log.info(f"Table '{TABLE_DEST}' supprimée (si existante) — recréation avec le nouveau schéma.")
+    # client.query(drop_sql).result()
+    # log.info(f"Table '{TABLE_DEST}' supprimée (si existante) — recréation avec le nouveau schéma.")
 
     client.query(DDL_PAIE_QUALITE).result()
-    log.info(f"Table '{TABLE_DEST}' créée avec le nouveau schéma.")
+    log.info(f"Table '{TABLE_DEST}' créée ou déjà existante avec le bon schéma.")
 
 
 def seed_mapping_if_empty(client: bigquery.Client) -> None:
@@ -781,7 +780,7 @@ _BATCH_SIZE = 5_000   # insert_rows_json : max recommandé BigQuery
 
 def load_to_staging(client: bigquery.Client, records: list) -> None:
     """
-    Crée la table staging (CREATE OR REPLACE) et charge les records par batches.
+    Crée la table staging (CREATE OR REPLACE) et charge les records via un Load Job.
     """
     # Recréation de la staging table à chaque run
     client.query(DDL_STAGING).result()
@@ -790,22 +789,26 @@ def load_to_staging(client: bigquery.Client, records: list) -> None:
         log.warning("  Aucun record à charger dans staging.")
         return
 
-    table_id = f"{PROJECT_ID}.{DATASET_PAIE}.{TABLE_STAGING}"
-    total_errors = []
+    import tempfile
+    import json
+    tmp_path = os.path.join(tempfile.gettempdir(), "staging_qualite.jsonl")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        for r in records:
+            f.write(json.dumps(r) + "\n")
 
-    for i in range(0, len(records), _BATCH_SIZE):
-        batch = records[i : i + _BATCH_SIZE]
-        errors = client.insert_rows_json(table_id, batch)
-        if errors:
-            total_errors.extend(errors[:3])  # on garde seulement les 3 premiers pour le log
-        log.info(f"  Batch {i // _BATCH_SIZE + 1} : {len(batch)} records insérés.")
-
-    if total_errors:
-        log.error(f"Erreurs lors de l'insert staging (extraits) : {total_errors}")
-        raise RuntimeError("Échec partiel du chargement staging.")
-
-    log.info(f"  Total staging : {len(records)} records.")
-
+    job_config = bigquery.LoadJobConfig(
+        source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+    )
+    
+    # Strip backticks from TABLE_STAGING_REF because load_table_from_file doesn't like them
+    table_id_clean = TABLE_STAGING_REF.replace("`", "")
+    with open(tmp_path, "rb") as f:
+        job = client.load_table_from_file(f, table_id_clean, job_config=job_config)
+    job.result()  # Attend la fin du job
+    
+    os.remove(tmp_path)
+    log.info(f"  Total staging : {len(records)} records (via Load Job).")
 
 def merge_staging_to_dest(client: bigquery.Client) -> int:
     """

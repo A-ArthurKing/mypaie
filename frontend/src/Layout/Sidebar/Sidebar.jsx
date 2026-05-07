@@ -13,6 +13,8 @@ const NAV_ITEMS = [
   { id: 'heures',      label: 'Heures agents',  icon: 'fa-solid fa-clock',        path: '/heures'      },
   { id: 'qualite',     label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite'     },
   { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance' },
+  { id: 'agents',      label: 'Gestion agents', icon: 'fa-solid fa-users-gear',   path: '/agents'      },
+  { id: 'structure',   label: 'Gestion structure', icon: 'fa-solid fa-building-user', path: '/structure' },
   { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
 ]
 
@@ -58,10 +60,28 @@ function Sidebar() {
 
       {/* ── Pied de sidebar ── */}
       <div className="sidebar__footer">
-        <NavLink to="/parametres" className={({ isActive }) => `sidebar__nav-item${isActive ? ' sidebar__nav-item--active' : ''}`} title={collapsed ? 'Paramètres' : undefined}>
-          <i className="fa-solid fa-gear sidebar__nav-icon" />
-          {!collapsed && <span className="sidebar__nav-label">Paramètres</span>}
-        </NavLink>
+        <nav className="sidebar__nav-footer">
+          <NavLink
+            to="/parametres"
+            className={({ isActive }) => `sidebar__nav-item${isActive ? ' sidebar__nav-item--active' : ''}`}
+            title={collapsed ? 'Paramètres' : undefined}
+          >
+            <i className="fa-solid fa-gear sidebar__nav-icon" />
+            {!collapsed && <span className="sidebar__nav-label">Paramètres</span>}
+          </NavLink>
+        </nav>
+
+        {!collapsed && (
+          <div className="sidebar__user">
+            <div className="sidebar__user-avatar">
+              <i className="fa-solid fa-user" />
+            </div>
+            <div className="sidebar__user-info">
+              <span className="sidebar__user-name">Administrateur</span>
+              <span className="sidebar__user-role">Gestionnaire Paie</span>
+            </div>
+          </div>
+        )}
       </div>
 
     </aside>

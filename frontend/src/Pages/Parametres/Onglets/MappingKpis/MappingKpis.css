@@ -1,1 +1,671 @@
-/* On réutilise les styles de MappingProjets.css car la structure est identique */
+/*
+ * Fichier : MappingKpis.css
+ * Rôle    : Styles Premium pour l'onglet de mapping des indicateurs.
+ * Module  : mypaie / Pages / Parametres / MappingKpis
+ */
+
+.mk-tab-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px;
+}
+
+.mk-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- Header Section --- */
+.mk-header {
+    background: var(--color-surface);
+    padding: 14px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-xs);
+}
+
+.mk-header__content {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.mk-header__icon {
+    width: 40px;
+    height: 40px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.2rem;
+}
+
+.mk-header__title {
+    margin: 0 0 2px 0;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+}
+
+.mk-header__desc {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+/* --- Cards Shared --- */
+.mk-form-card,
+.mk-list-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-xs);
+}
+
+.mk-card-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mk-card-header i {
+    color: var(--color-accent);
+    font-size: 0.95rem;
+}
+
+.mk-card-header h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* --- Form Section --- */
+.mk-form {
+    padding: 16px;
+}
+
+.mk-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.mk-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mk-field--full {
+    grid-column: 1 / -1;
+}
+
+.mk-field label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mk-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.mk-input-wrapper i {
+    position: absolute;
+    left: 14px;
+    font-size: 0.9rem;
+    color: var(--color-text-disabled);
+}
+
+.mk-input-wrapper input,
+.mk-input-wrapper select,
+.mk-input-wrapper textarea {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    transition: all var(--transition-base);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+}
+
+.mk-input-wrapper select {
+    appearance: none;
+    cursor: pointer;
+    padding-right: 44px !important;
+}
+
+.mk-quick-add-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.mk-quick-add-btn:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+.mk-input-wrapper input:focus,
+.mk-input-wrapper select:focus,
+.mk-input-wrapper textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.mk-form-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+}
+
+/* --- Buttons --- */
+.mk-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mk-btn--primary {
+    background: var(--color-accent);
+    color: white;
+    box-shadow: 0 4px 10px var(--color-accent-soft);
+}
+
+.mk-btn--primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px var(--color-accent-soft);
+}
+
+.mk-btn--ghost {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border-color: var(--color-border);
+}
+
+.mk-btn--ghost:hover {
+    background: var(--color-surface-hover);
+}
+
+/* --- Table Section --- */
+.mk-list-card {
+    padding-bottom: 8px;
+}
+
+.mk-count-badge {
+    background: var(--color-bg-app);
+    color: var(--color-text-secondary);
+    padding: 2px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.mk-table-container {
+    padding: 12px;
+    overflow-x: auto;
+}
+
+.mk-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+}
+
+.mk-table th {
+    padding: 6px 12px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: left;
+}
+
+.mk-row {
+    transition: transform 0.2s;
+}
+
+.mk-row td {
+    background: var(--color-bg-app);
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.mk-row td:first-child {
+    border-left: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.mk-row td:last-child {
+    border-right: 1px solid var(--color-border-subtle);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.mk-row:hover {
+    transform: translateX(4px);
+}
+
+.mk-cell-univers {
+    width: 100px;
+}
+
+.mk-univers-tag {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.mk-univers-tag--perf {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.mk-univers-tag--qualite {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.mk-univers-tag--heures {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.mk-cell-scope {
+    width: 140px;
+}
+
+.mk-scope-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.mk-scope-tag i {
+    font-size: 0.7rem;
+}
+
+.mk-scope-tag--global {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.mk-scope-tag--project {
+    background: #fae8ff;
+    color: #701a75;
+}
+
+.mk-source-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mk-table-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mk-table-name i {
+    color: var(--color-accent);
+    font-size: 0.75rem;
+}
+
+.mk-column-name {
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 4px;
+}
+
+.mk-cell-arrow {
+    text-align: center;
+    color: var(--color-text-disabled);
+    width: 40px;
+}
+
+.mk-badge-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.mk-badge-source i {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.mk-badge-standard {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    position: relative;
+    padding-left: 28px;
+}
+
+.mk-badge-standard i {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 0.65rem;
+}
+
+.mk-badge-standard strong {
+    color: var(--color-text-primary);
+    font-weight: 700;
+}
+
+.mk-badge-standard small {
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+/* --- Formula Editor & Badges --- */
+.mk-mode-selector {
+    display: flex;
+    background: var(--color-bg-app);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.mk-mode-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.mk-mode-btn.active {
+    background: white;
+    color: var(--color-accent);
+    box-shadow: var(--shadow-xs);
+}
+
+.mk-formula-editor {
+    background: var(--color-bg-app);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.mk-formula-toolbar {
+    margin-bottom: 12px;
+}
+
+.mk-toolbar-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.mk-toolbar-section {
+    margin-bottom: 12px;
+}
+
+.mk-toolbar-section:last-child {
+    margin-bottom: 0;
+}
+
+.mk-operator-btns {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.mk-op-btn {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mk-op-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+}
+
+.mk-op-btn--num {
+    color: var(--color-text-primary);
+    background: var(--color-surface-2);
+}
+
+.mk-op-btn--fn {
+    font-size: 0.65rem;
+    padding: 0 8px;
+    width: auto;
+    min-width: 60px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #dbeafe;
+}
+
+.mk-op-btn--clear {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fee2e2;
+}
+
+.mk-op-btn--clear:hover {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+
+.mk-separator-v {
+    width: 1px;
+    height: 20px;
+    background: var(--color-border);
+    margin: 0 4px;
+}
+
+.mk-column-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.mk-col-tag {
+    background: white;
+    border: 1px solid var(--color-border);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mk-col-tag:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
+}
+
+.mk-formula-hint {
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.mk-formula-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-bg-sidebar);
+    color: white;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mk-formula-badge i {
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.mk-cell-desc {
+    color: var(--color-text-secondary);
+    font-style: italic;
+    font-size: 0.78rem;
+}
+
+.mk-nil {
+    opacity: 0.4;
+}
+
+.mk-action-btn {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    font-size: 0.75rem;
+}
+
+.mk-action-btn--edit:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.mk-action-btn--delete:hover {
+    background: var(--color-error-soft);
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.mk-empty-state {
+    padding: 60px;
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+.mk-empty-state i {
+    font-size: 3rem;
+    opacity: 0.15;
+    margin-bottom: 16px;
+}
+
+/* --- States --- */
+.mk-list-card--loading,
+.mk-list-card--error {
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--color-text-muted);
+}
+
+.mk-list-card--loading i {
+    font-size: 2rem;
+    color: var(--color-accent);
+}
+
+.mk-list-card--error {
+    color: var(--color-error);
+}
+
+.mk-list-card--error i {
+    font-size: 2rem;
+}

@@ -1,0 +1,757 @@
+﻿/*
+ * Fichier : AgentCard.css
+ * Rôle    : Styles pour la carte agent individuelle
+ * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets / Sections / AgentCard
+ */
+
+/* ── Dashboard Wrapper & List ── */
+.agents-dashboard-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 12px 10px;
+}
+
+.agents-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.agent-card {
+    display: grid;
+    grid-template-columns: 200px 1fr 260px 180px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-xs);
+    transition: all var(--transition-base);
+    min-height: 180px;
+    overflow: hidden;
+}
+
+.agent-card:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-accent-border);
+}
+
+/* ── Sections communes ── */
+.agent-card__profil,
+.agent-card__kpis,
+.agent-card__assiduite,
+.agent-card__result {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.agent-card__profil {
+    background: #fafafa;
+    border-right: 1px solid var(--color-border-subtle);
+}
+
+.agent-card__kpis {
+    border-right: 1px solid var(--color-border-subtle);
+    min-width: 320px;
+}
+
+.agent-card__assiduite {
+    background: rgba(245, 158, 11, 0.01);
+    border-right: 1px solid var(--color-border-subtle);
+}
+
+.agent-card__result {
+    background: rgba(232, 83, 58, 0.015);
+    justify-content: space-between;
+}
+
+/* Titre de section */
+.agent-card__section-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* ─── Section 1 : Profil ─── */
+.agent-card__identity {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.agent-card__matricule {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-accent);
+    font-weight: 700;
+    background: var(--color-accent-soft);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    width: fit-content;
+}
+
+.agent-card__name {
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+}
+
+.agent-card__name strong {
+    display: block;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.agent-card__projet {
+    padding: 6px 8px;
+    background: white;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.agent-card__operation {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+}
+
+.agent-card__meta {
+    font-size: 0.62rem;
+    color: var(--color-text-muted);
+}
+
+.agent-card__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.agent-card__status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.agent-card__status-label {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.agent-card__sanction-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    outline: none;
+    width: 100%;
+}
+
+.agent-card__sanction-toggle.is-ok {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.agent-card__sanction-toggle.is-ok:hover {
+    background: var(--color-success);
+    color: white;
+    border-color: var(--color-success);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.agent-card__sanction-toggle.is-sanctioned {
+    background: var(--color-error-soft);
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.agent-card__sanction-toggle.is-sanctioned:hover {
+    background: var(--color-error);
+    color: white;
+    border-color: var(--color-error);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.agent-card__sanction-toggle i {
+    font-size: 0.85rem;
+}
+
+.agent-card__statut-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--color-bg-app);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.agent-card__statut-display i {
+    font-size: 0.7rem;
+    color: var(--color-accent);
+    opacity: 0.7;
+}
+
+/* ─── Section 2 : KPIs ─── */
+.agent-card__kpi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.agent-card__kpi-header {
+    display: grid;
+    grid-template-columns: 8px 1fr 60px 60px 50px 60px;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 6px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.agent-card__kpi-h-reel,
+.agent-card__kpi-h-obj,
+.agent-card__kpi-h-att,
+.agent-card__kpi-h-pts {
+    text-align: right;
+}
+
+.agent-card__kpi-row {
+    display: grid;
+    grid-template-columns: 8px 1fr 60px 60px 50px 60px;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.agent-card__kpi-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.agent-card__kpi-name {
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+.agent-card__kpi-reel,
+.agent-card__kpi-obj,
+.agent-card__kpi-att,
+.agent-card__kpi-pts {
+    text-align: right;
+}
+
+.agent-card__kpi-reel {
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.agent-card__kpi-obj {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+}
+
+.agent-card__kpi-att {
+    font-weight: 700;
+}
+
+.agent-card__kpi-pts {
+    font-weight: 800;
+    color: var(--color-accent);
+}
+
+.agent-card__kpi-pts.is-special {
+    color: var(--color-text-muted);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.agent-card__sanction-overlay.is-eliminated {
+    background: rgba(254, 242, 242, 0.95);
+    border: 1px solid var(--color-error);
+}
+
+.agent-card__sanction-overlay.is-eliminated i {
+    color: var(--color-error);
+}
+
+.agent-card__pts-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: var(--radius-md);
+    margin-top: 8px;
+}
+
+.agent-card__pts-total span:first-child {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.agent-card__pts-total-val {
+    color: var(--color-accent);
+    font-size: 1.1rem;
+    font-weight: 900;
+}
+
+/* ─── Zone Sanction (KPI) ─── */
+.agent-card__sanction-overlay {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--color-error-soft);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-md);
+    margin: 4px 0;
+}
+
+.agent-card__sanction-overlay i {
+    font-size: 1.5rem;
+    color: var(--color-error);
+}
+
+.agent-card__sanction-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.agent-card__sanction-text strong {
+    font-size: 0.85rem;
+    color: var(--color-error);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.agent-card__sanction-text span {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+/* ─── Section 3 : Assiduité ─── */
+.agent-card__assiduite {
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border-subtle);
+    display: flex;
+    flex-direction: column;
+}
+
+.agent-card__assiduite-main {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.agent-card__counts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.agent-card__count-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--color-bg-app);
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.agent-card__count-item i {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.agent-card__count-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.agent-card__count-label {
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.agent-card__count-val {
+    font-size: 0.95rem;
+    font-weight: 900;
+}
+
+.agent-card__jours-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-xs);
+}
+
+.agent-card__jour-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px;
+    border-right: 1px solid var(--color-border-subtle);
+}
+
+.agent-card__jour-stat:last-child {
+    border-right: none;
+}
+
+.agent-card__jour-label {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+}
+
+.agent-card__jour-label i {
+    font-size: 0.5rem;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.agent-card__jour-label i:hover {
+    opacity: 1;
+    color: var(--color-accent);
+}
+
+.agent-card__jour-val {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+}
+
+.agent-card__jour-val.highlight {
+    color: var(--color-accent);
+}
+
+.agent-card__assiduite-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+}
+
+.agent-card__malus-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+}
+
+.agent-card__malus-indicator.status-good {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+}
+
+.agent-card__malus-indicator.status-average {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+}
+
+.agent-card__malus-indicator.status-bad {
+    background: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+.agent-card__malus-indicator .label {
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.agent-card__malus-indicator .val {
+    font-size: 0.85rem;
+    font-weight: 900;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.agent-card__malus-indicator i {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.agent-card__prod-hours {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.agent-card__prod-hours .label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.agent-card__prod-hours .val {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+}
+
+/* ─── Section 4 : Paie ─── */
+.agent-card__result {
+    background: var(--color-bg-app);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.agent-card__prime-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.agent-card__prime-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.agent-card__prime-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.agent-card__prime-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+}
+
+.agent-card__prime-unit {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-left: 2px;
+}
+
+.agent-card__prime-zero {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-text-disabled);
+}
+
+.agent-card__sb-value {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-text-disabled);
+}
+
+.agent-card__sb-value.has-bonus {
+    color: var(--color-success);
+}
+
+.agent-card__pts-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.agent-card__pts-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+.agent-card__pts-val {
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.agent-card__prime-row--extra {
+    margin-top: 2px;
+    padding-top: 2px;
+}
+
+.agent-card__prime-row--extra .agent-card__prime-label {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.agent-card__prime-row--extra .agent-card__sb-value {
+    font-size: 0.72rem;
+}
+
+.agent-card__extra-primes {
+    display: flex;
+    flex-direction: column;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--color-border-subtle);
+}
+
+.agent-card__total-prime {
+    margin-top: auto;
+    background: var(--color-accent);
+    color: white;
+    padding: 14px 10px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    box-shadow: 0 6px 16px var(--color-accent-soft);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+}
+
+.agent-card__total-prime:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--color-accent-soft);
+}
+
+.agent-card__total-label {
+    font-size: 0.58rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.agent-card__total-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.agent-card__total-value span {
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0.7;
+    margin-left: 2px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1400px) {
+    .agent-card {
+        grid-template-columns: 180px 1fr 240px 160px;
+    }
+
+    .agent-card__kpis {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 1150px) {
+    .agent-card {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .agent-card__profil,
+    .agent-card__kpis,
+    .agent-card__assiduite,
+    .agent-card__result {
+        border-right: none;
+        border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .agent-card__assiduite {
+        border-bottom: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .agent-card {
+        grid-template-columns: 1fr;
+    }
+
+    .agent-card__profil,
+    .agent-card__kpis,
+    .agent-card__assiduite,
+    .agent-card__result {
+        border: none;
+        border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .agent-card__result {
+        border-bottom: none;
+    }
+
+    .agent-card__assiduite-grid {
+        grid-template-columns: 1fr;
+    }
+}

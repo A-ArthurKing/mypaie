@@ -1,0 +1,17 @@
+/* ---- Agents page — layout only ---- */
+.agents-page {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.agents-page__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+}

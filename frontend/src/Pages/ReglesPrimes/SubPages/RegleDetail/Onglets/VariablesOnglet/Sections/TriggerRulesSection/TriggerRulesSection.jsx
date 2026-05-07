@@ -32,34 +32,34 @@ export default function TriggerRulesSection({ regle, onSave }) {
   };
 
   return (
-    <div className="trigger-rules-section">
-      <div className="trigger-header">
-        <h3 className="trigger-title">Éléments déclencheurs (Killing Rules)</h3>
-        <p className="trigger-subtitle">Conditions critiques entraînant une perte immédiate de prime.</p>
+    <div className="trs-section">
+      <div className="trs-header">
+        <h3 className="trs-title">Éléments déclencheurs (Killing Rules)</h3>
+        <p className="trs-subtitle">Conditions critiques entraînant une perte immédiate de prime.</p>
       </div>
 
-      <div className="trigger-list">
+      <div className="trs-list">
         {triggers.map((trigger) => (
-          <div key={trigger.id} className="trigger-item">
-            <div className="trigger-item__config">
-              <span className="trigger-prefix">Dès</span>
+          <div key={trigger.id} className="trs-item">
+            <div className="trs-item-config">
+              <span className="trs-prefix">Dès</span>
               <input 
                 type="number" 
-                className="trigger-count"
+                className="trs-count"
                 value={trigger.count} 
                 onChange={(e) => handleUpdate(trigger.id, 'count', parseInt(e.target.value) || 0)}
               />
               <input 
-                className="trigger-label"
+                className="trs-label"
                 value={trigger.label}
                 onChange={(e) => handleUpdate(trigger.id, 'label', e.target.value)}
                 placeholder="Ex: Réclamation client"
               />
             </div>
-            <div className="trigger-item__impact">
+            <div className="trs-item-impact">
               <i className="fa-solid fa-arrow-right"></i>
               <input 
-                className="trigger-impact-input"
+                className="trs-impact-input"
                 value={trigger.impact}
                 onChange={(e) => handleUpdate(trigger.id, 'impact', e.target.value)}
                 placeholder="Impact sur la prime"
@@ -72,7 +72,7 @@ export default function TriggerRulesSection({ regle, onSave }) {
         ))}
       </div>
 
-      <div className="trigger-footer">
+      <div className="trs-footer">
         <button className="btn btn-outline" onClick={() => setTriggers([...triggers, { id: Date.now(), label: "", count: 1, impact: "" }])}>
           + Ajouter un déclencheur
         </button>

@@ -20,4 +20,11 @@
     background: var(--color-bg-content);
 }
 
+@media (max-width: 768px) {
+    .app-layout__main {
+        padding-bottom: 74px;
+        /* Espace pour le menu mobile fixe en bas */
+    }
+}
+
 /* #endregion */

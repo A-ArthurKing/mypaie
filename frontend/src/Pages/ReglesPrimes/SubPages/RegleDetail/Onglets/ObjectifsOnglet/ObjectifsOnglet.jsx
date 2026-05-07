@@ -14,8 +14,11 @@ import GrilleSection from './Sections/GrilleSection/GrilleSection';
 import GrilleEditorModal from './Components/GrilleEditorModal/GrilleEditorModal';
 import SaveVersionModal from './Components/SaveVersionModal/SaveVersionModal';
 import ConfirmationModal from '../../../../../../Components/ConfirmationModal/ConfirmationModal';
+import { useSocket } from '../../../../../../Shared/Contexts/SocketContext';
+import { useToast } from '../../../../../../Shared/Contexts/ToastContext';
 
 export default function ObjectifsOnglet({ regle }) {
+  const addToast = useToast();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isNewMode, setIsNewMode] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -26,6 +29,7 @@ export default function ObjectifsOnglet({ regle }) {
   const [loadingConfigs, setLoadingConfigs] = useState(true);
   const [selectedVersions, setSelectedVersions] = useState({}); // { grilleUuid: configId }
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { uuid, nom }
+  const socket = useSocket();
 
   const fetchConfigs = async () => {
     try {
@@ -58,6 +62,21 @@ export default function ObjectifsOnglet({ regle }) {
   useEffect(() => {
     if (regle?.id) fetchConfigs();
   }, [regle?.id]);
+
+  // Real-time updates
+  useEffect(() => {
+    if (!socket || !regle?.id) return;
+
+    const handleUpdate = (data) => {
+      if (data && data.regle_id && String(data.regle_id) !== String(regle.id)) return;
+      console.log('[RealTime] Mise à jour des configs de grille détectée');
+      fetchConfigs();
+    };
+
+    socket.on('regle_configs_updated', handleUpdate);
+
+    return () => socket.off('regle_configs_updated');
+  }, [socket, regle?.id]);
 
   if (!regle) return null;
 
@@ -92,9 +111,10 @@ export default function ObjectifsOnglet({ regle }) {
         setIsNewMode(false);
         setPendingGrilleUuid(null);
         fetchConfigs();
+        addToast('Grille enregistrée avec succès', 'success');
       }
     } catch (e) {
-      alert("Erreur lors de l'enregistrement de la grille");
+      addToast("Erreur lors de l'enregistrement de la grille", 'error');
     }
   };
 
@@ -105,7 +125,7 @@ export default function ObjectifsOnglet({ regle }) {
       });
       if (res.ok) fetchConfigs();
     } catch (e) {
-      alert("Erreur lors de l'activation");
+      addToast("Erreur lors de l'activation", 'error');
     }
   };
 
@@ -117,10 +137,10 @@ export default function ObjectifsOnglet({ regle }) {
         setDeleteConfirm(null);
         fetchConfigs();
       } else {
-        alert("Erreur lors de la suppression de la grille");
+        addToast("Erreur lors de la suppression de la grille", 'error');
       }
     } catch (e) {
-      alert("Erreur lors de la suppression de la grille");
+      addToast("Erreur lors de la suppression de la grille", 'error');
     }
   };
 
@@ -145,7 +165,7 @@ export default function ObjectifsOnglet({ regle }) {
       });
       if (res.ok) fetchConfigs();
     } catch (e) {
-      alert("Erreur lors du déplacement de la grille");
+      addToast("Erreur lors du déplacement de la grille", 'error');
     }
   };
 

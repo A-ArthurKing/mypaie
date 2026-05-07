@@ -1,4 +1,4 @@
-.attendance-rules-section {
+.ars-section {
     background: white;
     border-radius: 12px;
     border: 1px solid var(--color-border);
@@ -6,34 +6,34 @@
     box-shadow: var(--shadow-sm);
 }
 
-.attendance-header {
+.ars-header {
     margin-bottom: 16px;
 }
 
-.attendance-title {
+.ars-title {
     font-size: 1rem;
     font-weight: 700;
     color: var(--color-text-primary);
     margin: 0 0 2px 0;
 }
 
-.attendance-subtitle {
+.ars-subtitle {
     font-size: 0.8rem;
     color: var(--color-text-muted);
     margin: 0;
 }
 
-.attendance-table-container {
+.ars-table-wrapper {
     overflow-x: auto;
 }
 
-.attendance-table {
+.ars-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 400px;
 }
 
-.attendance-table th {
+.ars-table th {
     text-align: left;
     padding: 10px 12px;
     background-color: var(--color-bg-light);
@@ -44,12 +44,12 @@
     border-bottom: 2px solid var(--color-border);
 }
 
-.attendance-table td {
+.ars-table td {
     padding: 12px;
     border-bottom: 1px solid var(--color-border-light);
 }
 
-.rule-inputs {
+.ars-rule-inputs {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -57,7 +57,7 @@
     row-gap: 8px;
 }
 
-.input-group {
+.ars-input-group {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -65,7 +65,7 @@
     color: var(--color-text-primary);
 }
 
-.input-group input {
+.ars-input-group input {
     width: 45px;
     padding: 4px 6px;
     border: 1px solid var(--color-border);
@@ -74,7 +74,7 @@
     font-weight: 600;
 }
 
-.rule-separator {
+.ars-separator {
     font-weight: 800;
     font-size: 0.7rem;
     color: var(--color-accent);
@@ -83,7 +83,7 @@
     border-radius: 4px;
 }
 
-.impact-input {
+.ars-impact-input {
     width: 100%;
     padding: 6px 10px;
     border: 1px solid transparent;
@@ -94,13 +94,13 @@
     font-weight: 500;
 }
 
-.impact-input:focus {
+.ars-impact-input:focus {
     background: white;
     border-color: var(--color-accent);
     outline: none;
 }
 
-.attendance-footer {
+.ars-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -111,6 +111,6 @@
     border-top: 1px solid var(--color-border);
 }
 
-.center {
+.ars-center {
     text-align: center;
 }

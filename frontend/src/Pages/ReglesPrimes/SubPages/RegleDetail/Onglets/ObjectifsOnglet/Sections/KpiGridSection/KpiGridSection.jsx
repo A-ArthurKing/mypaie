@@ -10,11 +10,14 @@ const PERIODICITE_LABELS = {
 
 function KpiCard({ icon, label, value }) {
   return (
-    <div className="objectifs-onglet__kpi-card">
-      <div className="objectifs-onglet__kpi-label">
-        <i className={icon}></i> {label}
+    <div className="kpi-card">
+      <div className="kpi-card__icon-wrap">
+        <i className={icon}></i>
       </div>
-      <div className="objectifs-onglet__kpi-value">{value || '—'}</div>
+      <div className="kpi-card__body">
+        <span className="kpi-card__label">{label}</span>
+        <span className="kpi-card__value">{value || '\u2014'}</span>
+      </div>
     </div>
   );
 }
@@ -23,7 +26,7 @@ export default function KpiGridSection({ regle }) {
   if (!regle) return null;
 
   return (
-    <div className="objectifs-onglet__kpi-grid">
+    <div className="kpi-grid">
       <KpiCard
         icon="fa-regular fa-calendar"
         label="Périodicité"

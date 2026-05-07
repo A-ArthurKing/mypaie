@@ -255,10 +255,12 @@ def create_regle(data: dict):
     """
     Insère une nouvelle règle dans la table matrice_primes.
     """
-    nom          = data.get("nom", "Sans nom")
-    id_structure = data.get("id_structure") or None
-    periodicite  = data.get("periodicite", "mensuelle")
-    description  = data.get("description", "")
+    import json
+    nom               = data.get("nom", "Sans nom")
+    id_structure      = data.get("id_structure") or None
+    periodicite       = data.get("periodicite", "mensuelle")
+    description       = data.get("description", "")
+    grille_objectifs  = data.get("grille_objectifs")
 
     code          = f"REGLE_{uuid.uuid4().hex[:8].upper()}"
     periode_debut = datetime.now().strftime("%Y-%m-%d")
@@ -267,12 +269,14 @@ def create_regle(data: dict):
     try:
         connection = get_mysql_connection()
         with connection.cursor() as cursor:
+            # Le système utilise désormais id_structure (Cerveau) pour les jointures.
             sql = """
                 INSERT INTO matrice_primes
-                (code, libelle, id_structure, periodicite, description, periode_debut, actif)
-                VALUES (%s, %s, %s, %s, %s, %s, 1)
+                (code, libelle, id_structure, periodicite, description, periode_debut, grille_objectifs, actif, projet)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 1, '')
             """
-            cursor.execute(sql, (code, nom, id_structure, periodicite, description, periode_debut))
+            grille_json = json.dumps(grille_objectifs) if grille_objectifs else None
+            cursor.execute(sql, (code, nom, id_structure, periodicite, description, periode_debut, grille_json))
             connection.commit()
             return {"id": cursor.lastrowid, "code": code, "nom": nom, "status": "success"}
     except Exception as e:

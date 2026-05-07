@@ -59,40 +59,52 @@ def get_qualite_agents(
     """
     client = get_bigquery_client()
 
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_QUALITE}.{BQ_TABLE_QUALITE}`"
-    colonnes_str = ", ".join(COLONNES_EXPOSEES)
+    table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
+    # colonnes_str = ", ".join(COLONNES_EXPOSEES)
+    colonnes_str = "agent as Agent, matricule, projet as Projet, date_evaluation as Date_Evaluation, score_global, nb_evaluations, item1_Respect_des_criteres_et_procedures as item1, item2_Savoir_etre_et_attitudes_commerciales as item2, item3_Traitement_de_la_demande as item3, item4_Savoir_faire as item4"
 
     where_clauses = []
     query_params = []
 
     if date_debut:
-        where_clauses.append("Date_Evaluation >= @date_debut")
+        where_clauses.append("date_evaluation >= @date_debut")
         query_params.append(
-            {"name": "date_debut", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_debut}}
+            {"name": "date_debut", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_debut.split()[0]}}
         )
 
     if date_fin:
-        where_clauses.append("Date_Evaluation <= @date_fin")
+        where_clauses.append("date_evaluation <= @date_fin")
         query_params.append(
-            {"name": "date_fin", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_fin}}
+            {"name": "date_fin", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_fin.split()[0]}}
         )
 
     if agent:
-        where_clauses.append("Agent = @agent")
+        where_clauses.append("agent = @agent")
         query_params.append(
             {"name": "agent", "parameterType": {"type": "STRING"}, "parameterValue": {"value": agent}}
         )
 
     if projet:
-        where_clauses.append("Projet = @projet")
+        where_clauses.append("projet = @projet")
         query_params.append(
             {"name": "projet", "parameterType": {"type": "STRING"}, "parameterValue": {"value": projet}}
         )
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-    data_query  = query_qualite_detail(table_ref, colonnes_str, where_str)
-    count_query = query_qualite_count(table_ref, where_str)
+    data_query = f"""
+        SELECT {colonnes_str}
+        FROM {table_ref}
+        {where_str}
+        ORDER BY date_evaluation DESC
+        LIMIT @limit OFFSET @offset
+    """
+    
+    count_query = f"""
+        SELECT COUNT(*) AS total
+        FROM {table_ref}
+        {where_str}
+    """
 
     pagination_params = query_params + [
         {"name": "limit",  "parameterType": {"type": "INT64"}, "parameterValue": {"value": str(limit)}},
@@ -132,20 +144,30 @@ def get_qualite_stats_projets(
         return cached
 
     client    = get_bigquery_client()
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_QUALITE}.{BQ_TABLE_QUALITE}`"
+    table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
     where_clauses = []
     query_params  = []
 
     if date_debut:
-        where_clauses.append("Date_Evaluation >= @date_debut")
-        query_params.append({"name": "date_debut", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_debut}})
+        where_clauses.append("date_evaluation >= @date_debut")
+        query_params.append({"name": "date_debut", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_debut.split()[0]}})
     if date_fin:
-        where_clauses.append("Date_Evaluation <= @date_fin")
-        query_params.append({"name": "date_fin", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_fin}})
+        where_clauses.append("date_evaluation <= @date_fin")
+        query_params.append({"name": "date_fin", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_fin.split()[0]}})
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-    query     = query_qualite_stats_projets(table_ref, where_str)
+    
+    query = f"""
+        SELECT 
+            projet,
+            AVG(score_global) as moyenne,
+            SUM(nb_evaluations) as nbEvaluations
+        FROM {table_ref}
+        {where_str}
+        GROUP BY 1
+        ORDER BY moyenne DESC
+    """
 
     try:
         job    = client.query(query, job_config=_build_job_config(query_params))

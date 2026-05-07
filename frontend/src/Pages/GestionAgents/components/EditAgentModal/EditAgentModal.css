@@ -1,0 +1,225 @@
+.eam-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.eam-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 620px;
+    max-height: 92vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.eam-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+}
+
+.eam-modal__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.eam-modal__icon {
+    width: 38px;
+    height: 38px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.eam-modal__title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 0 0 2px 0;
+    line-height: 1.2;
+}
+
+.eam-modal__matricule {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.eam-modal__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transition: all 0.15s;
+}
+
+.eam-modal__close:hover {
+    background: var(--color-bg-light, #f9fafb);
+    color: var(--color-text-primary);
+}
+
+.eam-modal__form {
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.eam-modal__error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #fecaca;
+}
+
+.eam-modal__section-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border-subtle, #f3f4f6);
+    padding-bottom: 6px;
+    margin-bottom: -0.25rem;
+}
+
+.eam-modal__row {
+    display: grid;
+    gap: 1rem;
+}
+
+.eam-modal__row--1 {
+    grid-template-columns: 1fr;
+}
+
+.eam-modal__row--2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.eam-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.eam-modal__field label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+}
+
+.eam-req {
+    color: #ef4444;
+}
+
+.eam-modal__field input,
+.eam-modal__field select {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-light, #f9fafb);
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+    outline: none;
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.eam-modal__field input:focus,
+.eam-modal__field select:focus {
+    border-color: #1d4ed8;
+    background: white;
+    box-shadow: 0 0 0 3px #eff6ff;
+}
+
+.eam-modal__field select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.eam-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-subtle, #f3f4f6);
+    margin-top: 0.25rem;
+}
+
+.eam-modal__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.eam-modal__btn--cancel {
+    background: #1f2937;
+    color: white;
+}
+
+.eam-modal__btn--cancel:hover {
+    background: #111827;
+}
+
+.eam-modal__btn--submit {
+    background: #1d4ed8;
+    color: white;
+}
+
+.eam-modal__btn--submit:hover {
+    opacity: 0.9;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
+}
+
+.eam-modal__btn--submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+}

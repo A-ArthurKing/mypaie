@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSocket } from '../../../../../../../../Shared/Contexts/SocketContext';
 import './GrilleEditorModal.css';
 import '../../../VariablesOnglet/Sections/PaliersSection/PaliersSection.css';
 
@@ -15,12 +16,40 @@ const DEFAULT_PALIERS_MODAL = [
 export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData }) {
   const [activeStep, setActiveStep] = useState(1); // 1: Statuts, 2: Indicateurs, 3: Valeurs, 4: Paliers
   const [newCatName, setNewCatName] = useState('');
+  const [kpiRefs, setKpiRefs] = useState({});
+  const socket = useSocket();
   const [data, setData] = useState({
     categories: [],
     indicateurs: [],
     statuts: [],
-    paliers: [] // [{id, seuil_atteinte, pourcentage_paiement}]
+    paliers: [],
+    primes_additionnelles: [] 
   });
+
+  useEffect(() => {
+    // Charger les KPIs de référence
+    const fetchRefs = () => {
+      fetch('/api/parametres/references')
+        .then(res => res.json())
+        .then(d => setKpiRefs(d.kpis || {}))
+        .catch(e => console.error("Erreur chargement refs KPIs", e));
+    };
+
+    fetchRefs();
+
+    if (socket) {
+      const handleUpdate = () => {
+        console.log('[RealTime] Mise à jour des références détectée');
+        fetchRefs();
+      };
+      socket.on('kpi_standards_updated', handleUpdate);
+      socket.on('mapping_kpis_updated', handleUpdate);
+      return () => {
+        socket.off('kpi_standards_updated', handleUpdate);
+        socket.off('mapping_kpis_updated', handleUpdate);
+      };
+    }
+  }, [socket]);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +65,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
           indicateurs: initialData.indicateurs || [],
           statuts: initialData.statuts || [],
           paliers: enrichedPaliers.length ? enrichedPaliers : DEFAULT_PALIERS_MODAL,
+          primes_additionnelles: initialData.primes_additionnelles || []
         });
       } else {
         // Mode création : paliers par défaut calqués sur l'Excel
@@ -44,6 +74,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
           indicateurs: [],
           statuts: [],
           paliers: DEFAULT_PALIERS_MODAL,
+          primes_additionnelles: []
         });
         setActiveStep(1);
       }
@@ -56,7 +87,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
   const addStatut = () => {
     setData(prev => ({
       ...prev,
-      statuts: [...prev.statuts, { nom: '', prime_brute: '', cibles: {} }]
+      statuts: [...prev.statuts, { nom: '', prime_brute: '', montant_sb: '', cibles: {} }]
     }));
   };
 
@@ -78,7 +109,15 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
     const id = `kpi_${Date.now()}`;
     setData(prev => ({
       ...prev,
-      indicateurs: [...prev.indicateurs, { id, nom: '', categorie: categoryName, type: 'entier' }]
+      indicateurs: [...prev.indicateurs, { 
+        id, 
+        nom: '', 
+        categorie: categoryName, 
+        type: 'entier', 
+        poids: 10, 
+        metric_key: '',
+        type_ponderation: 'bonus' // Nouveau : bonus, malus, eliminatoire, coefficient
+      }]
     }));
   };
 
@@ -90,10 +129,34 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
   };
 
   const updateIndicator = (id, field, value) => {
-    setData(prev => ({
-      ...prev,
-      indicateurs: prev.indicateurs.map(ind => ind.id === id ? { ...ind, [field]: value } : ind)
-    }));
+    setData(prev => {
+      const newInds = prev.indicateurs.map(ind => {
+        if (ind.id !== id) return ind;
+        
+        const updated = { ...ind, [field]: value };
+        
+        // Si on change la clé métrique, on pré-remplit les autres champs
+        if (field === 'metric_key' && value) {
+          // Rechercher la métrique dans toutes les catégories du référentiel
+          let found = null;
+          Object.values(kpiRefs).forEach(group => {
+            const m = group.find(k => k.tech_key === value);
+            if (m) found = m;
+          });
+
+          if (found) {
+            updated.nom = found.libelle;
+            // Mapping des types d'unités vers les types d'affichage
+            if (found.unite === '%') updated.type = 'pourcentage';
+            else if (found.unite === 'EUR' || found.unite === 'DH') updated.type = 'devise';
+            else updated.type = 'entier';
+          }
+        }
+        
+        return updated;
+      });
+      return { ...prev, indicateurs: newInds };
+    });
   };
 
   // --- Gestion des Catégories ---
@@ -173,6 +236,68 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
     }));
   };
 
+  // --- Gestion des Primes Additionnelles ---
+  const addExtraPrime = () => {
+    const id = `extra_${Date.now()}`;
+    setData(prev => ({
+      ...prev,
+      primes_additionnelles: [...prev.primes_additionnelles, { 
+        id, 
+        nom: '', 
+        type: 'fixe', 
+        montant_defaut: 0,
+        metric_key: '',
+        conditions: [{ seuil: 0, montant: 0 }] 
+      }]
+    }));
+  };
+
+  const addExtraCondition = (primeId) => {
+    setData(prev => ({
+      ...prev,
+      primes_additionnelles: prev.primes_additionnelles.map(p => 
+        p.id === primeId ? { ...p, conditions: [...(p.conditions || []), { seuil: 0, montant: 0 }] } : p
+      )
+    }));
+  };
+
+  const updateExtraCondition = (primeId, condIndex, field, value) => {
+    setData(prev => ({
+      ...prev,
+      primes_additionnelles: prev.primes_additionnelles.map(p => {
+        if (p.id !== primeId) return p;
+        const newConds = [...(p.conditions || [])];
+        newConds[condIndex] = { ...newConds[condIndex], [field]: parseFloat(value) || 0 };
+        return { ...p, conditions: newConds };
+      })
+    }));
+  };
+
+  const removeExtraCondition = (primeId, condIndex) => {
+    setData(prev => ({
+      ...prev,
+      primes_additionnelles: prev.primes_additionnelles.map(p => 
+        p.id === primeId ? { ...p, conditions: p.conditions.filter((_, i) => i !== condIndex) } : p
+      )
+    }));
+  };
+
+  const removeExtraPrime = (id) => {
+    setData(prev => ({
+      ...prev,
+      primes_additionnelles: prev.primes_additionnelles.filter(p => p.id !== id)
+    }));
+  };
+
+  const updateExtraPrime = (id, field, value) => {
+    setData(prev => ({
+      ...prev,
+      primes_additionnelles: prev.primes_additionnelles.map(p => 
+        p.id === id ? { ...p, [field]: value } : p
+      )
+    }));
+  };
+
   // --- Barre de visualisation des paliers ---
   const renderVisualBar = () => {
     const sorted = [...data.paliers].sort((a, b) => (a.seuil_atteinte ?? 999) - (b.seuil_atteinte ?? 999));
@@ -200,68 +325,85 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
   };
 
   return (
-    <div className="grille-editor-overlay" onClick={onClose}>
-      <div className="grille-editor-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="grille-editor-header">
-          <div className="grille-editor-title-row">
+    <div className="gem-overlay" onClick={onClose}>
+      <div className="gem-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="gem-header">
+          <div className="gem-title-row">
             <h2>Personnaliser la Grille d'Objectifs</h2>
-            <button className="btn-close-modal" onClick={onClose} title="Fermer">
+            <button className="gem-btn-close" onClick={onClose} title="Fermer">
               <i className="fa-solid fa-xmark"></i>
             </button>
           </div>
-          <div className="step-indicator">
+          <div className="gem-step-indicator">
             <span className={activeStep === 1 ? 'active' : ''} onClick={() => setActiveStep(1)}>1. Statuts</span>
             <span className={activeStep === 2 ? 'active' : ''} onClick={() => setActiveStep(2)}>2. Indicateurs</span>
             <span className={activeStep === 3 ? 'active' : ''} onClick={() => setActiveStep(3)}>3. Valeurs</span>
-            <span className={activeStep === 4 ? 'active' : ''} onClick={() => setActiveStep(4)}>4. Paliers de calcul</span>
+            <span className={activeStep === 4 ? 'active' : ''} onClick={() => setActiveStep(4)}>4. Paliers</span>
+            <span className={activeStep === 5 ? 'active' : ''} onClick={() => setActiveStep(5)}>5. Tranches & Règles Spéciales</span>
           </div>
         </div>
 
-        <div className="grille-editor-body">
+        <div className="gem-body">
           {activeStep === 1 && (
-            <div className="editor-step">
-              <p className="step-desc">Définissez les différents niveaux d'expérience ou statuts (ex: Débutant, Senior).</p>
-              <div className="statuts-list">
+            <div className="gem-step">
+              <p className="gem-step-desc">Définissez les niveaux (ex: Standard, Confirmé) et leurs montants cibles (Prime de base).</p>
+              <div className="gem-statuts-list">
                 {data.statuts.map((s, i) => (
-                  <div key={i} className="editor-row">
-                    <input 
-                      placeholder="Nom du statut" 
-                      value={s.nom} 
-                      onChange={(e) => updateStatut(i, 'nom', e.target.value)} 
-                    />
-                    <input 
-                      placeholder="Prime Brute (ex: 1200 MAD)" 
-                      value={s.prime_brute} 
-                      onChange={(e) => updateStatut(i, 'prime_brute', e.target.value)} 
-                    />
-                    <button className="btn-icon danger" onClick={() => removeStatut(i)}>
+                  <div key={i} className="gem-row gem-row--statut">
+                    <div className="gem-input-group">
+                      <label>Libellé Niveau</label>
+                      <input 
+                        placeholder="Ex: Senior" 
+                        value={s.nom} 
+                        onChange={(e) => updateStatut(i, 'nom', e.target.value)} 
+                      />
+                    </div>
+                    <div className="gem-input-group" style={{ flex: '0 0 140px' }}>
+                      <label>Prime Base</label>
+                      <input 
+                        type="number"
+                        placeholder="Ex: 1200" 
+                        value={s.prime_brute} 
+                        onChange={(e) => updateStatut(i, 'prime_brute', e.target.value)} 
+                      />
+                    </div>
+                    <div className="gem-input-group" style={{ flex: '0 0 140px' }}>
+                      <label>Super Bonus</label>
+                      <input 
+                        type="number"
+                        placeholder="Ex: 500" 
+                        value={s.montant_sb} 
+                        onChange={(e) => updateStatut(i, 'montant_sb', e.target.value)} 
+                      />
+                    </div>
+                    <button className="gem-btn-icon danger gem-mt-label" onClick={() => removeStatut(i)}>
                       <i className="fa-solid fa-trash"></i>
                     </button>
                   </div>
                 ))}
               </div>
-              <button className="btn btn-outline" onClick={addStatut}>+ Ajouter un statut</button>
+              <button className="btn gem-btn-outline" onClick={addStatut}>+ Ajouter un niveau</button>
             </div>
           )}
 
           {activeStep === 2 && (
-            <div className="editor-step">
-              <div className="categories-management">
-                <h4 className="management-title">1. Définir les grandes catégories</h4>
-                <p className="step-desc">Regroupez vos indicateurs par thématique (ex: Productivité, Qualité).</p>
+            <div className="gem-step">
+              <div className="gem-categories-mgmt">
+                <h4 className="gem-mgmt-title">1. Définir les grandes catégories</h4>
+                <p className="gem-step-desc">Regroupez vos indicateurs par thématique (ex: Productivité, Qualité).</p>
                 
-                <div className="category-add-form">
+                <div className="gem-cat-add-form">
                   <input 
                     placeholder="Nom de la catégorie..." 
                     value={newCatName} 
                     onChange={(e) => setNewCatName(e.target.value)}
                   />
-                  <button className="btn btn-primary btn-sm" onClick={handleAddCategory}>Ajouter</button>
+                  <button className="btn btn-primary gem-btn-sm" onClick={handleAddCategory}>Ajouter</button>
                 </div>
 
-                <div className="categories-badges">
+                <div className="gem-cat-badges">
                   {data.categories.map(cat => (
-                    <span key={cat} className="cat-badge">
+                    <span key={cat} className="gem-cat-badge">
                       {cat} 
                       <i className="fa-solid fa-xmark" onClick={() => removeCategory(cat)}></i>
                     </span>
@@ -269,43 +411,77 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                 </div>
               </div>
 
-              <div className="indicators-management">
-                <h4 className="management-title">2. Rattacher les indicateurs aux catégories</h4>
+              <div className="gem-indicators-mgmt">
+                <h4 className="gem-mgmt-title">2. Rattacher les indicateurs aux catégories</h4>
                 
                 {data.categories.length === 0 && (
-                  <div className="info-box">Veuillez d'abord créer au moins une catégorie ci-dessus.</div>
+                  <div className="gem-info-box">Veuillez d'abord créer au moins une catégorie ci-dessus.</div>
                 )}
 
                 {data.categories.map(cat => (
-                  <div key={cat} className="category-group-box">
-                    <div className="category-group-header">
+                  <div key={cat} className="gem-cat-group-box">
+                    <div className="gem-cat-group-header">
                       <i className="fa-solid fa-folder-open"></i> {cat}
                     </div>
-                    <div className="category-group-content">
+                    <div className="gem-cat-group-content">
                       {data.indicateurs.filter(i => i.categorie === cat).map(ind => (
-                        <div key={ind.id} className="editor-row">
-                          <div className="input-with-label">
-                            <label>Nom de l'indicateur</label>
-                            <input 
-                              placeholder="Ex: DMT, Ventes..." 
-                              value={ind.nom} 
-                              onChange={(e) => updateIndicator(ind.id, 'nom', e.target.value)} 
-                            />
-                          </div>
-                          <div className="input-with-label" style={{ flex: '0 0 150px' }}>
-                            <label>Type de valeur</label>
-                            <select value={ind.type} onChange={(e) => updateIndicator(ind.id, 'type', e.target.value)}>
-                              <option value="entier">Nombre</option>
-                              <option value="pourcentage">Pourcentage (%)</option>
-                              <option value="devise">Devise (€/MAD)</option>
+                        <div key={ind.id} className="gem-row">
+                          <div className="gem-input-group" style={{ flex: '1 1 300px' }}>
+                            <label>Source de donnée (DW) & Nom</label>
+                            <select 
+                              value={ind.metric_key || ''} 
+                              onChange={(e) => updateIndicator(ind.id, 'metric_key', e.target.value)}
+                            >
+                              <option value="">-- Choisir une métrique --</option>
+                              {Object.entries(kpiRefs).map(([univers, list]) => (
+                                <optgroup key={univers} label={univers}>
+                                  {list.map(k => (
+                                    <option key={`${univers}-${k.id || k.tech_key}`} value={k.tech_key}>
+                                      {k.mapping_count > 0 ? '🔗 ' : '⚠️ '} 
+                                      {k.libelle} 
+                                      {k.mapping_count > 0 ? '' : ' (Non lié)'}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              ))}
                             </select>
                           </div>
-                          <button className="btn-icon danger mt-label" onClick={() => removeIndicator(ind.id)}>
+
+                          <div className="gem-input-group" style={{ flex: '0 0 150px' }}>
+                            <label>Comportement</label>
+                            <select 
+                              value={ind.type_ponderation || 'bonus'} 
+                              onChange={(e) => updateIndicator(ind.id, 'type_ponderation', e.target.value)}
+                            >
+                              <option value="bonus">💰 Bonus (Pts)</option>
+                              <option value="malus">📉 Pénalité (Pts)</option>
+                              <option value="eliminatoire">🚫 Éliminatoire</option>
+                              <option value="coefficient">✖️ Global (%)</option>
+                            </select>
+                          </div>
+                          
+                          <div className="gem-input-group" style={{ flex: '0 0 80px' }}>
+                            <label>{(ind.type_ponderation === 'eliminatoire' || ind.type_ponderation === 'coefficient') ? 'Impact' : 'Poids'}</label>
+                            <input 
+                              type="number"
+                              placeholder="20" 
+                              value={ind.poids} 
+                              onChange={(e) => updateIndicator(ind.id, 'poids', e.target.value)} 
+                            />
+                          </div>
+
+                          <div className="gem-input-group" style={{ flex: '0 0 100px' }}>
+                            <label>Format</label>
+                            <div className="gem-readonly-val">
+                              {ind.type === 'pourcentage' ? '%' : ind.type === 'devise' ? 'DH/€' : 'Nb'}
+                            </div>
+                          </div>
+                          <button className="gem-btn-icon danger gem-mt-label" onClick={() => removeIndicator(ind.id)}>
                             <i className="fa-solid fa-trash"></i>
                           </button>
                         </div>
                       ))}
-                      <button className="btn btn-xs btn-outline-alt" onClick={() => addIndicator(cat)}>
+                      <button className="btn gem-btn-xs gem-btn-outline-alt" onClick={() => addIndicator(cat)}>
                         + Ajouter un indicateur dans {cat}
                       </button>
                     </div>
@@ -314,24 +490,21 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
 
                 {/* Indicateurs orphelins */}
                 {data.indicateurs.filter(i => !i.categorie || !data.categories.includes(i.categorie)).length > 0 && (
-                  <div className="category-group-box warning">
-                    <div className="category-group-header">Indicateurs sans catégorie</div>
-                    <div className="category-group-content">
+                  <div className="gem-cat-group-box warning">
+                    <div className="gem-cat-group-header">Indicateurs sans catégorie</div>
+                    <div className="gem-cat-group-content">
                       {data.indicateurs.filter(i => !i.categorie || !data.categories.includes(i.categorie)).map(ind => (
-                        <div key={ind.id} className="editor-row">
-                          <input 
-                            placeholder="Nom KPI" 
-                            value={ind.nom} 
-                            onChange={(e) => updateIndicator(ind.id, 'nom', e.target.value)} 
-                          />
+                        <div key={ind.id} className="gem-row">
+                          <div className="gem-readonly-val" style={{ flex: 1 }}>{ind.nom || 'Sans nom'}</div>
                           <select 
                             value={ind.categorie} 
                             onChange={(e) => updateIndicator(ind.id, 'categorie', e.target.value)}
+                            style={{ flex: 1 }}
                           >
-                            <option value="">Choisir une catégorie...</option>
+                            <option value="">Rattacher à...</option>
                             {data.categories.map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
-                          <button className="btn-icon danger" onClick={() => removeIndicator(ind.id)}>
+                          <button className="gem-btn-icon danger" onClick={() => removeIndicator(ind.id)}>
                             <i className="fa-solid fa-trash"></i>
                           </button>
                         </div>
@@ -344,13 +517,24 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
           )}
 
           {activeStep === 3 && (
-            <div className="editor-step overflow-auto">
-              <p className="step-desc">Saisissez les valeurs cibles pour chaque statut.</p>
-              <table className="preview-table">
+            <div className="gem-step overflow-auto">
+              <p className="gem-step-desc">Saisissez les valeurs cibles pour chaque statut.</p>
+              <table className="gem-preview-table">
                 <thead>
                   <tr>
                     <th>Statut</th>
-                    {data.indicateurs.map(ind => <th key={ind.id}>{ind.nom}</th>)}
+                    {data.indicateurs.map(ind => (
+                      <th key={ind.id}>
+                        <div className="gem-th-stack">
+                          <span className="gem-th-name">{ind.nom}</span>
+                          <span className={`gem-th-type tag-${ind.type_ponderation || 'bonus'}`}>
+                            {ind.type_ponderation === 'eliminatoire' ? 'BLOQUANT' : 
+                             ind.type_ponderation === 'coefficient' ? 'COEFF %' : 
+                             ind.type_ponderation === 'malus' ? 'PENALITÉ' : 'BONUS'}
+                          </span>
+                        </div>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -359,11 +543,17 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                       <td className="font-bold">{s.nom || `Statut ${si+1}`}</td>
                       {data.indicateurs.map(ind => (
                         <td key={ind.id}>
-                          <input 
-                            className="cell-input"
-                            value={s.cibles[ind.id] || ''} 
-                            onChange={(e) => updateCible(si, ind.id, e.target.value)}
-                          />
+                          <div className="gem-cell-wrapper">
+                            <input 
+                              className="gem-cell-input"
+                              placeholder={ind.type_ponderation === 'eliminatoire' ? 'Min' : 'Obj.'}
+                              value={s.cibles[ind.id] || ''} 
+                              onChange={(e) => updateCible(si, ind.id, e.target.value)}
+                            />
+                            <span className="gem-cell-unit">
+                              {ind.type === 'pourcentage' ? '%' : ind.type === 'devise' ? 'DH' : ''}
+                            </span>
+                          </div>
                         </td>
                       ))}
                     </tr>
@@ -374,9 +564,15 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
           )}
 
           {activeStep === 4 && (
-            <div className="editor-step">
-              <h4 className="management-title">Définir les paliers de versement</h4>
-              <p className="step-desc">Indiquez le % de points attribués selon le taux d'atteinte de l'objectif.</p>
+            <div className="gem-step">
+              <h4 className="gem-mgmt-title">Définir les paliers de versement</h4>
+              <div className="gem-info-box gem-info-box--blue" style={{ marginBottom: '20px' }}>
+                <i className="fa-solid fa-circle-info"></i>
+                <p>
+                  Les paliers évaluent la performance globale (la somme pondérée des indicateurs de type Bonus/Malus).<br/>
+                  <strong>Si vous souhaitez uniquement déclencher des montants selon des tranches (ex: tranches de CA), laissez ces paliers de côté et passez à l'étape suivante.</strong>
+                </p>
+              </div>
 
               {/* Barre visuelle */}
               {renderVisualBar()}
@@ -461,7 +657,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                         {/* Action */}
                         <div className="ps-legend__cell ps-legend__cell--action">
                           {!p.locked ? (
-                            <button type="button" className="btn-icon danger" onClick={() => removePalier(p.id)}>
+                            <button type="button" className="gem-btn-icon danger" onClick={() => removePalier(p.id)}>
                               <i className="fa-solid fa-trash"></i>
                             </button>
                           ) : (
@@ -477,25 +673,162 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
                 }
               </div>
 
-              <button className="btn btn-outline" onClick={addPalier} type="button">
+              <button className="btn gem-btn-outline" onClick={addPalier} type="button">
                 <i className="fa-solid fa-plus"></i> Ajouter un palier
               </button>
 
-              <div className="info-box info-box--blue mt-20">
+              <div className="gem-info-box gem-info-box--blue gem-mt-20">
                 <i className="fa-solid fa-circle-info"></i>
                 <p>Exemple : un palier à <strong>85%</strong> avec <strong>50%</strong> des points signifie que l'agent obtient la moitié des points prévus pour ce KPI s'il se situe entre 85% et le seuil suivant.</p>
               </div>
             </div>
           )}
+
+          {activeStep === 5 && (
+            <div className="gem-step">
+              <h4 className="gem-mgmt-title">Configuration des Primes Additionnelles</h4>
+              <p className="gem-step-desc">Ajoutez des primes spécifiques (fixes, manuelles ou basées sur l'atteinte d'un indicateur).</p>
+              
+              <div className="gem-extra-primes-list">
+                {data.primes_additionnelles.length === 0 && (
+                  <div className="gem-info-box">Aucune prime additionnelle configurée. Cliquez sur le bouton ci-dessous pour en ajouter une.</div>
+                )}
+                
+                {data.primes_additionnelles.map((p) => (
+                  <div key={p.id} className="gem-extra-prime-card">
+                    <div className="gem-row">
+                      <div className="gem-input-group">
+                        <label>Nom de la prime</label>
+                        <input 
+                          placeholder="Ex: Prime Challenge" 
+                          value={p.nom} 
+                          onChange={(e) => updateExtraPrime(p.id, 'nom', e.target.value)} 
+                        />
+                      </div>
+                      <div className="gem-input-group" style={{ flex: '0 0 220px' }}>
+                        <label>Type d'attribution</label>
+                        <select value={p.type} onChange={(e) => updateExtraPrime(p.id, 'type', e.target.value)}>
+                          <option value="fixe">Fixe (Par défaut)</option>
+                          <option value="conditionnelle">Conditionnelle (Calculée)</option>
+                          <option value="manuel">Saisie Manuelle (Agent)</option>
+                        </select>
+                      </div>
+                      <button className="gem-btn-icon danger gem-mt-label" onClick={() => removeExtraPrime(p.id)}>
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+
+                    {p.type === 'fixe' && (
+                      <div className="gem-extra-details">
+                        <div className="gem-input-group" style={{ maxWidth: '200px' }}>
+                          <label>Montant (DH)</label>
+                          <input 
+                            type="number"
+                            value={p.montant_defaut} 
+                            onChange={(e) => updateExtraPrime(p.id, 'montant_defaut', parseFloat(e.target.value) || 0)} 
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {p.type === 'conditionnelle' && (
+                      <div className="gem-extra-details gem-extra-details--cond">
+                        <div className="gem-info-box gem-info-box--blue" style={{ marginBottom: '16px', marginTop: 0 }}>
+                          <i className="fa-solid fa-wand-magic-sparkles"></i>
+                          <p>Cette prime sera calculée automatiquement selon le résultat de l'agent sur l'indicateur choisi.</p>
+                        </div>
+                        <div className="gem-input-group" style={{ marginBottom: '12px' }}>
+                          <label>Basé sur l'indicateur</label>
+                          <select 
+                            value={p.metric_key || ''} 
+                            onChange={(e) => updateExtraPrime(p.id, 'metric_key', e.target.value)}
+                          >
+                            <option value="">-- Choisir un indicateur --</option>
+                            {Object.entries(kpiRefs).map(([univers, list]) => (
+                              <optgroup key={univers} label={univers}>
+                                {list.map(k => (
+                                  <option key={k.tech_key} value={k.tech_key}>{k.libelle}</option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="gem-cond-rules">
+                          <label className="gem-sub-label">Règles de paliers :</label>
+                          {(p.conditions || []).map((c, cIdx) => (
+                            <div key={cIdx} className="gem-cond-row">
+                              <span className="gem-cond-txt">Si réel &ge;</span>
+                              <input 
+                                type="number" 
+                                placeholder="Seuil" 
+                                value={c.seuil} 
+                                style={{ width: '80px' }}
+                                onChange={(e) => updateExtraCondition(p.id, cIdx, 'seuil', e.target.value)}
+                              />
+                              <span className="gem-cond-txt">alors +</span>
+                              <input 
+                                type="number" 
+                                placeholder="Valeur" 
+                                value={c.montant} 
+                                style={{ width: '80px' }}
+                                onChange={(e) => updateExtraCondition(p.id, cIdx, 'montant', e.target.value)}
+                              />
+                              <select 
+                                value={c.type_montant || 'fixe'} 
+                                onChange={(e) => updateExtraCondition(p.id, cIdx, 'type_montant', e.target.value)}
+                                style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #3b3b4f', background: '#13131f', color: '#fff' }}
+                              >
+                                <option value="fixe">DH</option>
+                                <option value="pourcentage">% du réel</option>
+                              </select>
+                              <button className="gem-btn-icon danger btn-xs" onClick={() => removeExtraCondition(p.id, cIdx)}>
+                                <i className="fa-solid fa-times"></i>
+                              </button>
+                            </div>
+                          ))}
+                          <button className="btn gem-btn-xs gem-btn-outline" onClick={() => addExtraCondition(p.id)}>
+                            <i className="fa-solid fa-plus"></i> Ajouter un palier
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {p.type === 'manuel' && (
+                      <div className="gem-extra-details">
+                        <p className="gem-info-txt">
+                          <i className="fa-solid fa-circle-info"></i> Cette prime sera saisie manuellement pour chaque agent dans l'onglet "Objectifs".
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <button className="btn gem-btn-outline" onClick={addExtraPrime} type="button">
+                <i className="fa-solid fa-plus"></i> Ajouter une règle spéciale / tranche
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="grille-editor-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Annuler</button>
-          {activeStep > 1 && <button className="btn btn-outline" onClick={() => setActiveStep(activeStep - 1)}>Précédent</button>}
-          {activeStep < 4 ? (
-            <button className="btn btn-primary" onClick={() => setActiveStep(activeStep + 1)}>Suivant</button>
+        <div className="gem-footer">
+          <button className="btn btn-secondary" onClick={onClose}>
+            <i className="fa-solid fa-xmark"></i> Annuler
+          </button>
+          {activeStep > 1 && (
+            <button className="btn gem-btn-outline" onClick={() => setActiveStep(activeStep - 1)}>
+              <i className="fa-solid fa-arrow-left"></i> Précédent
+            </button>
+          )}
+          {activeStep < 5 ? (
+            <button className="btn btn-primary" onClick={() => setActiveStep(activeStep + 1)}>
+              Suivant <i className="fa-solid fa-arrow-right"></i>
+            </button>
           ) : (
-            <button className="btn btn-success" onClick={handleFinalSave}>Enregistrer la grille</button>
+            <button className="btn btn-success" onClick={handleFinalSave}>
+              <i className="fa-solid fa-check"></i> Enregistrer la grille
+            </button>
           )}
         </div>
       </div>

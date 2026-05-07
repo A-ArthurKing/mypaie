@@ -1,27 +1,25 @@
 /*
  * Fichier     : VariablesOnglet.jsx
  * Rôle        : Onglet "Variables" du détail d'une règle de prime.
- *               Orchestre les 5 sections de configuration du moteur de calcul,
- *               chacune encapsulée dans un AccordionSection repliable :
- *               1. TargetMatrixSection    — Postes & objectifs cibles par niveau
- *               2. WeightingSection       — Pondération des KPIs (nb de points)
- *               3. TempsProrataSection    — Jours ouvrés, base horaire, calcul prorata
- *               4. AttendanceRulesSection — Règles d'assiduité (absences/retards)
- *               5. TriggerRulesSection   — Killing rules (événements critiques)
- * Note        : Les paliers de calcul sont configurés dans l'onglet Objectifs (GrilleEditorModal).
+ *               Orchestre les sections de configuration environnementale :
+ *               1. TempsProrataSection    — Jours ouvrés, base horaire, calcul prorata
+ *               2. AttendanceRulesSection — Règles d'assiduité (absences/retards)
+ *               3. TriggerRulesSection   — Killing rules (événements critiques)
+ * Note        : Toute la logique de performance (KPIs, Poids, Montants, Paliers)
+ *               est désormais centralisée dans l'onglet "Objectifs".
  * Module      : mypaie / Pages / ReglesPrimes / SubPages / Onglets
  */
 
 import React from 'react';
+import { useToast } from '../../../../../../Shared/Contexts/ToastContext';
 import './VariablesOnglet.css';
 import AccordionSection from './Components/AccordionSection/AccordionSection';
-import TargetMatrixSection from './Sections/TargetMatrixSection/TargetMatrixSection';
-import WeightingSection from './Sections/WeightingSection/WeightingSection';
 import TempsProrataSection from './Sections/TempsProrataSection/TempsProrataSection';
 import AttendanceRulesSection from './Sections/AttendanceRulesSection/AttendanceRulesSection';
 import TriggerRulesSection from './Sections/TriggerRulesSection/TriggerRulesSection';
 
 export default function VariablesOnglet({ regle }) {
+  const addToast = useToast();
 
   // Persiste une mise à jour partielle de grille_objectifs via l'API puis recharge la page
   const handleSaveVariables = async (newGrille) => {
@@ -36,7 +34,7 @@ export default function VariablesOnglet({ regle }) {
       }
     } catch (e) {
       console.error("Erreur lors de l'enregistrement des variables", e);
-      alert("Erreur lors de l'enregistrement des variables");
+      addToast("Erreur lors de l'enregistrement des variables", 'error');
     }
   };
 
@@ -63,28 +61,7 @@ export default function VariablesOnglet({ regle }) {
 
       <div className="variables-content">
 
-        {/* ── 1. Postes & Cibles : ouverte par défaut (point de départ obligatoire) ── */}
-        <AccordionSection
-          icon="fa-solid fa-id-badge"
-          title="Postes & Objectifs Cibles"
-          subtitle="Définissez les postes d'agents et leurs objectifs KPI par niveau d'ancienneté"
-          defaultOpen={true}
-          {...getStatus('postes')}
-        >
-          <TargetMatrixSection regle={regle} onSave={handleSaveVariables} />
-        </AccordionSection>
-
-        {/* ── 2. Pondération : dépend des indicateurs configurés dans l'onglet Objectifs ── */}
-        <AccordionSection
-          icon="fa-solid fa-weight-hanging"
-          title="Pondération des indicateurs"
-          subtitle="Attribuez un nombre de points à chaque KPI pour le calcul du score final"
-          {...getStatus('indicateurs')}
-        >
-          <WeightingSection regle={regle} onSave={handleSaveVariables} />
-        </AccordionSection>
-
-        {/* ── 3. Configuration Temps & Prorata ── */}
+        {/* ── 1. Configuration Temps & Prorata ── */}
         <AccordionSection
           icon="fa-solid fa-clock"
           title="Configuration Temps & Prorata"
@@ -94,7 +71,7 @@ export default function VariablesOnglet({ regle }) {
           <TempsProrataSection regle={regle} onSave={handleSaveVariables} />
         </AccordionSection>
 
-        {/* ── 5. Assiduité & Discipline ── */}
+        {/* ── 2. Assiduité & Discipline ── */}
         <AccordionSection
           icon="fa-solid fa-calendar-xmark"
           title="Assiduité & Discipline"
@@ -104,7 +81,7 @@ export default function VariablesOnglet({ regle }) {
           <AttendanceRulesSection regle={regle} onSave={handleSaveVariables} />
         </AccordionSection>
 
-        {/* ── 6. Killing Rules ── */}
+        {/* ── 3. Killing Rules ── */}
         <AccordionSection
           icon="fa-solid fa-skull-crossbones"
           title="Killing Rules"

@@ -25,9 +25,9 @@ const makePoste = () => ({
   id: `poste_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
   code: '',
   niveaux: {
-    debutant: { montant: 0, objectifs: {} },
-    confirme: { montant: 0, objectifs: {} },
-    senior:   { montant: 0, objectifs: {} },
+    debutant: { montant: 0, montant_sb: 0, objectifs: {} },
+    confirme: { montant: 0, montant_sb: 0, objectifs: {} },
+    senior:   { montant: 0, montant_sb: 0, objectifs: {} },
   },
 });
 // #endregion
@@ -63,8 +63,8 @@ export default function TargetMatrixSection({ regle, onSave }) {
     ));
   };
 
-  // Met à jour le montant brut de prime pour un niveau donné
-  const handleMontantChange = (posteId, niveauKey, val) => {
+  // Met à jour le montant brut de prime ou super bonus pour un niveau donné
+  const handleMontantChange = (posteId, niveauKey, field, val) => {
     const num = parseFloat(val) || 0;
     setPostes(prev => prev.map(p => {
       if (p.id !== posteId) return p;
@@ -72,7 +72,7 @@ export default function TargetMatrixSection({ regle, onSave }) {
         ...p,
         niveaux: {
           ...p.niveaux,
-          [niveauKey]: { ...p.niveaux[niveauKey], montant: num },
+          [niveauKey]: { ...p.niveaux[niveauKey], [field]: num },
         },
       };
     }));
@@ -196,9 +196,29 @@ export default function TargetMatrixSection({ regle, onSave }) {
                           type="number"
                           className="tm-table__input tm-table__input--prime"
                           value={poste.niveaux[n.key]?.montant ?? 0}
-                          onChange={(e) => handleMontantChange(poste.id, n.key, e.target.value)}
+                          onChange={(e) => handleMontantChange(poste.id, n.key, 'montant', e.target.value)}
                           min="0"
                           step="50"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Ligne spéciale : montant brut du Super Bonus */}
+                  <tr className="tm-table__row--prime tm-table__row--sb">
+                    <td className="tm-table__kpi-cell">
+                      <i className="fa-solid fa-star" style={{ color: '#f59e0b' }}></i>
+                      <span>Montant Super Bonus (€)</span>
+                    </td>
+                    {NIVEAUX.map(n => (
+                      <td key={n.key} className="tm-table__value-cell">
+                        <input
+                          type="number"
+                          className="tm-table__input tm-table__input--sb"
+                          value={poste.niveaux[n.key]?.montant_sb ?? 0}
+                          onChange={(e) => handleMontantChange(poste.id, n.key, 'montant_sb', e.target.value)}
+                          min="0"
+                          step="10"
                         />
                       </td>
                     ))}

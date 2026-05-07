@@ -6,10 +6,13 @@
  */
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from '../Sidebar/Sidebar'
+import MobileMenu from '../MobileMenu/MobileMenu'
 import HeuresAgents from '../../Pages/HeuresAgents/HeuresAgents'
 import NotesQualite from '../../Pages/NotesQualite/NotesQualite'
 import Performance from '../../Pages/Performance/Performance'
+import Agents from '../../Pages/GestionAgents/GestionAgents'
 import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
+import GestionStructure from '../../Pages/GestionStructure/GestionStructure'
 import Parametres from '../../Pages/Parametres/Parametres'
 import './AppLayout.css'
 
@@ -17,18 +20,21 @@ function AppLayout() {
   return (
     <div className="app-layout">
 
-      {/* â”€â”€ Barre latÃ©rale â”€â”€ */}
+      {/* ── Barre latérale ── */}
       <Sidebar />
+      <MobileMenu />
 
-      {/* â”€â”€ Zone de contenu principale â”€â”€ */}
+      {/* ── Zone de contenu principale ── */}
       <main className="app-layout__main">
         <Routes>
           <Route path="/heures/*" element={<HeuresAgents />} />
           <Route path="/qualite/*" element={<NotesQualite />} />
           <Route path="/performance/*" element={<Performance />} />
+          <Route path="/agents/*" element={<Agents />} />
+          <Route path="/structure/*" element={<GestionStructure />} />
           <Route path="/regles-primes/*" element={<ReglesPrimes />} />
           <Route path="/parametres/*" element={<Parametres />} />
-          {/* Redirection par dÃ©faut vers les heures */}
+          {/* Redirection par défaut vers les heures */}
           <Route path="*" element={<Navigate to="/heures" replace />} />
         </Routes>
       </main>

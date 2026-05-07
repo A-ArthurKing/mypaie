@@ -12,9 +12,9 @@ import VariablesOnglet from './Onglets/VariablesOnglet/VariablesOnglet'
 import AgentsOnglet from './Onglets/AgentsOnglet/AgentsOnglet'
 
 const ONGLETS = [
-  { id: 'objectifs', label: 'Objectifs',     icon: 'fa-solid fa-bullseye' },
-  { id: 'variables', label: 'Variables',     icon: 'fa-solid fa-sliders' },
-  { id: 'agents',    label: 'Agents',        icon: 'fa-solid fa-users' },
+  { id: 'objectifs', label: 'Objectifs & Scoring', icon: 'fa-solid fa-bullseye' },
+  { id: 'variables', label: 'Cadre & Présence',  icon: 'fa-solid fa-sliders' },
+  { id: 'agents',    label: 'Tableau de bord',   icon: 'fa-solid fa-users' },
 ];
 
 export default function RegleDetail() {

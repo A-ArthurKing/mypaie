@@ -1,4 +1,4 @@
-.confirmation-modal-overlay {
+.cm-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -11,20 +11,20 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    animation: fadeIn 0.2s ease;
+    animation: cm-fadeIn 0.2s ease;
 }
 
-.confirmation-modal-content {
+.cm-content {
     background: white;
     border-radius: 12px;
     width: 90%;
     max-width: 450px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     overflow: hidden;
-    animation: slideUp 0.3s ease;
+    animation: cm-slideUp 0.3s ease;
 }
 
-.confirmation-modal-header {
+.cm-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -33,25 +33,25 @@
     border-bottom: 1px solid var(--color-border);
 }
 
-.confirmation-modal-title-wrapper {
+.cm-title-wrapper {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.confirmation-modal-icon--danger {
+.cm-icon--danger {
     color: var(--color-error);
     font-size: 1.2rem;
 }
 
-.confirmation-modal-header h2 {
+.cm-header h2 {
     margin: 0;
     font-size: 1.1rem;
     color: var(--color-text-primary);
     font-weight: 600;
 }
 
-.confirmation-modal-close {
+.cm-btn-close {
     background: none;
     border: none;
     font-size: 1.2rem;
@@ -61,22 +61,22 @@
     padding: 4px;
 }
 
-.confirmation-modal-close:hover {
+.cm-btn-close:hover {
     color: var(--color-error);
 }
 
-.confirmation-modal-body {
+.cm-body {
     padding: 20px;
 }
 
-.confirmation-modal-message {
+.cm-message {
     font-size: 0.95rem;
     color: var(--color-text-secondary);
     line-height: 1.5;
     margin: 0;
 }
 
-.confirmation-modal-footer {
+.cm-footer {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -85,37 +85,36 @@
     border-top: 1px solid var(--color-border);
 }
 
-.btn {
+.cm-btn {
     padding: 10px 20px;
     border-radius: 6px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.9rem;
+    border: none;
 }
 
-.btn.btn-secondary {
+.cm-btn.cm-btn-secondary {
     background-color: var(--color-bg-light);
     color: var(--color-text-primary);
     border: 1px solid var(--color-border);
 }
 
-.btn.btn-secondary:hover {
-    background-color: var(--color-border);
+.cm-btn.cm-btn-secondary:hover {
+    background-color: var(--color-surface-hover);
 }
 
-.btn.btn--danger {
+.cm-btn.cm-btn--danger {
     background-color: var(--color-error);
     color: white;
-    border: 1px solid var(--color-error);
 }
 
-.btn.btn--danger:hover {
+.cm-btn.cm-btn--danger:hover {
     background-color: #ef4444;
-    border-color: #ef4444;
 }
 
-@keyframes fadeIn {
+@keyframes cm-fadeIn {
     from {
         opacity: 0;
     }
@@ -125,14 +124,14 @@
     }
 }
 
-@keyframes slideUp {
+@keyframes cm-slideUp {
     from {
-        opacity: 0;
         transform: translateY(20px);
+        opacity: 0;
     }
 
     to {
-        opacity: 1;
         transform: translateY(0);
+        opacity: 1;
     }
 }

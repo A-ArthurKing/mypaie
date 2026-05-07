@@ -28,9 +28,9 @@ export default function GrilleSection({ grille }) {
           </tr>
           {/* Ligne 2 : Titre principal */}
           <tr className="grille-row-title">
-            <th rowSpan="3" className="grille-col-statut">Statut</th>
-            <th rowSpan="3" className="grille-col-prime">Prime<br/>(Montant Brut)</th>
-            <th colSpan={indicateurs.length} className="grille-col-main">Objectifs / Indicateurs / Statuts</th>
+            <th rowSpan="3" className="grille-col-statut">Niveau</th>
+            <th rowSpan="3" className="grille-col-prime">Montants Cibles<br/>(Base + S.Bonus)</th>
+            <th colSpan={indicateurs.length} className="grille-col-main">Objectifs / Indicateurs par Niveau</th>
           </tr>
           {/* Ligne 2 : Catégories */}
           <tr className="grille-row-categories">
@@ -51,7 +51,14 @@ export default function GrilleSection({ grille }) {
               <td className="grille-cell-statut">
                 <span className="statut-badge">{statut.nom}</span>
               </td>
-              <td className="grille-cell-prime">{statut.prime_brute}</td>
+              <td className="grille-cell-prime">
+                <div className="grille-amounts">
+                  <span className="grille-amount-base">{statut.prime_brute} DH</span>
+                  {statut.montant_sb > 0 && (
+                    <span className="grille-amount-sb">+{statut.montant_sb} SB</span>
+                  )}
+                </div>
+              </td>
               {indicateurs.map(ind => {
                 const val = statut.cibles[ind.id];
                 return (

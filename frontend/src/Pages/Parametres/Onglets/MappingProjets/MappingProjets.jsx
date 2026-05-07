@@ -1,29 +1,67 @@
 import { useState, useEffect } from 'react'
+import { useToast } from '../../../../Shared/Contexts/ToastContext'
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal'
+import HeaderSection from './Sections/HeaderSection/HeaderSection'
+import MappingFormSection from './Sections/MappingFormSection/MappingFormSection'
+import MappingTableSection from './Sections/MappingTableSection/MappingTableSection'
+import { useSocket } from '../../../../Shared/Contexts/SocketContext'
 import './MappingProjets.css'
 
-// Utilisation du proxy Vite (pas de port hardcodé)
 const API_BASE_URL = '/api'
 
-function MappingProjets() {
+export default function MappingProjets() {
+  const addToast = useToast()
   const [mappings, setMappings] = useState([])
+  const [projects, setProjects] = useState([])
+  const [files, setFiles] = useState([])
+  const [activities, setActivities] = useState([])
+  const [tables, setTables] = useState([])
+  const [columns, setColumns] = useState([])
+  const [uniqueValues, setUniqueValues] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingCols, setLoadingColumns] = useState(false)
+  const [loadingValues, setLoadingValues] = useState(false)
   const [error, setError] = useState(null)
   
   // States pour le formulaire
-  const [sourceName, setSourceName] = useState('')
-  const [standardName, setStandardName] = useState('')
+  const [sourceTable, setSourceTable] = useState('')
+  const [sourceColumn, setSourceColumn] = useState('')
+  const [sourceName, setSourceName] = useState('') // Le nom brut choisi
+  const [idProjet, setIdProjet] = useState('') // Le projet standard
+  const [idFile, setIdFile] = useState('') // Le file associé
+  const [idActivite, setIdActivite] = useState('') // L'activité associée
+  const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const socket = useSocket()
 
-  const fetchMappings = async () => {
+  const fetchData = async () => {
     setLoading(true)
+    setError(null)
     try {
-      const response = await fetch(`${API_BASE_URL}/parametres/mapping-projets`)
-      if (!response.ok) throw new Error('Erreur lors du chargement des mappings')
-      const data = await response.json()
-      setMappings(data.data || [])
+      // 1. Charger les mappings existants
+      const resMappings = await fetch(`${API_BASE_URL}/parametres/mapping-projets`)
+      if (!resMappings.ok) throw new Error('Erreur lors du chargement des mappings')
+      const dataMappings = await resMappings.json()
+      setMappings(dataMappings.data || [])
+
+      // 2. Charger les projets standards, files, activités et les tables BigQuery
+      const [resRefs, resTables] = await Promise.all([
+        fetch(`${API_BASE_URL}/parametres/references`),
+        fetch(`${API_BASE_URL}/parametres/introspection/tables`)
+      ]);
+
+      if (resRefs.ok) {
+        const dataRefs = await resRefs.json()
+        setProjects(dataRefs.projets || [])
+        setFiles(dataRefs.files || [])
+        setActivities(dataRefs.activites || [])
+      }
+      if (resTables.ok) {
+        const dataTables = await resTables.json()
+        setTables(dataTables.data || [])
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -32,12 +70,53 @@ function MappingProjets() {
   }
 
   useEffect(() => {
-    fetchMappings()
+    fetchData()
   }, [])
+
+  // Real-time updates
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('mapping_projets_updated', fetchData);
+    return () => socket.off('mapping_projets_updated');
+  }, [socket]);
+
+  // Charger les colonnes quand la table change
+  useEffect(() => {
+    if (!sourceTable) {
+      setColumns([]);
+      setSourceColumn('');
+      return;
+    }
+    setLoadingColumns(true);
+    fetch(`${API_BASE_URL}/parametres/introspection/columns?table=${sourceTable}`)
+      .then(res => res.json())
+      .then(data => {
+        setColumns(data.data || []);
+        // Auto-sélection si une colonne contient "projet"
+        const projCol = (data.data || []).find(c => c.name.toLowerCase().includes('projet'));
+        if (projCol) setSourceColumn(projCol.name);
+      })
+      .catch(err => console.error("Erreur colonnes:", err))
+      .finally(() => setLoadingColumns(false));
+  }, [sourceTable]);
+
+  // Charger les valeurs uniques quand la colonne change
+  useEffect(() => {
+    if (!sourceTable || !sourceColumn) {
+      setUniqueValues([]);
+      return;
+    }
+    setLoadingValues(true);
+    fetch(`${API_BASE_URL}/parametres/introspection/unique-values?table=${sourceTable}&column=${sourceColumn}`)
+      .then(res => res.json())
+      .then(data => setUniqueValues(data.data || []))
+      .catch(err => console.error("Erreur valeurs:", err))
+      .finally(() => setLoadingValues(false));
+  }, [sourceTable, sourceColumn]);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!sourceName.trim() || !standardName.trim()) return
+    if (!sourceName.trim() || !idProjet) return
 
     setIsSubmitting(true)
     try {
@@ -46,18 +125,26 @@ function MappingProjets() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source_name: sourceName.trim(),
-          standard_name: standardName.trim()
+          id_projet: idProjet,
+          id_file: idFile || null,
+          id_activite: idActivite || null,
+          description: description.trim()
         })
       })
 
       if (!response.ok) throw new Error('Erreur lors de la sauvegarde')
       
-      // Réinitialiser le formulaire et recharger la liste
+      setSourceTable('')
+      setSourceColumn('')
       setSourceName('')
-      setStandardName('')
-      await fetchMappings()
+      setIdProjet('')
+      setIdFile('')
+      setIdActivite('')
+      setDescription('')
+      await fetchData()
+      addToast('Mapping projet enregistré avec succès', 'success')
     } catch (err) {
-      alert(err.message)
+      addToast(err.message, 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -65,8 +152,10 @@ function MappingProjets() {
 
   const handleEdit = (item) => {
     setSourceName(item.source_name)
-    setStandardName(item.standard_name)
-    // On scroll vers le formulaire pour que l'utilisateur voie qu'il est en mode édition
+    setIdProjet(item.id_projet)
+    setIdFile(item.id_file || '')
+    setIdActivite(item.id_activite || '')
+    setDescription(item.description || '')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -80,117 +169,61 @@ function MappingProjets() {
     if (!itemToDelete) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/parametres/mapping-projets/${encodeURIComponent(itemToDelete.source_name)}`, {
+      const response = await fetch(`${API_BASE_URL}/parametres/mapping-projets/${itemToDelete.id}`, {
         method: 'DELETE'
       })
 
       if (!response.ok) throw new Error('Erreur lors de la suppression')
-      
-      // Mettre à jour l'état local directement
-      setMappings(prev => prev.filter(m => m.source_name !== itemToDelete.source_name))
+      await fetchData()
+      addToast('Mapping supprimé', 'success')
     } catch (err) {
-      alert(err.message)
+      addToast(err.message, 'error')
     } finally {
       setItemToDelete(null)
     }
   }
 
   return (
-    <div className="mapping-projets">
-      <div className="mapping-header">
-        <h2 className="mapping-title">Mapping des Projets</h2>
-        <p className="mapping-desc">
-          Associez les noms bruts issus de BigQuery (ex: "PV_SE", "PVSE") à un nom standard unifié (ex: "PV SE").
-          Cela permet de consolider les données dans le module de Performance.
-        </p>
+    <div className="mp-tab-container">
+      <HeaderSection />
+
+      <div className="mp-tab-content">
+        <MappingFormSection 
+          sourceTable={sourceTable}
+          setSourceTable={setSourceTable}
+          sourceColumn={sourceColumn}
+          setSourceColumn={setSourceColumn}
+          sourceName={sourceName}
+          setSourceName={setSourceName}
+          idProjet={idProjet}
+          setIdProjet={setIdProjet}
+          idFile={idFile}
+          setIdFile={setIdFile}
+          idActivite={idActivite}
+          setIdActivite={setIdActivite}
+          description={description}
+          setDescription={setDescription}
+          tables={tables}
+          columns={columns}
+          uniqueValues={uniqueValues}
+          projects={projects}
+          files={files}
+          activities={activities}
+          isSubmitting={isSubmitting}
+          handleSubmit={handleSubmit}
+          loadingCols={loadingCols}
+          loadingValues={loadingValues}
+        />
+
+        <MappingTableSection 
+          mappings={mappings}
+          loading={loading}
+          error={error}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
       </div>
-
-      <div className="mapping-content">
-        <div className="mapping-form-card">
-          <h3 className="card-title">Ajouter / Modifier un mapping</h3>
-          <form className="mapping-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="sourceName">Nom source (brut)</label>
-              <input
-                id="sourceName"
-                type="text"
-                value={sourceName}
-                onChange={(e) => setSourceName(e.target.value)}
-                placeholder="Ex: PV_SE"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="standardName">Nom standard (unifié)</label>
-              <input
-                id="standardName"
-                type="text"
-                value={standardName}
-                onChange={(e) => setStandardName(e.target.value)}
-                placeholder="Ex: PV SE"
-                required
-              />
-            </div>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={isSubmitting || !sourceName.trim() || !standardName.trim()}
-            >
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
-          </form>
-        </div>
-
-        <div className="mapping-list-card">
-          <h3 className="card-title">Mappings actifs ({mappings.length})</h3>
-          
-          {loading && <div className="loading-state">Chargement des données...</div>}
-          {error && <div className="error-state"><i className="fa-solid fa-triangle-exclamation" /> {error}</div>}
-          
-          {!loading && !error && mappings.length === 0 && (
-            <div className="empty-state">Aucun mapping configuré pour le moment.</div>
-          )}
-
-          {!loading && !error && mappings.length > 0 && (
-            <div className="table-responsive">
-              <table className="mapping-table">
-                <thead>
-                  <tr>
-                    <th>Nom brut (Source)</th>
-                    <th>Nom standard</th>
-                    <th className="action-col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mappings.map((item) => (
-                    <tr key={item.source_name}>
-                      <td className="source-col"><code>{item.source_name}</code></td>
-                      <td className="standard-col"><strong>{item.standard_name}</strong></td>
-                      <td className="action-col">
-                        <button 
-                          className="btn-icon btn-edit" 
-                          onClick={() => handleEdit(item)}
-                          title="Modifier"
-                          style={{ marginRight: '8px' }}
-                        >
-                          <i className="fa-solid fa-pen" />
-                        </button>
-                        <button 
-                          className="btn-icon btn-delete" 
-                          onClick={() => handleDelete(item)}
-                          title="Supprimer"
-                        >
-                          <i className="fa-solid fa-trash-can" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+      
       {itemToDelete && (
         <ConfirmationModal
           isOpen={showConfirmModal}
@@ -206,5 +239,3 @@ function MappingProjets() {
     </div>
   )
 }
-
-export default MappingProjets

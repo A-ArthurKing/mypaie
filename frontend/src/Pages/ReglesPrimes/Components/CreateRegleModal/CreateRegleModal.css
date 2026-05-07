@@ -10,6 +10,7 @@
     justify-content: center;
     z-index: var(--z-modal);
     animation: fadeIn 0.2s ease-out;
+    padding: 2rem;
 }
 
 .modal-content {
@@ -17,10 +18,12 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     width: 100%;
-    max-width: 500px;
+    max-width: 650px;
     display: flex;
     flex-direction: column;
     animation: slideUp 0.3s ease-out;
+    max-height: 100%;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -56,10 +59,17 @@
 }
 
 .modal-form {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.modal-body {
     padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    overflow-y: auto;
 }
 
 .form-group {
@@ -114,8 +124,10 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    padding-top: 8px;
-    margin-top: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border-subtle);
+    background-color: var(--color-surface);
+    flex-shrink: 0;
 }
 
 .btn-cancel {

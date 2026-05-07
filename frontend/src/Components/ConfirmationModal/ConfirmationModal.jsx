@@ -5,28 +5,28 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, m
   if (!isOpen) return null;
 
   return (
-    <div className="confirmation-modal-overlay" onClick={onClose}>
-      <div className="confirmation-modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="cm-overlay" onClick={onClose}>
+      <div className="cm-content" onClick={(e) => e.stopPropagation()}>
         
-        <div className="confirmation-modal-header">
-          <div className="confirmation-modal-title-wrapper">
-            <i className={`fa-solid fa-triangle-exclamation confirmation-modal-icon--${type}`}></i>
+        <div className="cm-header">
+          <div className="cm-title-wrapper">
+            <i className={`fa-solid fa-triangle-exclamation cm-icon--${type}`}></i>
             <h2>{title}</h2>
           </div>
-          <button className="confirmation-modal-close" onClick={onClose} title="Fermer">
+          <button className="cm-btn-close" onClick={onClose} title="Fermer">
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <div className="confirmation-modal-body">
-          <p className="confirmation-modal-message">{message}</p>
+        <div className="cm-body">
+          <p className="cm-message">{message}</p>
         </div>
 
-        <div className="confirmation-modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>
+        <div className="cm-footer">
+          <button className="cm-btn cm-btn-secondary" onClick={onClose}>
             {cancelText}
           </button>
-          <button className={`btn btn--${type}`} onClick={onConfirm}>
+          <button className={`cm-btn cm-btn--${type}`} onClick={onConfirm}>
             {confirmText}
           </button>
         </div>

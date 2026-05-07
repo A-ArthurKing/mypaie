@@ -1,0 +1,174 @@
+.mt-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeIn 0.3s ease;
+}
+
+.mt-card,
+.mt-list-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.mt-card-header {
+    padding: 14px 20px;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mt-card-header i {
+    color: var(--color-accent);
+}
+
+.mt-card-header h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mt-card-body {
+    padding: 20px;
+}
+
+.mt-form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.mt-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mt-field label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.mt-field select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.mt-btn-submit {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.mt-btn-submit:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    transform: translateY(-1px);
+}
+
+.mt-btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mt-table-wrapper {
+    padding: 12px;
+    background: white;
+    border-radius: var(--radius-md);
+    margin: 12px;
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+}
+
+.mt-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mt-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--color-surface-2);
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--color-border-subtle);
+}
+
+.mt-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+}
+
+.mt-row:hover td {
+    background: var(--color-bg-app);
+}
+
+.mt-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.mt-badge--projet {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.mt-badge--op {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.mt-nil {
+    color: var(--color-text-disabled);
+    font-style: italic;
+}
+
+.mt-action-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--color-bg-app);
+    color: var(--color-text-muted);
+}
+
+.mt-action-btn.danger:hover {
+    background: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+@media (max-width: 1024px) {
+    .mt-form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

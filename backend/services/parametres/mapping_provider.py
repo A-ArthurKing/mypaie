@@ -135,9 +135,11 @@ def get_mysql_project_mappings() -> list:
     try:
         with connection.cursor() as cursor:
             sql = """
-                SELECT m.*, p.nom as standard_nom 
+                SELECT m.*, p.nom as standard_nom, f.libelle as file_nom, a.libelle as activite_nom
                 FROM ref_projets_mapping m
                 LEFT JOIN ref_projets p ON m.id_projet = p.id
+                LEFT JOIN ref_files f ON m.id_file = f.id
+                LEFT JOIN ref_activites a ON m.id_activite = a.id
                 ORDER BY m.source_name
             """
             cursor.execute(sql)
@@ -149,20 +151,22 @@ def get_mysql_project_mappings() -> list:
     finally:
         connection.close()
 
-def add_mysql_project_mapping(source_name: str, id_projet: int, description: str = None):
+def add_mysql_project_mapping(source_name: str, id_projet: int, id_file: int = None, id_activite: int = None, description: str = None):
     """Ajoute ou met à jour un mapping de projet dans MySQL."""
     from config.db_mysql_connector import get_mysql_connection
     connection = get_mysql_connection()
     try:
         with connection.cursor() as cursor:
             sql = """
-                INSERT INTO ref_projets_mapping (source_name, id_projet, description)
-                VALUES (%s, %s, %s)
+                INSERT INTO ref_projets_mapping (source_name, id_projet, id_file, id_activite, description)
+                VALUES (%s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     id_projet = VALUES(id_projet),
+                    id_file = VALUES(id_file),
+                    id_activite = VALUES(id_activite),
                     description = VALUES(description)
             """
-            cursor.execute(sql, (source_name, id_projet, description))
+            cursor.execute(sql, (source_name, id_projet, id_file, id_activite, description))
             connection.commit()
             return {"status": "success", "id": cursor.lastrowid}
     finally:
@@ -234,6 +238,28 @@ def delete_mysql_kpi_mapping(mapping_id: int):
             cursor.execute("DELETE FROM matrice_kpis_mapping WHERE id = %s", (mapping_id,))
             connection.commit()
             return {"status": "deleted"}
+    finally:
+        connection.close()
+
+# --- GESTION DU RÉFÉRENTIEL STANDARDS ---
+
+def add_standard_kpi(code: str, libelle: str, univers: str, unite: str = None, description: str = None):
+    """Ajoute un nouveau KPI au référentiel officiel (matrice_kpis)."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                INSERT INTO matrice_kpis (code, libelle, univers, unite, description)
+                VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    libelle = VALUES(libelle),
+                    unite = VALUES(unite),
+                    description = VALUES(description)
+            """
+            cursor.execute(sql, (code.upper().strip(), libelle, univers, unite, description))
+            connection.commit()
+            return {"status": "success", "code": code.upper().strip()}
     finally:
         connection.close()
 

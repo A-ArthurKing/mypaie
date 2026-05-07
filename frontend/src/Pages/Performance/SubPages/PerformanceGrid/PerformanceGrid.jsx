@@ -197,8 +197,7 @@ function PerformanceGrid({
           <thead>
             <tr>
               {filtres.granularity !== 'total' && <th title="Période sélectionnée (Mois ou Semaine ISO)">Période</th>}
-              <th title="Matricule de l'agent">Matricule</th>
-              <th title="Nom de l'agent">Agent</th>
+              <th title="Nom et Matricule de l'agent">Agent / Matricule</th>
               <th title="Groupe ou opération d'appartenance">Équipe</th>
               <th className="num" title="Nombre de semaines travaillées agrégées">
                 {filtres.granularity === 'total' ? 'Semaines' : 'Unit'}
@@ -262,12 +261,12 @@ function PerformanceGrid({
                     <td className="txt-bold">{filtres.granularity === 'month' ? l.mois : dateRefStr}</td>
                   )}
                   <td>
-                    <span className="txt-muted">{l.matricule || '—'}</span>
-                  </td>
-                  <td>
                     <div className="perf-agent-cell">
                       <div className="perf-avatar">{(l.agent_name || '?').charAt(0)}</div>
-                      <span>{l.agent_name || 'Agent inconnu'}</span>
+                      <div className="perf-agent-info">
+                        <span className="perf-agent-name">{l.agent_name || 'Agent inconnu'}</span>
+                        <span className="perf-agent-mat">{l.matricule || '—'}</span>
+                      </div>
                     </div>
                   </td>
                   <td>{l.agent_group || '—'}</td>

@@ -33,14 +33,14 @@ export default function AttendanceRulesSection({ regle, onSave }) {
   };
 
   return (
-    <div className="attendance-rules-section">
-      <div className="attendance-header">
-        <h3 className="attendance-title">Règles d'assiduité & Discipline</h3>
-        <p className="attendance-subtitle">Configurez l'impact des absences et retards sur le montant final de la prime.</p>
+    <div className="ars-section">
+      <div className="ars-header">
+        <h3 className="ars-title">Règles d'assiduité & Discipline</h3>
+        <p className="ars-subtitle">Configurez l'impact des absences et retards sur le montant final de la prime.</p>
       </div>
 
-      <div className="attendance-table-container">
-        <table className="attendance-table">
+      <div className="ars-table-wrapper">
+        <table className="ars-table">
           <thead>
             <tr>
               <th>Condition (Absences / Retards)</th>
@@ -52,8 +52,8 @@ export default function AttendanceRulesSection({ regle, onSave }) {
             {rules.map((rule) => (
               <tr key={rule.id}>
                 <td>
-                  <div className="rule-inputs">
-                    <div className="input-group">
+                  <div className="ars-rule-inputs">
+                    <div className="ars-input-group">
                       <input 
                         type="number" 
                         value={rule.abs} 
@@ -61,8 +61,8 @@ export default function AttendanceRulesSection({ regle, onSave }) {
                       />
                       <span>Abs. injustifiée(s)</span>
                     </div>
-                    <span className="rule-separator">OU</span>
-                    <div className="input-group">
+                    <span className="ars-separator">OU</span>
+                    <div className="ars-input-group">
                       <input 
                         type="number" 
                         value={rule.retards} 
@@ -74,13 +74,13 @@ export default function AttendanceRulesSection({ regle, onSave }) {
                 </td>
                 <td>
                   <input 
-                    className="impact-input"
+                    className="ars-impact-input"
                     value={rule.label_ui}
                     onChange={(e) => handleUpdate(rule.id, 'label_ui', e.target.value)}
                     placeholder="Ex: Moitié de la prime est perdue"
                   />
                 </td>
-                <td className="center">
+                <td className="ars-center">
                   <button className="btn-icon danger" title="Supprimer la règle" onClick={() => setRules(rules.filter(r => r.id !== rule.id))}>
                     <i className="fa-solid fa-trash"></i>
                   </button>
@@ -91,7 +91,7 @@ export default function AttendanceRulesSection({ regle, onSave }) {
         </table>
       </div>
 
-      <div className="attendance-footer">
+      <div className="ars-footer">
         <button className="btn btn-outline" onClick={() => setRules([...rules, { id: Date.now(), abs: 0, retards: 0, label_ui: "" }])}>
           + Ajouter un palier
         </button>

@@ -1,0 +1,193 @@
+.agta-wrapper {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    overflow: auto;
+}
+
+.agta-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+/* ---- Header ---- */
+.agta-th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    background: var(--color-bg-light, #f9fafb);
+    color: var(--color-text-secondary);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 2px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.agta-th--matricule {
+    width: 90px;
+}
+
+.agta-th--projet {
+    min-width: 110px;
+}
+
+.agta-th--actions {
+    width: 80px;
+    text-align: center;
+}
+
+/* ---- Rows ---- */
+.agta-td {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--color-border-subtle, #f3f4f6);
+    vertical-align: middle;
+    color: var(--color-text-primary);
+    font-size: 0.8rem;
+}
+
+.agta-row:last-child .agta-td {
+    border-bottom: none;
+}
+
+.agta-row:hover .agta-td {
+    background: var(--color-bg-light, #f9fafb);
+}
+
+/* ---- Cell types ---- */
+.agta-td--matricule {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.agta-td--nom {
+    font-weight: 700;
+}
+
+/* ---- Badges ---- */
+.agta-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.agta-badge--projet {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.agta-badge--operation {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.agta-badge--prime {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #ffedd5;
+}
+
+.agta-nil {
+    color: var(--color-text-muted);
+}
+
+/* ---- Statut badge ---- */
+.agta-statut {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.agta-statut--debutant {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.agta-statut--confirme {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.agta-statut--senior {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.agta-statut--nondefini {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* ---- Action buttons ---- */
+.agta-td--actions {
+    text-align: center;
+}
+
+.agta-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.agta-action-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.75rem;
+}
+
+.agta-action-btn--edit {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.agta-action-btn--edit:hover {
+    background: #1d4ed8;
+    color: white;
+}
+
+.agta-action-btn--delete {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.agta-action-btn--delete:hover {
+    background: #dc2626;
+    color: white;
+}
+
+/* ---- Empty state ---- */
+.agta-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem;
+    color: var(--color-text-muted);
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    font-size: 1rem;
+}
+
+.agta-empty i {
+    font-size: 2rem;
+    opacity: 0.3;
+}

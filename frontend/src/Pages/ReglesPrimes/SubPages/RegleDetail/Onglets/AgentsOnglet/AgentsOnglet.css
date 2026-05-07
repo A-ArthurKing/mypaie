@@ -29,231 +29,183 @@
     opacity: 1;
 }
 
-/* Compteur */
+/* Compteur & Sélecteurs secondaires */
 .agents-onglet__toolbar-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
+    padding: 0 4px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
 }
 
 .agents-onglet__count {
-    font-size: var(--text-xs);
-    font-weight: var(--weight-semibold);
+    font-size: 0.7rem;
+    font-weight: 800;
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
 }
 
-/* Sélecteur de mois */
+.agents-onglet__count::before {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
 .agents-onglet__month-picker {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
+    flex-wrap: wrap;
+    background: var(--color-bg-app);
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-base);
+}
+
+.agents-onglet__month-picker:hover {
+    border-color: var(--color-accent-border);
+    background: var(--color-surface);
 }
 
 .agents-onglet__month-picker>i {
-    color: var(--color-text-muted);
     font-size: 0.9rem;
+    color: var(--color-accent);
 }
 
 .agents-onglet__month-label {
-    font-size: var(--text-xs);
-    font-weight: var(--weight-semibold);
+    font-size: 0.65rem;
+    font-weight: 700;
     color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     white-space: nowrap;
 }
 
 .agents-onglet__month-input {
-    padding: 4px 8px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--color-text-primary);
-    font-size: var(--text-sm);
-    font-family: var(--font-sans);
     cursor: pointer;
-    transition: border-color var(--transition-fast);
+    font-family: var(--font-sans);
+    text-transform: capitalize;
 }
 
-.agents-onglet__month-input:hover,
 .agents-onglet__month-input:focus {
-    border-color: var(--color-accent);
     outline: none;
 }
 
-/* Tableau */
-.agents-onglet__table-wrapper {
-    overflow-x: auto;
-}
-
-.agents-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: var(--text-sm);
-}
-
-.agents-table thead tr {
-    background: var(--color-surface-2);
-    border-bottom: 2px solid var(--color-border);
-}
-
-.agents-table th {
-    padding: 10px 14px;
-    text-align: left;
-    font-size: var(--text-xs);
-    font-weight: var(--weight-semibold);
-    color: var(--color-text-muted);
+.agents-table__dmt-unit-toggle {
+    height: 34px;
+    padding: 0 16px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
 }
 
-.agents-table tbody tr {
-    border-bottom: 1px solid var(--color-border-subtle);
-    transition: background var(--transition-fast);
-}
-
-.agents-table tbody tr:hover {
-    background: var(--color-surface-2);
-}
-
-.agents-table td {
-    padding: 10px 14px;
-    color: var(--color-text-primary);
-    vertical-align: middle;
-}
-
-.agents-table__matricule {
-    font-family: monospace;
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    font-weight: var(--weight-semibold);
-}
-
-.agents-table__lastname {
-    font-weight: var(--weight-semibold);
-}
-
-.agents-table__firstname {
-    color: var(--color-text-secondary);
-}
-
-/* Badges Sanction */
-.agents-badge {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: var(--text-xs);
-    font-weight: var(--weight-bold);
-    text-transform: uppercase;
-}
-
-.agents-badge--success {
-    background: var(--color-success-soft, #e6f7ed);
-    color: var(--color-success, #28a745);
-}
-
-.agents-badge--danger {
-    background: var(--color-error-soft, #fbeaea);
-    color: var(--color-error, #dc3545);
-}
-
-/* Select Statut */
-.agents-select-statut {
-    padding: 4px 8px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    background: var(--color-surface);
-    color: var(--color-text-primary);
-    cursor: pointer;
-    outline: none;
-    transition: border var(--transition-fast);
-}
-
-.agents-select-statut:focus {
+.agents-table__dmt-unit-toggle:hover {
+    background: var(--color-accent);
     border-color: var(--color-accent);
-}
-
-.agents-table__info-icon {
-    margin-left: 8px;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    cursor: help;
-    transition: color var(--transition-fast);
-}
-
-.agents-table__info-icon:hover {
-    color: var(--color-accent);
-}
-
-.agents-table__heures-loader {
-    opacity: 0.5;
-}
-
-/* Qualité colors */
-.agents-table__qualite {
-    font-weight: var(--weight-bold);
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-}
-
-.agents-table__qualite--good {
-    color: var(--color-success);
-}
-
-.agents-table__qualite--average {
-    color: var(--color-warning);
-}
-
-.agents-table__qualite--bad {
-    color: var(--color-error);
+    color: white;
+    box-shadow: 0 4px 10px var(--color-accent-soft);
 }
 
 .clickable {
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .clickable:hover {
     filter: brightness(0.95);
 }
 
-/* Colonne Heures */
-.agents-table__month-badge {
-    display: block;
-    font-size: var(--text-xs, 0.7rem);
-    font-weight: 400;
-    color: var(--color-text-muted);
-    text-transform: capitalize;
-    margin-top: 2px;
-    white-space: nowrap;
+
+@media (max-width: 900px) {
+    .agents-onglet__toolbar-row {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .agents-onglet__month-picker {
+        flex: 1;
+        min-width: 280px;
+        justify-content: center;
+        flex-wrap: wrap;
+        border-radius: var(--radius-md);
+    }
 }
 
-.agents-table__heures {
-    font-weight: 600;
-    color: var(--color-text-primary);
-    font-variant-numeric: tabular-nums;
+@media (max-width: 600px) {
+    .agents-onglet__toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .agents-onglet__count {
+        justify-content: center;
+        background: var(--color-surface);
+        padding: 8px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border);
+    }
+
+    .agents-onglet__month-picker {
+        order: 2;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px;
+        gap: 10px;
+        border-radius: var(--radius-md);
+    }
+
+    .agents-onglet__month-picker > i {
+        display: none;
+    }
+
+    .agents-onglet__month-label {
+        text-align: center;
+        font-size: 0.75rem;
+    }
+
+    .agents-onglet__month-input {
+        width: 100%;
+        text-align: center;
+        background: var(--color-surface);
+        padding: 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--color-border);
+    }
+    
+    .agents-table__dmt-unit-toggle {
+        width: 100%;
+        margin-left: 0;
+        height: 38px;
+    }
 }
 
-.agents-table__heures-unit {
-    font-size: var(--text-xs, 0.72rem);
-    font-weight: 400;
-    color: var(--color-text-muted);
-    margin-left: 1px;
-}
-
-.agents-table__heures-na {
-    color: var(--color-text-muted);
-    font-size: var(--text-sm, 0.85rem);
-}
-
-.agents-table__heures-loader {
-    color: var(--color-text-muted);
-    font-size: 0.8rem;
-}

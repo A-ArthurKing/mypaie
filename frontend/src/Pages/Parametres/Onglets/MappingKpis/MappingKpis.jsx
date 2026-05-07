@@ -1,29 +1,65 @@
 import { useState, useEffect } from 'react'
+import { useToast } from '../../../../Shared/Contexts/ToastContext'
 import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal'
+import HeaderSection from './Sections/HeaderSection/HeaderSection'
+import MappingFormSection from './Sections/MappingFormSection/MappingFormSection'
+import MappingTableSection from './Sections/MappingTableSection/MappingTableSection'
+import QuickAddKpiModal from './Components/QuickAddKpiModal/QuickAddKpiModal'
+import { useSocket } from '../../../../Shared/Contexts/SocketContext'
 import './MappingKpis.css'
 
 const API_BASE_URL = '/api'
 
 export default function MappingKpis() {
+  const addToast = useToast()
   const [mappings, setMappings] = useState([])
+  const [kpiRefs, setKpiRefs] = useState({})
+  const [projects, setProjects] = useState([])
+  const [tables, setTables] = useState([])
+  const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingCols, setLoadingColumns] = useState(false)
   const [error, setError] = useState(null)
   
   // States pour le formulaire
-  const [sourceName, setSourceName] = useState('')
-  const [standardName, setStandardName] = useState('')
+  const [univers, setUnivers] = useState('PERF')
+  const [sourceTable, setSourceTable] = useState('')
+  const [sourceColumn, setSourceColumn] = useState('')
+  const [standardKpiCode, setStandardKpiCode] = useState('')
+  const [idProjet, setIdProjet] = useState('') 
+  const [isFormula, setIsFormula] = useState(false)
+  const [formula, setFormula] = useState('')
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const socket = useSocket()
 
-  const fetchMappings = async () => {
+  const fetchData = async () => {
     setLoading(true)
+    setError(null)
     try {
-      const response = await fetch(`${API_BASE_URL}/parametres/mapping-kpis`)
-      if (!response.ok) throw new Error('Erreur lors du chargement des mappings KPI')
-      const data = await response.json()
-      setMappings(data.data || [])
+      // 1. Charger les mappings existants
+      const resMappings = await fetch(`${API_BASE_URL}/parametres/mapping-kpis`)
+      if (!resMappings.ok) throw new Error('Erreur lors du chargement des mappings KPI')
+      const dataMappings = await resMappings.json()
+      setMappings(dataMappings.data || [])
+
+      // 2. Charger les KPIs de référence + Projets
+      const resRefs = await fetch(`${API_BASE_URL}/parametres/references`)
+      if (resRefs.ok) {
+        const dataRefs = await resRefs.json()
+        setKpiRefs(dataRefs.kpis || {})
+        setProjects(dataRefs.projets || [])
+      }
+
+      // 3. Charger les tables BigQuery
+      const resTables = await fetch(`${API_BASE_URL}/parametres/introspection/tables`)
+      if (resTables.ok) {
+        const dataTables = await resTables.json()
+        setTables(dataTables.data || [])
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -32,12 +68,51 @@ export default function MappingKpis() {
   }
 
   useEffect(() => {
-    fetchMappings()
+    fetchData()
   }, [])
+
+  // Real-time updates
+  useEffect(() => {
+    if (!socket) return;
+    
+    socket.on('mapping_kpis_updated', () => {
+      console.log('[RealTime] Mapping KPIs mis à jour détecté');
+      fetch(`${API_BASE_URL}/parametres/mapping-kpis`)
+        .then(res => res.json())
+        .then(data => setMappings(data.data || []));
+    });
+
+    socket.on('kpi_standards_updated', () => {
+      console.log('[RealTime] Référentiel KPIs mis à jour');
+      fetch(`${API_BASE_URL}/parametres/references`)
+        .then(res => res.json())
+        .then(data => setKpiRefs(data.kpis || {}));
+    });
+
+    return () => {
+      socket.off('mapping_kpis_updated');
+      socket.off('kpi_standards_updated');
+    };
+  }, [socket]);
+
+  // Charger les colonnes quand la table change
+  useEffect(() => {
+    if (!sourceTable) {
+      setColumns([]);
+      return;
+    }
+    setLoadingColumns(true);
+    fetch(`${API_BASE_URL}/parametres/introspection/columns?table=${sourceTable}`)
+      .then(res => res.json())
+      .then(data => setColumns(data.data || []))
+      .catch(err => console.error("Erreur colonnes:", err))
+      .finally(() => setLoadingColumns(false));
+  }, [sourceTable]);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!sourceName.trim() || !standardName.trim()) return
+    // Validation : Table source + (Colonne OU Formule) + KPI Standard
+    if (!sourceTable || (!sourceColumn && !isFormula) || (isFormula && !formula.trim()) || !standardKpiCode) return
 
     setIsSubmitting(true)
     try {
@@ -45,29 +120,45 @@ export default function MappingKpis() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source_name: sourceName.trim(),
-          standard_name: standardName.trim(),
+          univers,
+          source_table: sourceTable,
+          source_column: isFormula ? null : sourceColumn,
+          is_formula: isFormula,
+          formula: isFormula ? formula : null,
+          standard_kpi_code: standardKpiCode,
+          id_projet: idProjet || null,
           description: description.trim()
         })
       })
 
       if (!response.ok) throw new Error('Erreur lors de la sauvegarde')
       
-      // Réinitialiser le formulaire et recharger la liste
-      setSourceName('')
-      setStandardName('')
+      setSourceTable('')
+      setSourceColumn('')
+      setStandardKpiCode('')
+      setIdProjet('')
+      setIsFormula(false)
+      setFormula('')
       setDescription('')
-      await fetchMappings()
+      await fetchData()
+      addToast('Mapping KPI enregistré avec succès', 'success')
     } catch (err) {
-      alert(err.message)
+      addToast(err.message, 'error')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleEdit = (item) => {
-    setSourceName(item.source_name)
-    setStandardName(item.standard_name)
+    setUnivers(item.univers)
+    setSourceTable(item.source_table)
+    setIsFormula(!!item.is_formula)
+    setFormula(item.formula || '')
+    // On attend que les colonnes chargent (via useEffect) puis on mettra la colonne
+    // Note: il y a un risque de race condition, mais pour un MVP c'est okay
+    setTimeout(() => setSourceColumn(item.source_column), 500)
+    setStandardKpiCode(item.standard_kpi_code)
+    setIdProjet(item.id_projet || '')
     setDescription(item.description || '')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -82,129 +173,68 @@ export default function MappingKpis() {
     if (!itemToDelete) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/parametres/mapping-kpis/${encodeURIComponent(itemToDelete.source_name)}`, {
+      const response = await fetch(`${API_BASE_URL}/parametres/mapping-kpis/${itemToDelete.id}`, {
         method: 'DELETE'
       })
 
       if (!response.ok) throw new Error('Erreur lors de la suppression')
       
-      setMappings(prev => prev.filter(m => m.source_name !== itemToDelete.source_name))
+      setMappings(prev => prev.filter(m => m.id !== itemToDelete.id))
+      addToast('Mapping supprimé', 'success')
     } catch (err) {
-      alert(err.message)
+      addToast(err.message, 'error')
     } finally {
       setItemToDelete(null)
     }
   }
 
   return (
-    <div className="mapping-projets">
-      <div className="mapping-header">
-        <h2 className="mapping-title">Mapping des Indicateurs (KPIs)</h2>
-        <p className="mapping-desc">
-          Associez les noms bruts des indicateurs issus des sources de données (ex: "avg_call_time", "dmt_brut") 
-          vers un nom standard unifié (ex: "DMT"). Ce nom standard sera utilisé dans les grilles de primes.
-        </p>
+    <div className="mk-tab-container">
+      <HeaderSection />
+
+      <div className="mk-tab-content">
+        <MappingFormSection 
+          univers={univers}
+          setUnivers={setUnivers}
+          sourceTable={sourceTable}
+          setSourceTable={setSourceTable}
+          sourceColumn={sourceColumn}
+          setSourceColumn={setSourceColumn}
+          standardKpiCode={standardKpiCode}
+          setStandardKpiCode={setStandardKpiCode}
+          idProjet={idProjet}
+          setIdProjet={setIdProjet}
+          isFormula={isFormula}
+          setIsFormula={setIsFormula}
+          formula={formula}
+          setFormula={setFormula}
+          description={description}
+          setDescription={setDescription}
+          isSubmitting={isSubmitting}
+          handleSubmit={handleSubmit}
+          kpiRefs={kpiRefs}
+          tables={tables}
+          columns={columns}
+          loadingCols={loadingCols}
+          projects={projects}
+          onQuickAdd={() => setShowQuickAdd(true)}
+        />
+
+        <MappingTableSection 
+          mappings={mappings}
+          loading={loading}
+          error={error}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+          kpiRefs={kpiRefs}
+        />
       </div>
 
-      <div className="mapping-content">
-        <div className="mapping-form-card">
-          <h3 className="card-title">Ajouter / Modifier un KPI</h3>
-          <form className="mapping-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="sourceName">Nom source (brut)</label>
-              <input
-                id="sourceName"
-                type="text"
-                value={sourceName}
-                onChange={(e) => setSourceName(e.target.value)}
-                placeholder="Ex: avg_call_time"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="standardName">Nom standard (unifié)</label>
-              <input
-                id="standardName"
-                type="text"
-                value={standardName}
-                onChange={(e) => setStandardName(e.target.value)}
-                placeholder="Ex: DMT"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Durée Moyenne de Traitement"
-                rows="2"
-                style={{ width: '100%', padding: '0.5rem 0.6rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', resize: 'vertical' }}
-              />
-            </div>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={isSubmitting || !sourceName.trim() || !standardName.trim()}
-            >
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
-          </form>
-        </div>
-
-        <div className="mapping-list-card">
-          <h3 className="card-title">KPIs mappés ({mappings.length})</h3>
-          
-          {loading && <div className="loading-state">Chargement des données...</div>}
-          {error && <div className="error-state"><i className="fa-solid fa-triangle-exclamation" /> {error}</div>}
-          
-          {!loading && !error && mappings.length === 0 && (
-            <div className="empty-state">Aucun KPI mappé pour le moment.</div>
-          )}
-
-          {!loading && !error && mappings.length > 0 && (
-            <div className="table-responsive">
-              <table className="mapping-table">
-                <thead>
-                  <tr>
-                    <th>KPI Source</th>
-                    <th>KPI Standard</th>
-                    <th>Description</th>
-                    <th className="action-col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mappings.map((item) => (
-                    <tr key={item.source_name}>
-                      <td className="source-col"><code>{item.source_name}</code></td>
-                      <td className="standard-col"><strong>{item.standard_name}</strong></td>
-                      <td>{item.description || <span style={{color: 'var(--color-text-muted)', fontStyle: 'italic'}}>—</span>}</td>
-                      <td className="action-col">
-                        <button 
-                          className="btn-icon btn-edit" 
-                          onClick={() => handleEdit(item)}
-                          title="Modifier"
-                          style={{ marginRight: '8px' }}
-                        >
-                          <i className="fa-solid fa-pen" />
-                        </button>
-                        <button 
-                          className="btn-icon btn-delete" 
-                          onClick={() => handleDelete(item)}
-                          title="Supprimer"
-                        >
-                          <i className="fa-solid fa-trash-can" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+      <QuickAddKpiModal 
+        isOpen={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        univers={univers}
+      />
       
       {itemToDelete && (
         <ConfirmationModal

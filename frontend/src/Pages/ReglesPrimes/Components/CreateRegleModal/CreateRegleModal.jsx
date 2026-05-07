@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSocket } from '../../../../Shared/Contexts/SocketContext';
+import { useToast } from '../../../../Shared/Contexts/ToastContext';
 import './CreateRegleModal.css';
 
-export default function CreateRegleModal({ onClose, onCreated, regleToEdit }) {
+export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regleToDuplicate }) {
   const [formData, setFormData] = useState({
-    nom: regleToEdit?.nom || '',
-    id_structure: regleToEdit?.id_structure || '',
-    periodicite: regleToEdit?.periodicite || 'mensuelle',
-    description: regleToEdit?.description || ''
+    nom: regleToEdit?.nom || (regleToDuplicate ? `${regleToDuplicate.nom} (Copie)` : ''),
+    id_structure: regleToEdit?.id_structure || regleToDuplicate?.id_structure || '',
+    periodicite: regleToEdit?.periodicite || regleToDuplicate?.periodicite || 'mensuelle',
+    description: regleToEdit?.description || regleToDuplicate?.description || '',
+    grille_objectifs: regleToDuplicate?.grille_objectifs || null
   });
+
+  const socket = useSocket();
+  const addToast = useToast();
 
   // États pour les sélections individuelles (UI uniquement pour trouver l'id_structure)
   const [selections, setSelections] = useState({
@@ -27,35 +33,39 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit }) {
   });
 
   useEffect(() => {
-    fetch('/api/parametres/references')
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        console.log('[CreateRegleModal] Refs chargées:', {
-          projets: data.projets?.length,
-          operations: data.operations?.length,
-          structure: data.structure?.length
-        });
-        setReferences(data);
-        if (regleToEdit?.id_structure) {
-          const mapped = data.structure.find(s => s.id === regleToEdit.id_structure);
-          if (mapped) {
-            setSelections({
-              projet_id: String(mapped.id_projet || ''),
-              id_operation: String(mapped.id_operation || ''),
-              id_file: String(mapped.id_file || ''),
-              id_activite: String(mapped.id_activite || '')
-            });
+    const fetchRefs = () => {
+      fetch('/api/parametres/references')
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          setReferences(data);
+          const targetId = regleToEdit?.id_structure || regleToDuplicate?.id_structure;
+          if (targetId) {
+            const mapped = data.structure.find(s => s.id === targetId);
+            if (mapped) {
+              setSelections({
+                projet_id: String(mapped.id_projet || ''),
+                id_operation: String(mapped.id_operation || ''),
+                id_file: String(mapped.id_file || ''),
+                id_activite: String(mapped.id_activite || '')
+              });
+            }
           }
-        }
-      })
-      .catch(err => {
-        console.error("[CreateRegleModal] Erreur fetch /api/parametres/references:", err);
-        alert(`Erreur chargement des références : ${err.message}`);
-      });
-  }, [regleToEdit]);
+        })
+        .catch(err => {
+          console.error("[CreateRegleModal] Erreur fetch /api/parametres/references:", err);
+        });
+    };
+
+    fetchRefs();
+
+    if (socket) {
+      socket.on('structure_updated', fetchRefs);
+      return () => socket.off('structure_updated', fetchRefs);
+    }
+  }, [regleToEdit, regleToDuplicate, socket]);
 
   // Convertit les sélections string (venant des <select>) en entiers pour comparaison stricte
   const projId   = Number(selections.projet_id)   || 0;
@@ -151,13 +161,12 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit }) {
         throw new Error('Erreur lors de la sauvegarde');
       }
 
-      const data = await response.json();
-      console.log('Règle sauvegardée avec succès:', data);
       if (onCreated) onCreated();
       else onClose();
+      // Le toast de succès est géré par le parent (onCreated callback)
     } catch (err) {
       console.error('Erreur API:', err);
-      alert('Impossible de sauvegarder la règle pour le moment.');
+      addToast('Impossible de sauvegarder la règle pour le moment.', 'error');
     }
   };
 
@@ -172,94 +181,96 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit }) {
         </div>
         
         <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label htmlFor="nom">Nom de la règle *</label>
-            <input 
-              type="text" 
-              id="nom" 
-              name="nom" 
-              required 
-              placeholder="Ex: Prime de productivité" 
-              value={formData.nom}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="projet_id">Projet cible</label>
-            <select id="projet_id" name="projet_id" value={selections.projet_id} onChange={handleSelectionChange}>
-              <option value="">-- Sélectionner un projet ({refs.projets.length} disponible(s)) --</option>
-              {refs.projets.map(p => <option key={p.id} value={p.id}>{p.libelle}</option>)}
-            </select>
-          </div>
-
-          <div className="form-row">
+          <div className="modal-body">
             <div className="form-group">
-              <label htmlFor="id_operation">
-                Opération {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
-              </label>
-              <select 
-                id="id_operation" 
-                name="id_operation" 
-                value={selections.id_operation} 
-                onChange={handleSelectionChange}
-                disabled={!selections.projet_id}
-              >
-                <option value="">-- {filteredOperations.length} opération(s) --</option>
-                {filteredOperations.map(o => <option key={o.id} value={o.id}>{o.libelle}</option>)}
+              <label htmlFor="nom">Nom de la règle *</label>
+              <input 
+                type="text" 
+                id="nom" 
+                name="nom" 
+                required 
+                placeholder="Ex: Prime de productivité" 
+                value={formData.nom}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="projet_id">Projet cible</label>
+              <select id="projet_id" name="projet_id" value={selections.projet_id} onChange={handleSelectionChange}>
+                <option value="">-- Sélectionner un projet ({refs.projets.length} disponible(s)) --</option>
+                {refs.projets.map(p => <option key={p.id} value={p.id}>{p.libelle}</option>)}
               </select>
             </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="id_operation">
+                  Opération {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
+                </label>
+                <select 
+                  id="id_operation" 
+                  name="id_operation" 
+                  value={selections.id_operation} 
+                  onChange={handleSelectionChange}
+                  disabled={!selections.projet_id}
+                >
+                  <option value="">-- {filteredOperations.length} opération(s) --</option>
+                  {filteredOperations.map(o => <option key={o.id} value={o.id}>{o.libelle}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="id_file">
+                  File {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
+                </label>
+                <select 
+                  id="id_file" 
+                  name="id_file" 
+                  value={selections.id_file} 
+                  onChange={handleSelectionChange}
+                  disabled={!selections.id_operation}
+                >
+                  <option value="">-- {filteredFiles.length} file(s) --</option>
+                  {filteredFiles.map(f => <option key={f.id} value={f.id}>{f.libelle}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="id_activite">
+                  Activité {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
+                </label>
+                <select 
+                  id="id_activite" 
+                  name="id_activite" 
+                  value={selections.id_activite} 
+                  onChange={handleSelectionChange}
+                  disabled={!selections.id_operation}
+                >
+                  <option value="">-- {filteredActivites.length} activité(s) --</option>
+                  {filteredActivites.map(a => <option key={a.id} value={a.id}>{a.libelle}</option>)}
+                </select>
+              </div>
+            </div>
+
             <div className="form-group">
-              <label htmlFor="id_file">
-                File {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
-              </label>
-              <select 
-                id="id_file" 
-                name="id_file" 
-                value={selections.id_file} 
-                onChange={handleSelectionChange}
-                disabled={!selections.id_operation}
-              >
-                <option value="">-- {filteredFiles.length} file(s) --</option>
-                {filteredFiles.map(f => <option key={f.id} value={f.id}>{f.libelle}</option>)}
+              <label htmlFor="periodicite">Périodicité</label>
+              <select id="periodicite" name="periodicite" value={formData.periodicite} onChange={handleChange}>
+                <option value="mensuelle">Mensuelle</option>
+                <option value="trimestrielle">Trimestrielle</option>
+                <option value="annuelle">Annuelle</option>
               </select>
             </div>
+
             <div className="form-group">
-              <label htmlFor="id_activite">
-                Activité {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
-              </label>
-              <select 
-                id="id_activite" 
-                name="id_activite" 
-                value={selections.id_activite} 
-                onChange={handleSelectionChange}
-                disabled={!selections.id_operation}
-              >
-                <option value="">-- {filteredActivites.length} activité(s) --</option>
-                {filteredActivites.map(a => <option key={a.id} value={a.id}>{a.libelle}</option>)}
-              </select>
+              <label htmlFor="description">Description</label>
+              <textarea 
+                id="description" 
+                name="description" 
+                rows="3" 
+                placeholder="Description et objectifs de la règle..."
+                value={formData.description}
+                onChange={handleChange}
+              ></textarea>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="periodicite">Périodicité</label>
-            <select id="periodicite" name="periodicite" value={formData.periodicite} onChange={handleChange}>
-              <option value="mensuelle">Mensuelle</option>
-              <option value="trimestrielle">Trimestrielle</option>
-              <option value="annuelle">Annuelle</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea 
-              id="description" 
-              name="description" 
-              rows="3" 
-              placeholder="Description et objectifs de la règle..."
-              value={formData.description}
-              onChange={handleChange}
-            ></textarea>
           </div>
 
           <div className="modal-footer">

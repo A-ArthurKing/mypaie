@@ -15,7 +15,7 @@ import {
 
 export default function usePerformance() {
   const [filtres, setFiltres] = useState({
-    dateDebut: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    dateDebut: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
     dateFin: new Date(),
     agent: "",
     granularity: "total", // total, month, week
