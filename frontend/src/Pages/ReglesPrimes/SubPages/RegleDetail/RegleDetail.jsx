@@ -13,6 +13,7 @@ import AgentsOnglet from './Onglets/TableauDeBordOnglet/TableauDeBordOnglet'
 import useApiSWR from '../../../../Shared/Hooks/useApiSWR';
 import { fetchRegle } from '../../../../Shared/Utils/apiFetchers';
 import { clearCacheKey, TTL } from '../../../../Shared/Utils/cacheStorage';
+import AiSidebar from '../../Components/AiSidebar/AiSidebar';
 
 const ONGLETS = [
   { id: 'objectifs', label: 'Objectifs & Scoring', icon: 'fa-solid fa-bullseye' },
@@ -26,6 +27,7 @@ export default function RegleDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const cacheKey = `regle:${regleId}`;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const { data: regle, loading, error, revalidate } = useApiSWR(
     regleId ? cacheKey : null,
@@ -72,42 +74,52 @@ export default function RegleDetail() {
   }
 
   return (
-    <div className="regle-detail">
-      <button className="regle-detail__retour" onClick={() => navigate('/regles-primes')}>
-        <i className="fa-solid fa-arrow-left"></i> Retour aux règles
-      </button>
+    <div className="regle-detail-layout" style={{ display: 'flex', position: 'relative', paddingRight: isSidebarOpen ? '300px' : '0', transition: 'padding-right 0.25s ease' }}>
+      <div className="regle-detail" style={{ flex: 1, minWidth: 0 }}>
+        <button className="regle-detail__retour" onClick={() => navigate('/regles-primes')}>
+          <i className="fa-solid fa-arrow-left"></i> Retour aux règles
+        </button>
 
-      {/* ── Header ── */}
-      <header className="regle-detail__header">
-        <div className="regle-detail__header-left">
-          <span className="regle-detail__projet">{regle.projet || '—'}</span>
-          <h1 className="regle-detail__nom">{regle.nom}</h1>
-          <span className="regle-detail__code">{regle.code}</span>
+        {/* ── Header ── */}
+        <header className="regle-detail__header">
+          <div className="regle-detail__header-left">
+            <span className="regle-detail__projet">{regle.projet || '—'}</span>
+            <h1 className="regle-detail__nom">{regle.nom}</h1>
+            <span className="regle-detail__code">{regle.code}</span>
+          </div>
+          <span className={`regle-detail__badge regle-detail__badge--${regle.actif ? 'actif' : 'inactif'}`}>
+            {regle.actif ? 'Actif' : 'Inactif'}
+          </span>
+        </header>
+
+        {/* ── Onglets ── */}
+        <nav className="regle-detail__tabs">
+          {ONGLETS.map((o) => (
+            <button
+              key={o.id}
+              className={`regle-detail__tab ${ongletActif === o.id ? 'regle-detail__tab--active' : ''}`}
+              onClick={() => setOngletActif(o.id)}
+            >
+              <i className={o.icon}></i> {o.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* ── Contenu de l'onglet actif ── */}
+        <div className="regle-detail__tab-content">
+          {ongletActif === 'objectifs' && <ObjectifsOnglet regle={regle} onRefresh={handleRefresh} />}
+          {ongletActif === 'variables' && <VariablesOnglet regle={regle} onRefresh={handleRefresh} />}
+          {ongletActif === 'agents'    && <AgentsOnglet   regle={regle} onRefresh={handleRefresh} />}
         </div>
-        <span className={`regle-detail__badge regle-detail__badge--${regle.actif ? 'actif' : 'inactif'}`}>
-          {regle.actif ? 'Actif' : 'Inactif'}
-        </span>
-      </header>
-
-      {/* ── Onglets ── */}
-      <nav className="regle-detail__tabs">
-        {ONGLETS.map((o) => (
-          <button
-            key={o.id}
-            className={`regle-detail__tab ${ongletActif === o.id ? 'regle-detail__tab--active' : ''}`}
-            onClick={() => setOngletActif(o.id)}
-          >
-            <i className={o.icon}></i> {o.label}
-          </button>
-        ))}
-      </nav>
-
-      {/* ── Contenu de l'onglet actif ── */}
-      <div className="regle-detail__tab-content">
-        {ongletActif === 'objectifs' && <ObjectifsOnglet regle={regle} onRefresh={handleRefresh} />}
-        {ongletActif === 'variables' && <VariablesOnglet regle={regle} onRefresh={handleRefresh} />}
-        {ongletActif === 'agents'    && <AgentsOnglet   regle={regle} onRefresh={handleRefresh} />}
       </div>
+      
+      {!isSidebarOpen && (
+        <button className="ai-sidebar-toggle" onClick={() => setIsSidebarOpen(true)}>
+          <i className="fa-solid fa-robot"></i> Assistant IA
+        </button>
+      )}
+      
+      <AiSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </div>
   );
 }

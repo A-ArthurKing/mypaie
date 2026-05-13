@@ -1,5 +1,5 @@
 
-from routes.dw_api_heures_endpoint import app, FLASK_PORT, logger, socketio
+from app import app, FLASK_PORT, logger, socketio
 
 if __name__ == "__main__":
     logger.info("Démarrage du serveur Flask + SocketIO sur le port %d", FLASK_PORT)

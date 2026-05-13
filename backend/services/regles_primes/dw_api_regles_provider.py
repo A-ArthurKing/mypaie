@@ -272,8 +272,8 @@ def create_regle(data: dict):
             # Le système utilise désormais id_structure (Cerveau) pour les jointures.
             sql = """
                 INSERT INTO matrice_primes
-                (code, libelle, id_structure, periodicite, description, periode_debut, grille_objectifs, actif, projet)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 1, '')
+                (code, libelle, id_structure, periodicite, description, periode_debut, grille_objectifs, actif)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 1)
             """
             grille_json = json.dumps(grille_objectifs) if grille_objectifs else None
             cursor.execute(sql, (code, nom, id_structure, periodicite, description, periode_debut, grille_json))
