@@ -35,7 +35,7 @@ def get_all_references():
             cur.execute("SELECT id, nom as libelle FROM ref_projets ORDER BY nom")
             projets = cur.fetchall()
 
-            cur.execute("SELECT id, id_projet, libelle FROM ref_operations ORDER BY libelle")
+            cur.execute("SELECT id, libelle FROM ref_operations ORDER BY libelle")
             ops = cur.fetchall()
             
             cur.execute("SELECT id, libelle FROM ref_files ORDER BY libelle")
@@ -44,7 +44,7 @@ def get_all_references():
             cur.execute("SELECT id, libelle FROM ref_activites ORDER BY libelle")
             acts = cur.fetchall()
             
-            cur.execute("SELECT id, libelle FROM ref_statuts ORDER BY libelle")
+            cur.execute("SELECT id, code, libelle FROM matrice_statuts WHERE actif = 1 ORDER BY libelle")
             statuts = cur.fetchall()
 
             cur.execute("SELECT id, id_projet, id_operation, id_file, id_activite FROM ref_structure_map")
@@ -53,7 +53,7 @@ def get_all_references():
             # On récupère les KPIs standards avec un flag indiquant s'ils sont déjà mappés (Liaison faite)
             cur.execute("""
                 SELECT 
-                    k.id, k.code, k.libelle, k.unite, k.univers, k.tech_key, k.source_db,
+                    k.id, k.code, k.libelle, k.unite, k.univers, k.tech_key,
                     (SELECT COUNT(*) FROM matrice_kpis_mapping m WHERE m.standard_kpi_code = k.code) as mapping_count,
                     (SELECT m2.is_formula FROM matrice_kpis_mapping m2 WHERE m2.standard_kpi_code = k.code AND m2.is_formula = 1 LIMIT 1) as is_formula,
                     (SELECT m3.formula FROM matrice_kpis_mapping m3 WHERE m3.standard_kpi_code = k.code AND m3.is_formula = 1 LIMIT 1) as formula

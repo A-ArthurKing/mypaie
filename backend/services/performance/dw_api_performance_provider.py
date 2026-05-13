@@ -2,6 +2,8 @@
 Fichier : dw_api_performance_provider.py
 Rôle    : Service de lecture des données de performance (PVCP) depuis BigQuery.
           Extrait les métriques JSON et gère les filtres.
+          La résolution des noms de projet se fait depuis MySQL (ref_projets_mapping),
+          sans JOIN BigQuery — architecture découplée et plus maintenable.
 Module  : mypaie / backend / services / performance
 """
 
@@ -16,6 +18,49 @@ from tools.sql_queries import query_performance_detail, query_performance_count
 
 logger = logging.getLogger(__name__)
 
+
+# #region HELPERS — Résolution des noms de projets depuis MySQL
+
+def _load_projet_mapping() -> dict:
+    """
+    Charge le mapping source_name → nom standard depuis MySQL ref_projets_mapping.
+    Retourne un dict { 'NOM_SOURCE_UPPER': 'Nom Standard' } pour résolution rapide.
+    En cas d'erreur de connexion, retourne un dict vide (non bloquant).
+    """
+    try:
+        import pymysql
+        from config.db_mysql_connector import get_mysql_connection
+        conn = get_mysql_connection()
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("""
+                SELECT pm.source_name, p.nom AS standard_name
+                FROM ref_projets_mapping pm
+                LEFT JOIN ref_projets p ON p.id = pm.id_projet
+                WHERE pm.source_name IS NOT NULL
+            """)
+            rows = cur.fetchall()
+        conn.close()
+        # Clé en UPPER pour comparaison insensible à la casse
+        return {r["source_name"].strip().upper(): r["standard_name"] for r in rows if r["standard_name"]}
+    except Exception as e:
+        logger.warning("Impossible de charger ref_projets_mapping depuis MySQL : %s", e)
+        return {}
+
+
+def _resolve_projet(raw_name: Optional[str], mapping: dict) -> Optional[str]:
+    """
+    Résout le nom brut BigQuery vers le nom standard MySQL.
+    Retourne le nom brut si aucun mapping trouvé.
+    """
+    if not raw_name:
+        return raw_name
+    return mapping.get(raw_name.strip().upper(), raw_name)
+
+# #endregion
+
+
+# #region LECTURE PERFORMANCE PVCP
+
 def get_performance_pvcp(
     date_debut: Optional[str] = None,
     date_fin: Optional[str] = None,
@@ -26,14 +71,18 @@ def get_performance_pvcp(
 ) -> dict:
     """
     Récupère les données de performance depuis la table normalisée ou les vues.
+    Les noms de projets bruts BigQuery sont résolus via MySQL (ref_projets_mapping).
     Granularity : 'total' (default), 'month', 'week'
     """
     client = get_bigquery_client()
-    
+
+    # Chargement anticipé du mapping projet (non bloquant si MySQL indisponible)
+    projet_mapping = _load_projet_mapping()
+
     # Choix de la source selon la granularité
     if granularity == "month":
         table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.v_paie_agent_mensuel`"
-        date_col = "mois" # Format 'YYYY-MM'
+        date_col = "mois"
     elif granularity == "week":
         table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.v_paie_agent_hebdo`"
         date_col = "date_ref"
@@ -47,16 +96,14 @@ def get_performance_pvcp(
     if date_debut:
         where_clauses.append(f"{date_col} >= @date_debut")
         if granularity == "month" and len(date_debut) > 7:
-            date_debut_param = date_debut[:7]
-            query_params.append(bigquery.ScalarQueryParameter("date_debut", "STRING", date_debut_param))
+            query_params.append(bigquery.ScalarQueryParameter("date_debut", "STRING", date_debut[:7]))
         else:
             query_params.append(bigquery.ScalarQueryParameter("date_debut", "DATE" if granularity != "month" else "STRING", date_debut))
 
     if date_fin:
         where_clauses.append(f"{date_col} <= @date_fin")
         if granularity == "month" and len(date_fin) > 7:
-            date_fin_param = date_fin[:7]
-            query_params.append(bigquery.ScalarQueryParameter("date_fin", "STRING", date_fin_param))
+            query_params.append(bigquery.ScalarQueryParameter("date_fin", "STRING", date_fin[:7]))
         else:
             query_params.append(bigquery.ScalarQueryParameter("date_fin", "DATE" if granularity != "month" else "STRING", date_fin))
 
@@ -66,58 +113,57 @@ def get_performance_pvcp(
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-    # Pour les vues, les colonnes sont déjà pré-agrégées
+    # Requêtes selon granularité
     if granularity in ["month", "week"]:
         sql_data = f"""
-            SELECT *, matricule as agent_id_hash, agent_nom as agent_name 
-            FROM {table_ref} 
-            {where_str} 
+            SELECT *, matricule AS agent_id_hash, agent_nom AS agent_name
+            FROM {table_ref}
+            {where_str}
             ORDER BY {date_col} DESC, agent_nom ASC
             LIMIT @limit OFFSET @offset
         """
-        sql_count = f"SELECT COUNT(*) as total FROM {table_ref} {where_str}"
+        sql_count = f"SELECT COUNT(*) AS total FROM {table_ref} {where_str}"
     else:
         sql_data = query_performance_detail(table_ref, where_str)
         sql_count = query_performance_count(table_ref, where_str)
-    
-    # Paramètres additionnels pour la pagination
+
     pagination_params = query_params + [
         bigquery.ScalarQueryParameter("limit", "INT64", limit),
-        bigquery.ScalarQueryParameter("offset", "INT64", offset)
+        bigquery.ScalarQueryParameter("offset", "INT64", offset),
     ]
 
     try:
-        # Exécution data
         job_config_data = bigquery.QueryJobConfig(query_parameters=pagination_params)
         data_job = client.query(sql_data, job_config=job_config_data)
         results = [dict(row) for row in data_job.result()]
 
-        # Transformation pour la compatibilité Frontend
         for r in results:
-            r['chiffre_affaire'] = r.get('chiffre_affaire')
-            r['taux_conversion_calc'] = r.get('taux_conversion') if granularity in ["month", "week"] else r.get('taux_conversion_calc')
-            
-            r['metrics_full'] = {
-                'in_call_nbr': r.get('in_call_nbr'),
-                'booking_nbr': r.get('nb_ventes') if granularity in ["month", "week"] else r.get('booking_nbr'),
-                'in_call_min_nbr': r.get('temps_appel') if granularity in ["month", "week"] else r.get('call_min'),
-                'call_worked_time_min_nbr': r.get('temps_appel') if granularity in ["month", "week"] else r.get('worked_min'),
-                'agent_logged_time_min_nbr': r.get('temps_production') if granularity in ["month", "week"] else r.get('logged_min'),
-                'chiffre_affaire': r.get('chiffre_affaire'),
-                'taux_conversion_calc': r.get('taux_conversion') if granularity in ["month", "week"] else r.get('taux_conversion_calc'),
-                'csat_moyen': r.get('csat'),
-                'nb_records': r.get('nb_records') if granularity == "month" else (1 if granularity == "week" else r.get('nb_records')),
-                'is_consolidated': True,
-                'granularity': granularity,
-                'date_val': r.get('mois') if granularity == "month" else r.get('date_ref')
+            # Résolution du nom de projet brut BQ → nom standard MySQL
+            r["projet"] = _resolve_projet(r.get("projet"), projet_mapping)
+
+            r["chiffre_affaire"] = r.get("chiffre_affaire")
+            r["taux_conversion_calc"] = r.get("taux_conversion") if granularity in ["month", "week"] else r.get("taux_conversion_calc")
+
+            r["metrics_full"] = {
+                "in_call_nbr":               r.get("in_call_nbr"),
+                "booking_nbr":               r.get("nb_ventes") if granularity in ["month", "week"] else r.get("booking_nbr"),
+                "in_call_min_nbr":           r.get("temps_appel") if granularity in ["month", "week"] else r.get("call_min"),
+                "call_worked_time_min_nbr":  r.get("temps_appel") if granularity in ["month", "week"] else r.get("worked_min"),
+                "agent_logged_time_min_nbr": r.get("temps_production") if granularity in ["month", "week"] else r.get("logged_min"),
+                "chiffre_affaire":           r.get("chiffre_affaire"),
+                "taux_conversion_calc":      r.get("taux_conversion") if granularity in ["month", "week"] else r.get("taux_conversion_calc"),
+                "csat_moyen":                r.get("csat"),
+                "nb_records":                r.get("nb_records") if granularity == "month" else (1 if granularity == "week" else r.get("nb_records")),
+                "is_consolidated":           True,
+                "granularity":               granularity,
+                "date_val":                  r.get("mois") if granularity == "month" else r.get("date_ref"),
             }
-            
+
             # Sérialisation des dates
             for key, value in r.items():
                 if isinstance(value, (datetime.date, datetime.datetime)):
                     r[key] = value.isoformat()
 
-        # Exécution count
         job_config_count = bigquery.QueryJobConfig(query_parameters=query_params)
         count_job = client.query(sql_count, job_config=job_config_count)
         total_res = next(iter(count_job.result()), {"total": 0})
@@ -132,8 +178,10 @@ def get_performance_pvcp(
         logger.error("Erreur Inattendue Performance : %s", e)
         raise e
 
+# #endregion
 
-# ─── Moteur de formules dynamiques ──────────────────────────────────────────
+
+# #region MOTEUR DE FORMULES DYNAMIQUES
 
 import re as _re
 
@@ -300,3 +348,5 @@ def get_perf_totaux_par_matricule(
     except GoogleCloudError as e:
         logger.error("Erreur BigQuery perf totaux par matricule : %s", e)
         raise
+
+# #endregion

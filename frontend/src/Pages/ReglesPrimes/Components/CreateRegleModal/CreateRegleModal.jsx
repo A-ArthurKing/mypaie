@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSocket } from '../../../../Shared/Contexts/SocketContext';
 import { useToast } from '../../../../Shared/Contexts/ToastContext';
+import CustomSelect from '../../../../Shared/CustomSelect/CustomSelect';
 import './CreateRegleModal.css';
 
 export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regleToDuplicate }) {
@@ -204,10 +205,7 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
 
             <div className="form-group">
               <label htmlFor="projet_id">Projet cible</label>
-              <select id="projet_id" name="projet_id" value={selections.projet_id} onChange={handleSelectionChange}>
-                <option value="">-- Sélectionner un projet ({refs.projets.length} disponible(s)) --</option>
-                {refs.projets.map(p => <option key={p.id} value={p.id}>{p.libelle}</option>)}
-              </select>
+              <CustomSelect id="projet_id" name="projet_id" value={selections.projet_id} onChange={handleSelectionChange} placeholder={`-- Sélectionner un projet (${refs.projets.length} disponible(s)) --`} options={refs.projets.map(p => ({ value: p.id, label: p.libelle }))} />
             </div>
 
             <div className="form-row">
@@ -215,56 +213,25 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
                 <label htmlFor="id_operation">
                   Opération {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
                 </label>
-                <select 
-                  id="id_operation" 
-                  name="id_operation" 
-                  value={selections.id_operation} 
-                  onChange={handleSelectionChange}
-                  disabled={!selections.projet_id}
-                >
-                  <option value="">-- {filteredOperations.length} opération(s) --</option>
-                  {filteredOperations.map(o => <option key={o.id} value={o.id}>{o.libelle}</option>)}
-                </select>
+                <CustomSelect id="id_operation" name="id_operation" value={selections.id_operation} onChange={handleSelectionChange} isDisabled={!selections.projet_id} placeholder={`-- ${filteredOperations.length} opération(s) --`} options={filteredOperations.map(o => ({ value: o.id, label: o.libelle }))} />
               </div>
               <div className="form-group">
                 <label htmlFor="id_file">
                   File {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
                 </label>
-                <select 
-                  id="id_file" 
-                  name="id_file" 
-                  value={selections.id_file} 
-                  onChange={handleSelectionChange}
-                  disabled={!selections.id_operation}
-                >
-                  <option value="">-- {filteredFiles.length} file(s) --</option>
-                  {filteredFiles.map(f => <option key={f.id} value={f.id}>{f.libelle}</option>)}
-                </select>
+                <CustomSelect id="id_file" name="id_file" value={selections.id_file} onChange={handleSelectionChange} isDisabled={!selections.id_operation} placeholder={`-- ${filteredFiles.length} file(s) --`} options={filteredFiles.map(f => ({ value: f.id, label: f.libelle }))} />
               </div>
               <div className="form-group">
                 <label htmlFor="id_activite">
                   Activité {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
                 </label>
-                <select 
-                  id="id_activite" 
-                  name="id_activite" 
-                  value={selections.id_activite} 
-                  onChange={handleSelectionChange}
-                  disabled={!selections.id_operation}
-                >
-                  <option value="">-- {filteredActivites.length} activité(s) --</option>
-                  {filteredActivites.map(a => <option key={a.id} value={a.id}>{a.libelle}</option>)}
-                </select>
+                <CustomSelect id="id_activite" name="id_activite" value={selections.id_activite} onChange={handleSelectionChange} isDisabled={!selections.id_file} placeholder={`-- ${filteredActivites.length} activité(s) --`} options={filteredActivites.map(a => ({ value: a.id, label: a.libelle }))} />
               </div>
             </div>
 
             <div className="form-group">
               <label htmlFor="periodicite">Périodicité</label>
-              <select id="periodicite" name="periodicite" value={formData.periodicite} onChange={handleChange}>
-                <option value="mensuelle">Mensuelle</option>
-                <option value="trimestrielle">Trimestrielle</option>
-                <option value="annuelle">Annuelle</option>
-              </select>
+              <CustomSelect id="periodicite" name="periodicite" value={formData.periodicite} onChange={handleChange} options={[ { value: "mensuelle", label: "Mensuelle" }, { value: "trimestrielle", label: "Trimestrielle" }, { value: "annuelle", label: "Annuelle" } ]} />
             </div>
 
             <div className="form-group">

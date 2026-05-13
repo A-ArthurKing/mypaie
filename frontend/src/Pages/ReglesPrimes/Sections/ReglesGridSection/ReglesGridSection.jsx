@@ -99,7 +99,7 @@ export default function ReglesGridSection({ regles, loading, onCardClick, onEdit
     );
   }
 
-  if (regles.length === 0) {
+  if (!regles || regles.length === 0) {
     return (
       <div className="regles-grid-section__empty">
         <i className="fa-solid fa-calculator regles-grid-section__empty-icon"></i>
