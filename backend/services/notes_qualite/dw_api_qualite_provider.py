@@ -63,7 +63,9 @@ def get_qualite_agents(
     # colonnes_str = ", ".join(COLONNES_EXPOSEES)
     colonnes_str = "agent as Agent, matricule, projet as Projet, date_evaluation as Date_Evaluation, score_global, nb_evaluations, item1_Respect_des_criteres_et_procedures as item1, item2_Savoir_etre_et_attitudes_commerciales as item2, item3_Traitement_de_la_demande as item3, item4_Savoir_faire as item4"
 
-    where_clauses = []
+    where_clauses = [
+        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%batisante%%' OR LOWER(projet) LIKE '%%axione%%' OR LOWER(projet) LIKE '%%venum%%')"
+    ]
     query_params = []
 
     if date_debut:
@@ -146,7 +148,9 @@ def get_qualite_stats_projets(
     client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
-    where_clauses = []
+    where_clauses = [
+        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%batisante%%' OR LOWER(projet) LIKE '%%axione%%' OR LOWER(projet) LIKE '%%venum%%')"
+    ]
     query_params  = []
 
     if date_debut:
@@ -217,7 +221,10 @@ def get_qualite_totaux_par_matricule(
         query_params.append(bq.ArrayQueryParameter("agent_names", "STRING", agent_names))
 
     identity_clause = "(" + " OR ".join(identity_parts) + ")"
-    where_clauses = [identity_clause]
+    where_clauses = [
+        identity_clause,
+        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%batisante%%' OR LOWER(projet) LIKE '%%axione%%' OR LOWER(projet) LIKE '%%venum%%')"
+    ]
 
     if date_debut:
         where_clauses.append("date_evaluation >= @date_debut")
@@ -265,7 +272,7 @@ def get_qualite_stats_global(
         return cached
 
     client    = get_bigquery_client()
-    table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_QUALITE}.{BQ_TABLE_QUALITE}`"
+    table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
     where_clauses = []
     query_params  = []
@@ -278,32 +285,32 @@ def get_qualite_stats_global(
         query_params.append({"name": "date_fin", "parameterType": {"type": "DATETIME"}, "parameterValue": {"value": date_fin}})
 
     where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-    query     = query_qualite_stats_global(table_ref, where_str)
+    sql = f"""
+        SELECT 
+            AVG(score_global) as moyenne_globale,
+            SUM(nb_evaluations) as nb_total,
+            AVG(item1_Total) as it1_moy,
+            AVG(item2_Total) as it2_moy,
+            AVG(item3_Total) as it3_moy,
+            AVG(item4_Total) as it4_moy
+        FROM {table_ref}
+        {where_str.replace("Date_Evaluation", "date_evaluation")}
+    """
 
     try:
-        job  = client.query(query, job_config=_build_job_config(query_params))
-        rows = [dict(row) for row in job.result()]
+        job  = client.query(sql, job_config=_build_job_config(query_params))
+        row = list(job.result())[0]
 
-        result = {"moyenne_globale": 0, "nb_total": 0, "items": {}}
-
-        for row in rows:
-            it  = row["item"]
-            sit = row["sous_item"]
-            moy = row["moyenne"]
-            nb  = row["nb"]
-
-            if it is None and sit is None:
-                result["moyenne_globale"] = moy
-                result["nb_total"]        = nb
-            elif sit is None:
-                if it not in result["items"]:
-                    result["items"][it] = {"moyenne": 0, "nb": 0, "sous_items": {}}
-                result["items"][it]["moyenne"] = moy
-                result["items"][it]["nb"]      = nb
-            else:
-                if it not in result["items"]:
-                    result["items"][it] = {"moyenne": 0, "nb": 0, "sous_items": {}}
-                result["items"][it]["sous_items"][sit] = {"moyenne": moy, "nb": nb}
+        result = {
+            "moyenne_globale": row["moyenne_globale"] or 0, 
+            "nb_total": row["nb_total"] or 0, 
+            "items": {
+                "Respect des criteres et procedures": {"moyenne": row["it1_moy"] or 0, "nb": row["nb_total"] or 0, "sous_items": {}},
+                "Savoir etre et attitudes commerciales": {"moyenne": row["it2_moy"] or 0, "nb": row["nb_total"] or 0, "sous_items": {}},
+                "Traitement de la demande": {"moyenne": row["it3_moy"] or 0, "nb": row["nb_total"] or 0, "sous_items": {}},
+                "Savoir faire": {"moyenne": row["it4_moy"] or 0, "nb": row["nb_total"] or 0, "sous_items": {}},
+            }
+        }
 
         set_cached(cache_key, result, _CACHE_TTL_STATS)
         return result

@@ -12,7 +12,6 @@ import NotesQualite from '../../Pages/NotesQualite/NotesQualite'
 import Performance from '../../Pages/Performance/Performance'
 import Agents from '../../Pages/GestionAgents/GestionAgents'
 import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
-import GestionStructure from '../../Pages/GestionStructure/GestionStructure'
 import Parametres from '../../Pages/Parametres/Parametres'
 import './AppLayout.css'
 
@@ -31,7 +30,6 @@ function AppLayout() {
           <Route path="/qualite/*" element={<NotesQualite />} />
           <Route path="/performance/*" element={<Performance />} />
           <Route path="/agents/*" element={<Agents />} />
-          <Route path="/structure/*" element={<GestionStructure />} />
           <Route path="/regles-primes/*" element={<ReglesPrimes />} />
           <Route path="/parametres/*" element={<Parametres />} />
           {/* Redirection par défaut vers les heures */}

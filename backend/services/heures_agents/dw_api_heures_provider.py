@@ -61,7 +61,10 @@ def get_heures_agents(
     Les lignes supprimées (deleted_at IS NOT NULL) sont exclues.
     Retourne un dict { data, total, limit, offset }.
     """
-    where_clauses = ["deleted_at IS NULL"]
+    where_clauses = [
+        "deleted_at IS NULL",
+        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%bati sante%%' OR LOWER(projet) LIKE '%%axionne%%' OR LOWER(projet) LIKE '%%venum%%')"
+    ]
     params: list = []
 
     if date_debut:
@@ -127,6 +130,7 @@ def get_equipes_distinctes() -> list:
     sql = (
         f"SELECT DISTINCT Equipe FROM {_TABLE} "
         f"WHERE Equipe IS NOT NULL AND deleted_at IS NULL "
+        f"AND (LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%bati sante%%' OR LOWER(projet) LIKE '%%axionne%%' OR LOWER(projet) LIKE '%%venum%%') "
         f"ORDER BY Equipe"
     )
     try:
@@ -151,6 +155,7 @@ def get_projets_distincts() -> list:
     sql = (
         f"SELECT DISTINCT projet FROM {_TABLE} "
         f"WHERE projet IS NOT NULL AND deleted_at IS NULL "
+        f"AND (LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%bati sante%%' OR LOWER(projet) LIKE '%%axionne%%' OR LOWER(projet) LIKE '%%venum%%') "
         f"ORDER BY projet"
     )
     try:
@@ -183,6 +188,7 @@ def get_totaux_par_matricule(
     where_clauses = [
         "deleted_at IS NULL",
         f"matricule IN ({placeholders})",
+        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%bati sante%%' OR LOWER(projet) LIKE '%%axionne%%' OR LOWER(projet) LIKE '%%venum%%')"
     ]
     params: list = list(matricules)
 

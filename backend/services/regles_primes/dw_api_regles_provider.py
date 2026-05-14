@@ -213,13 +213,13 @@ def get_regles() -> list:
                     mp.periode_debut, mp.actif, mp.created_at,
                     rp.nom        AS libelle_projet,
                     ro.libelle    AS libelle_operation,
-                    rf.libelle    AS libelle_file,
+                    rf.libelle    AS libelle_sous_projet,
                     ra.libelle    AS libelle_activite
                 FROM matrice_primes mp
                 LEFT JOIN ref_structure_map rsm ON rsm.id = mp.id_structure
                 LEFT JOIN ref_projets       rp  ON rp.id  = rsm.id_projet
                 LEFT JOIN ref_operations    ro  ON ro.id  = rsm.id_operation
-                LEFT JOIN ref_files         rf  ON rf.id  = rsm.id_file
+                LEFT JOIN ref_sous_projet         rf  ON rf.id  = rsm.id_sous_projet
                 LEFT JOIN ref_activites     ra  ON ra.id  = rsm.id_activite
                 ORDER BY mp.created_at DESC
             """
@@ -239,7 +239,7 @@ def get_regles() -> list:
                     "created_at": str(row["created_at"]) if row["created_at"] else None,
                     "libelle_projet": row.get("libelle_projet"),
                     "libelle_operation": row.get("libelle_operation"),
-                    "libelle_file": row.get("libelle_file"),
+                    "libelle_sous_projet": row.get("libelle_sous_projet"),
                     "libelle_activite": row.get("libelle_activite"),
                 })
             return regles

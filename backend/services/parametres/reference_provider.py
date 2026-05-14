@@ -38,8 +38,8 @@ def get_all_references():
             cur.execute("SELECT id, libelle FROM ref_operations ORDER BY libelle")
             ops = cur.fetchall()
             
-            cur.execute("SELECT id, libelle FROM ref_files ORDER BY libelle")
-            files = cur.fetchall()
+            cur.execute("SELECT id, libelle FROM ref_sous_projet ORDER BY libelle")
+            sous_projets = cur.fetchall()
             
             cur.execute("SELECT id, libelle FROM ref_activites ORDER BY libelle")
             acts = cur.fetchall()
@@ -47,7 +47,7 @@ def get_all_references():
             cur.execute("SELECT id, code, libelle FROM matrice_statuts WHERE actif = 1 ORDER BY libelle")
             statuts = cur.fetchall()
 
-            cur.execute("SELECT id, id_projet, id_operation, id_file, id_activite FROM ref_structure_map")
+            cur.execute("SELECT id, id_projet, id_operation, id_sous_projet, id_activite FROM ref_structure_map")
             structure = cur.fetchall()
 
             # On récupère les KPIs standards avec un flag indiquant s'ils sont déjà mappés (Liaison faite)
@@ -78,7 +78,7 @@ def get_all_references():
             result = {
                 "projets": projets,
                 "operations": ops,
-                "files": files,
+                "sous_projets": sous_projets,
                 "activites": acts,
                 "statuts": statuts,
                 "structure": structure,

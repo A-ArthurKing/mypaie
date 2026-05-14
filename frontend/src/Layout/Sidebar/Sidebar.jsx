@@ -14,8 +14,8 @@ const NAV_ITEMS = [
   { id: 'qualite',     label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite'     },
   { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance' },
   { id: 'agents',      label: 'Gestion agents', icon: 'fa-solid fa-users-gear',   path: '/agents'      },
-  { id: 'structure',   label: 'Gestion structure', icon: 'fa-solid fa-building-user', path: '/structure' },
   { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
+  { id: 'parametres',  label: 'Paramètres',    icon: 'fa-solid fa-gear',         path: '/parametres'  },
 ]
 
 function Sidebar() {

@@ -7,16 +7,17 @@ Module  : mypaie / backend / api / parametres
 import logging
 from flask import Blueprint, jsonify, request
 from services.parametres.mapping_provider import (
-    get_mappings, add_mapping, delete_mapping,
+    get_mappings, delete_mapping,
     get_kpi_mappings, add_kpi_mapping, delete_kpi_mapping,
     get_mysql_kpi_mappings, add_mysql_kpi_mapping, delete_mysql_kpi_mapping,
     add_standard_kpi, update_standard_kpi,
     get_mysql_project_mappings, add_mysql_project_mapping, delete_mysql_project_mapping,
+    get_all_kpis_with_status, toggle_kpi_actif, get_etl_sources, get_kpi_mappings_by_source,
 )
 from services.parametres.structure_provider import (
     add_project, update_project, delete_project,
     add_operation, update_operation, delete_operation,
-    add_file, update_file, delete_file,
+    add_sous_projet, update_sous_projet, delete_sous_projet,
     add_activity, update_activity, delete_activity,
     add_structure_mapping, delete_structure_mapping,
 )
@@ -133,7 +134,7 @@ def endpoint_post_mapping():
     data        = request.json or {}
     source_name = data.get("source_name")
     id_projet   = data.get("id_projet")
-    id_file     = data.get("id_file")
+    id_sous_projet     = data.get("id_sous_projet")
     id_activite = data.get("id_activite")
     description = data.get("description")
 
@@ -141,7 +142,7 @@ def endpoint_post_mapping():
         return jsonify({"error": "Les champs source_name et id_projet sont requis"}), 400
 
     try:
-        f_id   = int(id_file)     if id_file     and str(id_file).isdigit()     else None
+        f_id   = int(id_sous_projet)     if id_sous_projet     and str(id_sous_projet).isdigit()     else None
         a_id   = int(id_activite) if id_activite and str(id_activite).isdigit() else None
         result = add_mysql_project_mapping(source_name, int(id_projet), f_id, a_id, description)
         emit_update("mapping_projets_updated")
@@ -213,6 +214,53 @@ def endpoint_delete_kpi_mapping(mapping_id):
         return jsonify({"error": "Erreur lors de la suppression du mapping KPI"}), 500
 
 
+# --- KPI REGISTRY : catalogue + toggle actif ---
+
+@parametres_bp.route("/api/parametres/kpis-registry", methods=["GET"])
+def endpoint_kpis_registry():
+    """Liste tous les KPIs standards avec leur statut actif et le nombre de mappings."""
+    try:
+        return jsonify({"data": get_all_kpis_with_status()}), 200
+    except Exception as e:
+        logger.error("Erreur GET kpis-registry: %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@parametres_bp.route("/api/parametres/kpis-registry/<code>/toggle", methods=["PATCH"])
+def endpoint_toggle_kpi(code):
+    """Bascule le flag actif d'un KPI (actif ↔ inactif)."""
+    try:
+        result = toggle_kpi_actif(code)
+        invalidate_references_cache()
+        emit_update("kpi_registry_updated")
+        return jsonify(result), 200
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 404
+    except Exception as e:
+        logger.error("Erreur PATCH toggle kpi '%s': %s", code, e)
+        return jsonify({"error": str(e)}), 500
+
+
+@parametres_bp.route("/api/parametres/etl-sources", methods=["GET"])
+def endpoint_etl_sources():
+    """Liste les sources ETL configurées (ref_etl_config)."""
+    try:
+        return jsonify({"data": get_etl_sources()}), 200
+    except Exception as e:
+        logger.error("Erreur GET etl-sources: %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@parametres_bp.route("/api/parametres/etl-sources/<path:source_table>/mappings", methods=["GET"])
+def endpoint_etl_source_mappings(source_table):
+    """Retourne les mappings KPI d'une source ETL donnée."""
+    try:
+        return jsonify({"data": get_kpi_mappings_by_source(source_table)}), 200
+    except Exception as e:
+        logger.error("Erreur GET etl-source-mappings '%s': %s", source_table, e)
+        return jsonify({"error": str(e)}), 500
+
+
 # --- STRUCTURE ---
 
 @parametres_bp.route("/api/parametres/structure/projets", methods=["POST"])
@@ -265,25 +313,25 @@ def endpoint_manage_operation(id):
         return jsonify({"error": str(e)}), 500
 
 
-@parametres_bp.route("/api/parametres/structure/files", methods=["POST"])
+@parametres_bp.route("/api/parametres/structure/sous-projets", methods=["POST"])
 def endpoint_add_file():
     data = request.json or {}
     try:
-        res = add_file(data.get("libelle"))
+        res = add_sous_projet(data.get("libelle"))
         _emit_structure_update()
         return jsonify(res), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@parametres_bp.route("/api/parametres/structure/files/<int:id>", methods=["PUT", "DELETE"])
+@parametres_bp.route("/api/parametres/structure/sous-projets/<int:id>", methods=["PUT", "DELETE"])
 def endpoint_manage_file(id):
     try:
         if request.method == "DELETE":
-            res = delete_file(id)
+            res = delete_sous_projet(id)
         else:
             data = request.json or {}
-            res  = update_file(id, data.get("libelle"))
+            res  = update_sous_projet(id, data.get("libelle"))
         _emit_structure_update()
         return jsonify(res), 200
     except Exception as e:
@@ -322,7 +370,7 @@ def endpoint_add_structure_mapping():
         res = add_structure_mapping(
             data.get("id_projet"),
             data.get("id_operation"),
-            data.get("id_file"),
+            data.get("id_sous_projet"),
             data.get("id_activite"),
         )
         _emit_structure_update()

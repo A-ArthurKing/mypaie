@@ -1,8 +1,8 @@
-﻿-- ============================================================
+-- ============================================================
 -- Fichier : 00_schema.sql
--- Rôle    : Initialisation de la base mypaie_config.
---           Crée toutes les tables du moteur de calcul des primes,
---           les tables de référence structurelles et les données de seed.
+-- R�le    : Initialisation de la base mypaie_config.
+--           Cr�e toutes les tables du moteur de calcul des primes,
+--           les tables de r�f�rence structurelles et les donn�es de seed.
 -- Module  : mypaie / mysql / init
 -- ============================================================
 SET NAMES utf8mb4;
@@ -12,7 +12,7 @@ USE mypaie_config;
 
 -- ============================================================
 -- TABLE : matrice_statuts
--- Rôle  : Types de contrats / statuts des agents
+-- R�le  : Types de contrats / statuts des agents
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_statuts (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -26,15 +26,15 @@ CREATE TABLE IF NOT EXISTS matrice_statuts (
 
 -- ============================================================
 -- TABLE : matrice_kpis
--- Rôle  : Définition des KPIs utilisables dans les matrices
+-- R�le  : D�finition des KPIs utilisables dans les matrices
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_kpis (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Code technique (CSAT, CONV, CA...)',
     libelle VARCHAR(100) NOT NULL,
-    unite VARCHAR(20) COMMENT 'Unité de mesure (%, EUR, appels...)',
+    unite VARCHAR(20) COMMENT 'Unit� de mesure (%, EUR, appels...)',
     univers ENUM('PERF','QUALITE','HEURES') NOT NULL DEFAULT 'PERF',
-    tech_key VARCHAR(50) NULL COMMENT 'Clé technique dans le DW',
+    tech_key VARCHAR(50) NULL COMMENT 'Cl� technique dans le DW',
     description TEXT,
     actif TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS matrice_kpis (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- TABLES DE RÉFÉRENCE STRUCTURELLES
--- Ordre : projets → operations → files → activites → structure_map
+-- TABLES DE R�F�RENCE STRUCTURELLES
+-- Ordre : projets ? operations ? files ? activites ? structure_map
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS ref_projets (
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS ref_operations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS ref_files (
+CREATE TABLE IF NOT EXISTS ref_sous_projet (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL UNIQUE,
     actif TINYINT(1) NOT NULL DEFAULT 1,
@@ -81,26 +81,26 @@ CREATE TABLE IF NOT EXISTS ref_activites (
 
 -- ============================================================
 -- TABLE : ref_structure_map
--- Rôle  : Combinaison unique projet/opération/file/activité
---         Sert de "clé structurelle" pour agents et règles
+-- R�le  : Combinaison unique projet/op�ration/file/activit�
+--         Sert de "cl� structurelle" pour agents et r�gles
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ref_structure_map (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     id_projet    INT UNSIGNED NOT NULL,
     id_operation INT UNSIGNED NULL,
-    id_file      INT UNSIGNED NULL,
+    id_sous_projet      INT UNSIGNED NULL,
     id_activite  INT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_structure (id_projet, id_operation, id_file, id_activite),
+    UNIQUE KEY uq_structure (id_projet, id_operation, id_sous_projet, id_activite),
     CONSTRAINT fk_strmap_projet    FOREIGN KEY (id_projet)    REFERENCES ref_projets(id)    ON DELETE CASCADE,
     CONSTRAINT fk_strmap_operation FOREIGN KEY (id_operation) REFERENCES ref_operations(id) ON DELETE SET NULL,
-    CONSTRAINT fk_strmap_file      FOREIGN KEY (id_file)      REFERENCES ref_files(id)      ON DELETE SET NULL,
+    CONSTRAINT fk_strmap_file      FOREIGN KEY (id_sous_projet)      REFERENCES ref_sous_projet(id)      ON DELETE SET NULL,
     CONSTRAINT fk_strmap_activite  FOREIGN KEY (id_activite)  REFERENCES ref_activites(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- TABLE : ref_employes
--- Rôle  : Référentiel local des agents (enrichissement SIRH)
+-- R�le  : R�f�rentiel local des agents (enrichissement SIRH)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ref_employes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -108,56 +108,56 @@ CREATE TABLE IF NOT EXISTS ref_employes (
     nom          VARCHAR(100) NOT NULL,
     prenom       VARCHAR(100) NOT NULL,
     id_operation INT UNSIGNED NULL,
-    id_file      INT UNSIGNED NULL,
+    id_sous_projet      INT UNSIGNED NULL,
     id_activite  INT UNSIGNED NULL,
     id_structure INT UNSIGNED NULL,
     actif        TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_emp_operation FOREIGN KEY (id_operation) REFERENCES ref_operations(id)    ON DELETE SET NULL,
-    CONSTRAINT fk_emp_file      FOREIGN KEY (id_file)      REFERENCES ref_files(id)         ON DELETE SET NULL,
+    CONSTRAINT fk_emp_file      FOREIGN KEY (id_sous_projet)      REFERENCES ref_sous_projet(id)         ON DELETE SET NULL,
     CONSTRAINT fk_emp_activite  FOREIGN KEY (id_activite)  REFERENCES ref_activites(id)     ON DELETE SET NULL,
     CONSTRAINT fk_emp_structure FOREIGN KEY (id_structure) REFERENCES ref_structure_map(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- TABLE : ref_projets_mapping
--- Rôle  : Correspondance nom brut BigQuery → ref_projets
---         Utilisé par le provider performance pour résoudre les noms
+-- R�le  : Correspondance nom brut BigQuery ? ref_projets
+--         Utilis� par le provider performance pour r�soudre les noms
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ref_projets_mapping (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     source_name VARCHAR(200) NOT NULL COMMENT 'Nom brut dans la source (BigQuery)',
     id_projet   INT UNSIGNED NOT NULL,
-    id_file     INT UNSIGNED NULL,
+    id_sous_projet     INT UNSIGNED NULL,
     id_activite INT UNSIGNED NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_project_source (source_name),
     CONSTRAINT fk_pmap_projet   FOREIGN KEY (id_projet)   REFERENCES ref_projets(id)   ON DELETE CASCADE,
-    CONSTRAINT fk_pmap_file     FOREIGN KEY (id_file)     REFERENCES ref_files(id)     ON DELETE SET NULL,
+    CONSTRAINT fk_pmap_file     FOREIGN KEY (id_sous_projet)     REFERENCES ref_sous_projet(id)     ON DELETE SET NULL,
     CONSTRAINT fk_pmap_activite FOREIGN KEY (id_activite) REFERENCES ref_activites(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- TABLE : matrice_primes
--- Rôle  : Matrices de primes (une par structure/période)
+-- R�le  : Matrices de primes (une par structure/p�riode)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_primes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    code        VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant métier unique',
+    code        VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant m�tier unique',
     libelle     VARCHAR(200) NOT NULL,
     id_structure INT UNSIGNED NULL COMMENT 'Lien vers ref_structure_map (NULL = global)',
-    sirh_filtre VARCHAR(100) NULL COMMENT 'Filtre SIRH optionnel (statut, équipe...)',
+    sirh_filtre VARCHAR(100) NULL COMMENT 'Filtre SIRH optionnel (statut, �quipe...)',
     periodicite VARCHAR(20) DEFAULT 'mensuelle',
     description TEXT,
-    description_kpi TEXT COMMENT 'Description des KPIs de la règle',
-    statut_id   INT UNSIGNED COMMENT 'Statut agent ciblé (NULL = tous)',
-    periode_debut DATE NOT NULL COMMENT 'Début de validité de la matrice',
-    periode_fin DATE COMMENT 'Fin de validité (NULL = illimitée)',
+    description_kpi TEXT COMMENT 'Description des KPIs de la r�gle',
+    statut_id   INT UNSIGNED COMMENT 'Statut agent cibl� (NULL = tous)',
+    periode_debut DATE NOT NULL COMMENT 'D�but de validit� de la matrice',
+    periode_fin DATE COMMENT 'Fin de validit� (NULL = illimit�e)',
     actif TINYINT(1) NOT NULL DEFAULT 1,
-    grille_objectifs JSON NULL COMMENT 'Configuration complète du moteur de calcul (JSON)',
+    grille_objectifs JSON NULL COMMENT 'Configuration compl�te du moteur de calcul (JSON)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_matrice_statut    FOREIGN KEY (statut_id)    REFERENCES matrice_statuts(id)    ON DELETE SET NULL,
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS matrice_primes (
 
 -- ============================================================
 -- TABLE : matrice_primes_configs
--- Rôle  : Versions de grilles d'objectifs par règle
+-- R�le  : Versions de grilles d'objectifs par r�gle
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_primes_configs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS matrice_primes_configs (
 
 -- ============================================================
 -- TABLE : matrice_objectifs
--- Rôle  : Objectifs KPI associés à chaque matrice
+-- R�le  : Objectifs KPI associ�s � chaque matrice
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_objectifs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS matrice_objectifs (
 
 -- ============================================================
 -- TABLE : matrice_paliers
--- Rôle  : Paliers de primes selon la note globale (0-100)
+-- R�le  : Paliers de primes selon la note globale (0-100)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_paliers (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -219,18 +219,22 @@ CREATE TABLE IF NOT EXISTS matrice_paliers (
 
 -- ============================================================
 -- TABLE : matrice_kpis_mapping
--- Rôle  : Correspondance colonnes BigQuery ↔ KPIs standards
---         Supporte aussi les formules calculées (is_formula=1)
+-- R�le  : Correspondance colonnes BigQuery ? KPIs standards
+--         Supporte aussi les formules calcul�es (is_formula=1)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_kpis_mapping (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     univers      ENUM('PERF','QUALITE','HEURES') NOT NULL,
     source_table VARCHAR(200) NOT NULL COMMENT 'Table/Vue dans BigQuery',
     source_column VARCHAR(100) NULL COMMENT 'Colonne source (NULL si is_formula=1)',
-    is_formula   TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = valeur calculée par formule',
-    formula      TEXT NULL COMMENT 'Expression arithmétique (ex: nb_ventes/nb_appels*100)',
-    standard_kpi_code VARCHAR(30) NOT NULL COMMENT 'Code KPI standard (DMT, CONV, etc.)',
-    id_projet    INT UNSIGNED NULL COMMENT 'Portée projet (NULL = tous les projets)',
+    is_formula   TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = valeur calculee par formule',
+    formula      TEXT NULL COMMENT 'Expression SQL (ex: SAFE_DIVIDE(SUM(nb_ventes), NULLIF(SUM(nb_appels),0)))',
+    standard_kpi_code VARCHAR(30) NOT NULL COMMENT 'Code KPI standard (APPELS, CA, CSAT...)',
+    dest_table   VARCHAR(100) NULL COMMENT 'Table BQ destination (ex: paie_performance_tv)',
+    dest_column  VARCHAR(100) NULL COMMENT 'Colonne BQ destination (NULL si helper)',
+    data_type    ENUM('FLOAT','INT','BOOL','DURATION_MIN','PERCENT') NOT NULL DEFAULT 'FLOAT',
+    is_helper    TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = colonne intermediaire pour formule, non stockee en BQ',
+    id_projet    INT UNSIGNED NULL COMMENT 'Portee projet (NULL = tous les projets)',
     description  TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -255,14 +259,37 @@ ON DUPLICATE KEY UPDATE
     tech_key = VALUES(tech_key);
 
 -- ============================================================
--- DONNÉES DE RÉFÉRENCE : Statuts agents
+-- DONN�ES DE R�F�RENCE : Statuts agents
 -- ============================================================
 INSERT INTO matrice_statuts (code, libelle)
 VALUES
-    ('CDI',   'CDI — Contrat à Durée Indéterminée'),
-    ('CDD',   'CDD — Contrat à Durée Déterminée'),
+    ('CDI',   'CDI � Contrat � Dur�e Ind�termin�e'),
+    ('CDD',   'CDD � Contrat � Dur�e D�termin�e'),
     ('STAGE', 'Stage'),
-    ('INTER', 'Intérimaire'),
+    ('INTER', 'Int�rimaire'),
     ('PRESTA','Prestataire Externe')
 ON DUPLICATE KEY UPDATE libelle = VALUES(libelle);
 
+
+CREATE TABLE IF NOT EXISTS ref_etl_config (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projet              VARCHAR(100)  NOT NULL,
+    type_projet         VARCHAR(100),
+    source_table        VARCHAR(255)  NOT NULL,
+    mapping_json        JSON          NOT NULL DEFAULT ('{}'),
+    snapshot_date_expr  VARCHAR(200)  NULL COMMENT 'Expression BQ pour la date snapshot',
+    agent_field         VARCHAR(100)  NULL COMMENT 'Colonne nom agent',
+    op_field            VARCHAR(100)  NULL COMMENT 'Colonne OPERATION ou JSON path $.xxx (NULL si absent)',
+    file_field          VARCHAR(100)  NULL COMMENT 'Colonne FILE/sous_projet (NULL si absent)',
+    activite_field      VARCHAR(100)  NULL COMMENT 'Colonne ACTIVITE (NULL si absent)',
+    week_field          VARCHAR(100)  NULL COMMENT 'JSON path semaine dans METRICS',
+    year_code_field     VARCHAR(100)  NULL COMMENT 'JSON path annee dans METRICS',
+    week_source         ENUM('metrics_json','date_column') NOT NULL DEFAULT 'metrics_json'
+                        COMMENT 'Source de calcul de la semaine ISO',
+    date_ref_field      VARCHAR(100)  NULL COMMENT 'Colonne BQ date si week_source=date_column',
+    matricule_expr      VARCHAR(200)  NULL COMMENT 'Expression SQL pour normaliser MATRICULE',
+    is_active           BOOLEAN       DEFAULT TRUE,
+    created_at          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY (projet)
+);

@@ -138,7 +138,7 @@ def get_mysql_project_mappings() -> list:
                 SELECT m.*, p.nom as standard_nom, f.libelle as file_nom, a.libelle as activite_nom
                 FROM ref_projets_mapping m
                 LEFT JOIN ref_projets p ON m.id_projet = p.id
-                LEFT JOIN ref_files f ON m.id_file = f.id
+                LEFT JOIN ref_sous_projet f ON m.id_sous_projet = f.id
                 LEFT JOIN ref_activites a ON m.id_activite = a.id
                 ORDER BY m.source_name
             """
@@ -151,22 +151,22 @@ def get_mysql_project_mappings() -> list:
     finally:
         connection.close()
 
-def add_mysql_project_mapping(source_name: str, id_projet: int, id_file: int = None, id_activite: int = None, description: str = None):
+def add_mysql_project_mapping(source_name: str, id_projet: int, id_sous_projet: int = None, id_activite: int = None, description: str = None):
     """Ajoute ou met à jour un mapping de projet dans MySQL."""
     from config.db_mysql_connector import get_mysql_connection
     connection = get_mysql_connection()
     try:
         with connection.cursor() as cursor:
             sql = """
-                INSERT INTO ref_projets_mapping (source_name, id_projet, id_file, id_activite, description)
+                INSERT INTO ref_projets_mapping (source_name, id_projet, id_sous_projet, id_activite, description)
                 VALUES (%s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     id_projet = VALUES(id_projet),
-                    id_file = VALUES(id_file),
+                    id_sous_projet = VALUES(id_sous_projet),
                     id_activite = VALUES(id_activite),
                     description = VALUES(description)
             """
-            cursor.execute(sql, (source_name, id_projet, id_file, id_activite, description))
+            cursor.execute(sql, (source_name, id_projet, id_sous_projet, id_activite, description))
             connection.commit()
             return {"status": "success", "id": cursor.lastrowid}
     finally:
@@ -284,7 +284,98 @@ def update_standard_kpi(code: str, libelle: str, unite: str = None):
         connection.close()
 
 
-def add_mapping(source_name: str, standard_name: str):
+def get_all_kpis_with_status() -> list:
+    """Retourne tous les KPIs standards avec leur statut actif/inactif et le nombre de mappings."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT k.id, k.code, k.libelle, k.unite, k.univers, k.tech_key,
+                       k.description, k.actif,
+                       COUNT(m.id) AS nb_mappings
+                FROM matrice_kpis k
+                LEFT JOIN matrice_kpis_mapping m ON m.standard_kpi_code = k.code
+                GROUP BY k.id, k.code, k.libelle, k.unite, k.univers, k.tech_key, k.description, k.actif
+                ORDER BY k.univers, k.libelle
+            """)
+            rows = cursor.fetchall()
+            for r in rows:
+                if r.get("created_at"): r["created_at"] = str(r["created_at"])
+                if r.get("updated_at"): r["updated_at"] = str(r["updated_at"])
+            return rows
+    finally:
+        connection.close()
+
+
+def toggle_kpi_actif(code: str) -> dict:
+    """Bascule le flag actif d'un KPI (1→0 ou 0→1). Retourne le nouvel état."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE matrice_kpis SET actif = IF(actif=1, 0, 1) WHERE code = %s",
+                (code.upper().strip(),)
+            )
+            if cursor.rowcount == 0:
+                raise ValueError(f"KPI '{code}' introuvable.")
+            connection.commit()
+            cursor.execute("SELECT actif FROM matrice_kpis WHERE code = %s", (code.upper().strip(),))
+            row = cursor.fetchone()
+            return {"code": code.upper().strip(), "actif": bool(row["actif"])}
+    finally:
+        connection.close()
+
+
+def get_etl_sources() -> list:
+    """Retourne la liste des sources ETL configurées avec leurs champs structurels."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT projet, type_projet, source_table,
+                       snapshot_date_expr, agent_field, op_field,
+                       file_field, activite_field, week_field, year_code_field,
+                       week_source, date_ref_field, is_active
+                FROM ref_etl_config ORDER BY projet
+            """)
+            rows = cursor.fetchall()
+            for r in rows:
+                if r.get("created_at"): r["created_at"] = str(r["created_at"])
+                if r.get("updated_at"): r["updated_at"] = str(r["updated_at"])
+            return rows
+    finally:
+        connection.close()
+
+
+def get_kpi_mappings_by_source(source_table: str) -> list:
+    """Retourne les mappings KPI d'une source donnée, enrichis du libellé KPI et du statut actif."""
+    from config.db_mysql_connector import get_mysql_connection
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.id, m.univers, m.source_table, m.source_column,
+                       m.standard_kpi_code, m.dest_table, m.dest_column,
+                       m.data_type, m.is_helper, m.is_formula, m.formula,
+                       m.description,
+                       k.libelle AS kpi_libelle, k.unite AS kpi_unite, k.actif AS kpi_actif
+                FROM matrice_kpis_mapping m
+                JOIN matrice_kpis k ON k.code = m.standard_kpi_code
+                WHERE m.source_table = %s
+                ORDER BY m.is_formula, m.id
+            """, (source_table,))
+            rows = cursor.fetchall()
+            for r in rows:
+                if r.get("created_at"): r["created_at"] = str(r["created_at"])
+                if r.get("updated_at"): r["updated_at"] = str(r["updated_at"])
+            return rows
+    finally:
+        connection.close()
+
+
     """Ajoute ou met à jour un mapping de projet."""
     ensure_mapping_table_exists()
     client = get_bigquery_client()

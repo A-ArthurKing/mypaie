@@ -79,7 +79,7 @@ def get_all_agents_gestion() -> list:
                     e.matricule, e.nom, e.prenom,
                     p.nom as projet,
                     o.libelle as operation,
-                    f.libelle as file,
+                    f.libelle AS sous_projet,
                     a.libelle as activite,
                     e.id_statut,
                     s.libelle as statut,
@@ -88,7 +88,7 @@ def get_all_agents_gestion() -> list:
                 LEFT JOIN ref_structure_map m ON e.id_structure = m.id
                 LEFT JOIN ref_projets p ON m.id_projet = p.id
                 LEFT JOIN ref_operations o ON m.id_operation = o.id
-                LEFT JOIN ref_files f ON m.id_file = f.id
+                LEFT JOIN ref_sous_projet f ON m.id_sous_projet = f.id
                 LEFT JOIN ref_activites a ON m.id_activite = a.id
                 LEFT JOIN ref_statuts s ON e.id_statut = s.id
                 ORDER BY e.nom, e.prenom
@@ -144,7 +144,7 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
                     e.matricule, e.nom, e.prenom,
                     p.nom  AS projet,
                     o.libelle AS operation,
-                    f.libelle AS file,
+                    f.libelle AS sous_projet,
                     a.libelle AS activite,
                     e.id_statut,
                     s.libelle AS statut,
@@ -153,7 +153,7 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
                 LEFT JOIN ref_structure_map m ON e.id_structure = m.id
                 LEFT JOIN ref_projets     p ON m.id_projet    = p.id
                 LEFT JOIN ref_operations  o ON m.id_operation = o.id
-                LEFT JOIN ref_files       f ON m.id_file      = f.id
+                LEFT JOIN ref_sous_projet       f ON m.id_sous_projet      = f.id
                 LEFT JOIN ref_activites   a ON m.id_activite  = a.id
                 LEFT JOIN ref_statuts     s ON e.id_statut    = s.id
                 WHERE e.matricule = %s
@@ -191,7 +191,7 @@ def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_st
                     e.matricule, e.nom, e.prenom,
                     p.nom  AS projet,
                     o.libelle AS operation,
-                    f.libelle AS file,
+                    f.libelle AS sous_projet,
                     a.libelle AS activite,
                     e.id_statut,
                     s.libelle AS statut,
@@ -200,7 +200,7 @@ def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_st
                 LEFT JOIN ref_structure_map m ON e.id_structure = m.id
                 LEFT JOIN ref_projets     p ON m.id_projet    = p.id
                 LEFT JOIN ref_operations  o ON m.id_operation = o.id
-                LEFT JOIN ref_files       f ON m.id_file      = f.id
+                LEFT JOIN ref_sous_projet       f ON m.id_sous_projet      = f.id
                 LEFT JOIN ref_activites   a ON m.id_activite  = a.id
                 LEFT JOIN ref_statuts     s ON e.id_statut    = s.id
                 WHERE e.matricule = %s

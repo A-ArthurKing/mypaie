@@ -12,11 +12,29 @@ import './TabsSection.css';
 export default function TabsSection() {
   return (
     <nav className="parametres-tabs">
+      <NavLink
+        to="/parametres/structure"
+        className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
+      >
+        <i className="fa-solid fa-sitemap" /> Structure
+      </NavLink>
+      <NavLink
+        to="/parametres/mapping-projets"
+        className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
+      >
+        <i className="fa-solid fa-code-merge" /> Mapping Projets
+      </NavLink>
       <NavLink 
         to="/parametres/mapping-kpis" 
         className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
       >
-        <i className="fa-solid fa-chart-bar" /> Mapping Indicateurs (KPIs)
+        <i className="fa-solid fa-chart-bar" /> Mapping KPIs
+      </NavLink>
+      <NavLink
+        to="/parametres/kpi-registry"
+        className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
+      >
+        <i className="fa-solid fa-sliders" /> KPI Registry
       </NavLink>
     </nav>
   );

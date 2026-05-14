@@ -38,13 +38,13 @@ def delete_project(id: int):
     finally: conn.close()
 
 # --- OPERATIONS ---
-def add_operation(id_projet: int, libelle: str):
+def add_operation(libelle: str, id_projet: int = None):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO ref_operations (id_projet, libelle) VALUES (%s, %s)", (id_projet, libelle))
+            cur.execute("INSERT INTO ref_operations (libelle) VALUES (%s)", (libelle,))
             conn.commit()
-            return {"id": cur.lastrowid, "id_projet": id_projet, "libelle": libelle}
+            return {"id": cur.lastrowid, "libelle": libelle}
     finally: conn.close()
 
 def update_operation(id: int, libelle: str):
@@ -65,30 +65,30 @@ def delete_operation(id: int):
             return {"status": "deleted"}
     finally: conn.close()
 
-# --- FILES ---
-def add_file(libelle: str):
+# --- SOUS-PROJETS ---
+def add_sous_projet(libelle: str):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO ref_files (libelle) VALUES (%s)", (libelle,))
+            cur.execute("INSERT INTO ref_sous_projet (libelle) VALUES (%s)", (libelle,))
             conn.commit()
             return {"id": cur.lastrowid, "libelle": libelle}
     finally: conn.close()
 
-def update_file(id: int, libelle: str):
+def update_sous_projet(id: int, libelle: str):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE ref_files SET libelle = %s WHERE id = %s", (libelle, id))
+            cur.execute("UPDATE ref_sous_projet SET libelle = %s WHERE id = %s", (libelle, id))
             conn.commit()
             return {"id": id, "libelle": libelle}
     finally: conn.close()
 
-def delete_file(id: int):
+def delete_sous_projet(id: int):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM ref_files WHERE id = %s", (id,))
+            cur.execute("DELETE FROM ref_sous_projet WHERE id = %s", (id,))
             conn.commit()
             return {"status": "deleted"}
     finally: conn.close()
@@ -122,12 +122,12 @@ def delete_activity(id: int):
     finally: conn.close()
 
 # --- STRUCTURE MAP (Liaisons) ---
-def add_structure_mapping(id_projet: int, id_operation: int, id_file: int = None, id_activite: int = None):
+def add_structure_mapping(id_projet: int, id_operation: int, id_sous_projet: int = None, id_activite: int = None):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cur:
-            sql = "INSERT INTO ref_structure_map (id_projet, id_operation, id_file, id_activite) VALUES (%s, %s, %s, %s)"
-            cur.execute(sql, (id_projet, id_operation, id_file, id_activite))
+            sql = "INSERT INTO ref_structure_map (id_projet, id_operation, id_sous_projet, id_activite) VALUES (%s, %s, %s, %s)"
+            cur.execute(sql, (id_projet, id_operation, id_sous_projet, id_activite))
             conn.commit()
             return {"id": cur.lastrowid, "status": "success"}
     finally: conn.close()
