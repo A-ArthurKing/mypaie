@@ -90,7 +90,7 @@ def get_all_agents_gestion() -> list:
                 LEFT JOIN ref_operations o ON m.id_operation = o.id
                 LEFT JOIN ref_sous_projet f ON m.id_sous_projet = f.id
                 LEFT JOIN ref_activites a ON m.id_activite = a.id
-                LEFT JOIN ref_statuts s ON e.id_statut = s.id
+                LEFT JOIN matrice_statuts s ON e.id_statut = s.id
                 ORDER BY e.nom, e.prenom
             """
             cursor.execute(sql)
@@ -155,7 +155,7 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
                 LEFT JOIN ref_operations  o ON m.id_operation = o.id
                 LEFT JOIN ref_sous_projet       f ON m.id_sous_projet      = f.id
                 LEFT JOIN ref_activites   a ON m.id_activite  = a.id
-                LEFT JOIN ref_statuts     s ON e.id_statut    = s.id
+                LEFT JOIN matrice_statuts     s ON e.id_statut    = s.id
                 WHERE e.matricule = %s
             """
             cursor.execute(sql_get, (matricule,))
@@ -202,7 +202,7 @@ def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_st
                 LEFT JOIN ref_operations  o ON m.id_operation = o.id
                 LEFT JOIN ref_sous_projet       f ON m.id_sous_projet      = f.id
                 LEFT JOIN ref_activites   a ON m.id_activite  = a.id
-                LEFT JOIN ref_statuts     s ON e.id_statut    = s.id
+                LEFT JOIN matrice_statuts     s ON e.id_statut    = s.id
                 WHERE e.matricule = %s
             """
             cursor.execute(sql_get, (matricule,))

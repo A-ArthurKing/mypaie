@@ -1,8 +1,8 @@
 -- ============================================================
 -- Fichier : 00_schema.sql
--- R�le    : Initialisation de la base mypaie_config.
---           Cr�e toutes les tables du moteur de calcul des primes,
---           les tables de r�f�rence structurelles et les donn�es de seed.
+-- Rôle    : Initialisation de la base mypaie_config.
+--           Crée toutes les tables du moteur de calcul des primes,
+--           les tables de référence structurelles et les données de seed.
 -- Module  : mypaie / mysql / init
 -- ============================================================
 SET NAMES utf8mb4;
@@ -12,7 +12,7 @@ USE mypaie_config;
 
 -- ============================================================
 -- TABLE : matrice_statuts
--- R�le  : Types de contrats / statuts des agents
+-- Rôle  : Types de contrats / statuts des agents
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_statuts (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -26,15 +26,15 @@ CREATE TABLE IF NOT EXISTS matrice_statuts (
 
 -- ============================================================
 -- TABLE : matrice_kpis
--- R�le  : D�finition des KPIs utilisables dans les matrices
+-- Rôle  : Définition des KPIs utilisables dans les matrices
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_kpis (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Code technique (CSAT, CONV, CA...)',
     libelle VARCHAR(100) NOT NULL,
-    unite VARCHAR(20) COMMENT 'Unit� de mesure (%, EUR, appels...)',
+    unite VARCHAR(20) COMMENT 'Unité de mesure (%, EUR, appels...)',
     univers ENUM('PERF','QUALITE','HEURES') NOT NULL DEFAULT 'PERF',
-    tech_key VARCHAR(50) NULL COMMENT 'Cl� technique dans le DW',
+    tech_key VARCHAR(50) NULL COMMENT 'Clé technique dans le DW',
     description TEXT,
     actif TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS matrice_kpis (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- TABLES DE R�F�RENCE STRUCTURELLES
+-- TABLES DE RéFéRENCE STRUCTURELLES
 -- Ordre : projets ? operations ? files ? activites ? structure_map
 -- ============================================================
 
@@ -81,8 +81,8 @@ CREATE TABLE IF NOT EXISTS ref_activites (
 
 -- ============================================================
 -- TABLE : ref_structure_map
--- R�le  : Combinaison unique projet/op�ration/file/activit�
---         Sert de "cl� structurelle" pour agents et r�gles
+-- Rôle  : Combinaison unique projet/opération/file/activité
+--         Sert de "clé structurelle" pour agents et régles
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ref_structure_map (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS ref_structure_map (
 
 -- ============================================================
 -- TABLE : ref_employes
--- R�le  : R�f�rentiel local des agents (enrichissement SIRH)
+-- Rôle  : Référentiel local des agents (enrichissement SIRH)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ref_employes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -122,8 +122,8 @@ CREATE TABLE IF NOT EXISTS ref_employes (
 
 -- ============================================================
 -- TABLE : ref_projets_mapping
--- R�le  : Correspondance nom brut BigQuery ? ref_projets
---         Utilis� par le provider performance pour r�soudre les noms
+-- Rôle  : Correspondance nom brut BigQuery ? ref_projets
+--         Utilisé par le provider performance pour résoudre les noms
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ref_projets_mapping (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -142,22 +142,22 @@ CREATE TABLE IF NOT EXISTS ref_projets_mapping (
 
 -- ============================================================
 -- TABLE : matrice_primes
--- R�le  : Matrices de primes (une par structure/p�riode)
+-- Rôle  : Matrices de primes (une par structure/période)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_primes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    code        VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant m�tier unique',
+    code        VARCHAR(30) NOT NULL UNIQUE COMMENT 'Identifiant métier unique',
     libelle     VARCHAR(200) NOT NULL,
     id_structure INT UNSIGNED NULL COMMENT 'Lien vers ref_structure_map (NULL = global)',
-    sirh_filtre VARCHAR(100) NULL COMMENT 'Filtre SIRH optionnel (statut, �quipe...)',
+    sirh_filtre VARCHAR(100) NULL COMMENT 'Filtre SIRH optionnel (statut, équipe...)',
     periodicite VARCHAR(20) DEFAULT 'mensuelle',
     description TEXT,
-    description_kpi TEXT COMMENT 'Description des KPIs de la r�gle',
-    statut_id   INT UNSIGNED COMMENT 'Statut agent cibl� (NULL = tous)',
-    periode_debut DATE NOT NULL COMMENT 'D�but de validit� de la matrice',
-    periode_fin DATE COMMENT 'Fin de validit� (NULL = illimit�e)',
+    description_kpi TEXT COMMENT 'Description des KPIs de la régle',
+    statut_id   INT UNSIGNED COMMENT 'Statut agent ciblé (NULL = tous)',
+    periode_debut DATE NOT NULL COMMENT 'Début de validité de la matrice',
+    periode_fin DATE COMMENT 'Fin de validité (NULL = illimitée)',
     actif TINYINT(1) NOT NULL DEFAULT 1,
-    grille_objectifs JSON NULL COMMENT 'Configuration compl�te du moteur de calcul (JSON)',
+    grille_objectifs JSON NULL COMMENT 'Configuration compléte du moteur de calcul (JSON)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_matrice_statut    FOREIGN KEY (statut_id)    REFERENCES matrice_statuts(id)    ON DELETE SET NULL,
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS matrice_primes (
 
 -- ============================================================
 -- TABLE : matrice_primes_configs
--- R�le  : Versions de grilles d'objectifs par r�gle
+-- Rôle  : Versions de grilles d'objectifs par régle
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_primes_configs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS matrice_primes_configs (
 
 -- ============================================================
 -- TABLE : matrice_objectifs
--- R�le  : Objectifs KPI associ�s � chaque matrice
+-- Rôle  : Objectifs KPI associés é chaque matrice
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_objectifs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS matrice_objectifs (
 
 -- ============================================================
 -- TABLE : matrice_paliers
--- R�le  : Paliers de primes selon la note globale (0-100)
+-- Rôle  : Paliers de primes selon la note globale (0-100)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_paliers (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -219,8 +219,8 @@ CREATE TABLE IF NOT EXISTS matrice_paliers (
 
 -- ============================================================
 -- TABLE : matrice_kpis_mapping
--- R�le  : Correspondance colonnes BigQuery ? KPIs standards
---         Supporte aussi les formules calcul�es (is_formula=1)
+-- Rôle  : Correspondance colonnes BigQuery ? KPIs standards
+--         Supporte aussi les formules calculées (is_formula=1)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS matrice_kpis_mapping (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -259,14 +259,14 @@ ON DUPLICATE KEY UPDATE
     tech_key = VALUES(tech_key);
 
 -- ============================================================
--- DONN�ES DE R�F�RENCE : Statuts agents
+-- DONNéES DE RéFéRENCE : Statuts agents
 -- ============================================================
 INSERT INTO matrice_statuts (code, libelle)
 VALUES
-    ('CDI',   'CDI � Contrat � Dur�e Ind�termin�e'),
-    ('CDD',   'CDD � Contrat � Dur�e D�termin�e'),
+    ('CDI',   'CDI é Contrat é Durée Indéterminée'),
+    ('CDD',   'CDD é Contrat é Durée Déterminée'),
     ('STAGE', 'Stage'),
-    ('INTER', 'Int�rimaire'),
+    ('INTER', 'Intérimaire'),
     ('PRESTA','Prestataire Externe')
 ON DUPLICATE KEY UPDATE libelle = VALUES(libelle);
 

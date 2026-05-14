@@ -50,6 +50,9 @@ export default function Agents() {
   const [editingAgent, setEditingAgent] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null); // agent object
   const [deleting, setDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   const socket = useSocket();
   const addToast = useToast();
 
@@ -119,7 +122,7 @@ export default function Agents() {
       .filter(a =>
         (!projetFilter    || a.projet    === projetFilter)    &&
         (!operationFilter || a.operation === operationFilter) &&
-        (!sous_projetFilter      || a.sous_projet === sous_projetFilter)
+        (!sous_projetFilter      || a.sous_projet === sous_projetFilter      ) 
       )
       .map(a => a.activite)
       .filter(Boolean)
@@ -142,6 +145,16 @@ export default function Agents() {
     const matchStatut    = statutFilter    ? (a.statut    || '') === statutFilter    : true;
     return matchSearch && matchProjet && matchOperation && matchFile && matchActivite && matchStatut;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedAgents = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, projetFilter, operationFilter, sous_projetFilter, activiteFilter, statutFilter]);
 
   return (
     <div className="agents-page">
@@ -179,11 +192,34 @@ export default function Agents() {
           Chargement des agents...
         </div>
       ) : (
-        <AgentsTable
-          agents={filtered}
-          onEdit={agent => setEditingAgent(agent)}
-          onDelete={agent => setDeleteTarget(agent)}
-        />
+        <>
+          <AgentsTable
+            agents={paginatedAgents}
+            onEdit={agent => setEditingAgent(agent)}
+            onDelete={agent => setDeleteTarget(agent)}
+          />
+          {totalPages > 1 && (
+            <div className="agents-pagination">
+              <button 
+                className="agents-page-btn" 
+                disabled={currentPage === 1} 
+                onClick={() => setCurrentPage(p => p - 1)}
+              >
+                <i className="fa-solid fa-chevron-left"></i> Précédent
+              </button>
+              <span className="agents-page-info">
+                Page {currentPage} sur {totalPages}
+              </span>
+              <button 
+                className="agents-page-btn" 
+                disabled={currentPage === totalPages} 
+                onClick={() => setCurrentPage(p => p + 1)}
+              >
+                Suivant <i className="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <AddAgentModal
