@@ -1,11 +1,12 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
 import "./AiSidebar.css";
 
-export default function AiSidebar({ isOpen, onClose }) {
+export default function AiSidebar({ isOpen, onClose, regleId }) {
   const [messages, setMessages] = useState([
-    { id: 1, sender: "bot", text: "Bonjour ! Je suis votre IA spécialisée dans la création de grilles d'objectifs. Décrivez-moi les critères de votre prime." }
+    { id: 1, sender: "bot", text: "Bonjour ! Je suis l'assistant IA de myPaie. Je peux répondre à vos questions sur cette règle de prime, ses objectifs (KPIs) et ses paramètres. Comment puis-je vous aider ?" }
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -14,16 +15,44 @@ export default function AiSidebar({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
     
-    setMessages(prev => [...prev, { id: Date.now(), sender: "user", text: input }]);
+    const userText = input.trim();
+    setMessages(prev => [...prev, { id: Date.now(), sender: "user", text: userText }]);
     setInput("");
-    
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "Je génère la grille au format JSON d'après vos instructions..." }]);
-    }, 1000);
+    setIsLoading(true);
+
+    try {
+      // Préparation de l'historique pour l'API (on exclut le tout premier message d'accueil)
+      const history = messages.slice(1).map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        text: m.text
+      }));
+
+      const response = await fetch('/api/agents/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userText,
+          regle_id: regleId,
+          history: history
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la communication avec l'assistant");
+      }
+
+      setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: data.response }]);
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "Désolé, je rencontre une erreur de connexion : " + err.message }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,13 +72,18 @@ export default function AiSidebar({ isOpen, onClose }) {
             {msg.text}
           </div>
         ))}
+        {isLoading && (
+          <div className="ai-message ai-message--bot ai-message--loading">
+            <i className="fa-solid fa-ellipsis fa-fade"></i>
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
       <div className="ai-sidebar__input-area">
         <textarea
           className="ai-sidebar__input"
-          placeholder="Décrivez les tranches, KPIs, montants..."
+          placeholder="Posez votre question sur cette règle..."
           rows={2}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -59,11 +93,12 @@ export default function AiSidebar({ isOpen, onClose }) {
               handleSend();
             }
           }}
+          disabled={isLoading}
         />
         <button 
           className="ai-sidebar__send" 
           onClick={handleSend}
-          disabled={!input.trim()}
+          disabled={!input.trim() || isLoading}
         >
           <i className="fa-solid fa-paper-plane"></i>
         </button>

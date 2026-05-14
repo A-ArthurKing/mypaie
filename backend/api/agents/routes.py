@@ -65,8 +65,8 @@ def endpoint_get_agents(regle_id):
                 LEFT JOIN ref_activites a ON m.id_activite = a.id
                 LEFT JOIN matrice_primes_agents_gestion g 
                     ON e.matricule = g.agent_matricule AND g.matrice_id = %s
-                LEFT JOIN ref_statuts s ON g.id_statut = s.id
-                LEFT JOIN ref_statuts sg ON e.id_statut = sg.id
+                LEFT JOIN matrice_statuts s ON g.id_statut = s.id
+                LEFT JOIN matrice_statuts sg ON e.id_statut = sg.id
                 WHERE m.id_projet = %s AND m.id_operation = %s
             """
             params = [regle_id, struct['id_projet'], struct['id_operation']]

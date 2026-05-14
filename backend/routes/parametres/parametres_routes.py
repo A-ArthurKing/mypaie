@@ -7,7 +7,7 @@ Module  : mypaie / backend / routes / parametres
 import logging
 from flask import Blueprint, jsonify, request
 from services.parametres.mapping_provider import (
-    get_mappings, add_mapping, delete_mapping,
+    get_mappings, delete_mapping,
     get_kpi_mappings, add_kpi_mapping, delete_kpi_mapping,
     get_mysql_kpi_mappings, add_mysql_kpi_mapping, delete_mysql_kpi_mapping,
     add_standard_kpi, update_standard_kpi,
@@ -18,7 +18,7 @@ from services.parametres.mapping_provider import (
 from services.parametres.structure_provider import (
     add_project, update_project, delete_project,
     add_operation, update_operation, delete_operation,
-    add_file, update_file, delete_file,
+    add_sous_projet, update_sous_projet, delete_sous_projet,
     add_activity, update_activity, delete_activity,
     add_structure_mapping, delete_structure_mapping
 )

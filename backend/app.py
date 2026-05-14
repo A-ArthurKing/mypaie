@@ -12,12 +12,12 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from core.socket import socketio
-from api.heures_agents.routes import heures_agents_bp
-from api.notes_qualite.routes import notes_qualite_bp
-from api.performance.routes import performance_bp
-from api.regles_primes.routes import regles_primes_bp
-from api.parametres.routes import parametres_bp
-from api.agents.routes import agents_bp
+from routes.heures_agents.heures_agents_routes import heures_agents_bp
+from routes.notes_qualite.notes_qualite_routes import notes_qualite_bp
+from routes.performance.performance_routes import performance_bp
+from routes.regles_primes.regles_primes_routes import regles_primes_bp
+from routes.parametres.parametres_routes import parametres_bp
+from routes.agents.agents_routes import agents_bp
 # #endregion
 
 # #region CONFIGURATION

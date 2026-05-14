@@ -119,7 +119,7 @@ export default function RegleDetail() {
         </button>
       )}
       
-      <AiSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <AiSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} regleId={regleId} />
     </div>
   );
 }

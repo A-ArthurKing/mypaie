@@ -8,6 +8,7 @@ Module  : mypaie / backend / routes / agents
 import logging
 from flask import Blueprint, jsonify, request
 from services.agents.sirh_agents_provider import get_agents_sirh
+from services.agents.gemini_agent_provider import process_chat_message
 from services.agents.agents_data_provider import (
     get_agents_manual_data, 
     save_agent_manual_data,
@@ -18,15 +19,35 @@ from services.agents.agents_data_provider import (
     delete_agent,
 )
 from services.regles_primes.dw_api_regles_provider import get_regle_by_id
-from tools.socket_io import emit_update
-
-logger = logging.getLogger(__name__)
 
 agents_bp = Blueprint("agents", __name__)
 
 
+@agents_bp.route("/api/agents/chat", methods=["POST"])
+def endpoint_agent_chat():
+    """
+    Endpoint pour le chat de l'assistant IA (Gemini).
+    Attend un JSON : { "message": "...", "regle_id": 12 (optionnel), "history": [...] (optionnel) }
+    """
+    try:
+        data = request.json
+        if not data or not data.get("message"):
+            return jsonify({"error": "Message manquant"}), 400
+        
+        message = data.get("message")
+        regle_id = data.get("regle_id")
+        history = data.get("history", [])
+        
+        result = process_chat_message(message, regle_id, history)
+        return jsonify(result), 200
+        
+    except Exception as e:
+        logger.error("Erreur endpoint POST /api/agents/chat : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
 @agents_bp.route("/api/regles/<int:regle_id>/agents", methods=["GET"])
-def endpoint_get_agents(regle_id):
+def endpoint_get_agents_for_regle(regle_id):
     """
     Retourne la liste des agents filtrés par la structure de la règle.
     """
@@ -67,8 +88,8 @@ def endpoint_get_agents(regle_id):
                 LEFT JOIN ref_activites a ON m.id_activite = a.id
                 LEFT JOIN matrice_primes_agents_gestion g 
                     ON e.matricule = g.agent_matricule AND g.matrice_id = %s
-                LEFT JOIN ref_statuts s ON g.id_statut = s.id
-                LEFT JOIN ref_statuts sg ON e.id_statut = sg.id
+                LEFT JOIN matrice_statuts s ON g.id_statut = s.id
+                LEFT JOIN matrice_statuts sg ON e.id_statut = sg.id
                 WHERE m.id_projet = %s AND m.id_operation = %s
             """
             params = [regle_id, struct['id_projet'], struct['id_operation']]
