@@ -94,14 +94,14 @@ def seed_db():
             for op in operations:
                 cur.execute("INSERT IGNORE INTO ref_operations (libelle) VALUES (%s)", (op,))
             for f in files:
-                cur.execute("INSERT IGNORE INTO ref_files (libelle) VALUES (%s)", (f,))
+                cur.execute("INSERT IGNORE INTO ref_sous_projet (libelle) VALUES (%s)", (f,))
             for act in activites:
                 cur.execute("INSERT IGNORE INTO ref_activites (libelle) VALUES (%s)", (act,))
 
             # 4. Fetch IDs
             cur.execute("SELECT id, libelle FROM ref_operations")
             ops_map = {r['libelle']: r['id'] for r in cur.fetchall()}
-            cur.execute("SELECT id, libelle FROM ref_files")
+            cur.execute("SELECT id, libelle FROM ref_sous_projet")
             files_map = {r['libelle']: r['id'] for r in cur.fetchall()}
             cur.execute("SELECT id, libelle FROM ref_activites")
             acts_map = {r['libelle']: r['id'] for r in cur.fetchall()}
@@ -109,33 +109,33 @@ def seed_db():
             # 5. Insert structure map & employees
             for a in agents:
                 id_op = ops_map[a['operation']]
-                id_file = files_map[a['file']]
+                id_sous_projet = files_map[a['file']]
                 id_act = acts_map[a['activite']]
 
                 # Insert into ref_structure_map
                 cur.execute("""
-                    INSERT IGNORE INTO ref_structure_map (id_projet, id_operation, id_file, id_activite)
+                    INSERT IGNORE INTO ref_structure_map (id_projet, id_operation, id_sous_projet, id_activite)
                     VALUES (%s, %s, %s, %s)
-                """, (id_projet, id_op, id_file, id_act))
+                """, (id_projet, id_op, id_sous_projet, id_act))
                 
                 # Fetch id_structure
                 cur.execute("""
                     SELECT id FROM ref_structure_map 
-                    WHERE id_projet = %s AND id_operation = %s AND id_file = %s AND id_activite = %s
-                """, (id_projet, id_op, id_file, id_act))
+                    WHERE id_projet = %s AND id_operation = %s AND id_sous_projet = %s AND id_activite = %s
+                """, (id_projet, id_op, id_sous_projet, id_act))
                 
                 res = cur.fetchone()
                 id_structure = res['id'] if res else None
 
                 # Insert employee
                 cur.execute("""
-                    INSERT INTO ref_employes (matricule, nom, prenom, id_operation, id_file, id_activite, id_structure)
+                    INSERT INTO ref_employes (matricule, nom, prenom, id_operation, id_sous_projet, id_activite, id_structure)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON DUPLICATE KEY UPDATE 
                         nom=VALUES(nom), prenom=VALUES(prenom), 
-                        id_operation=VALUES(id_operation), id_file=VALUES(id_file), 
+                        id_operation=VALUES(id_operation), id_sous_projet=VALUES(id_sous_projet), 
                         id_activite=VALUES(id_activite), id_structure=VALUES(id_structure)
-                """, (a['matricule'], a['nom'], a['prenom'], id_op, id_file, id_act, id_structure))
+                """, (a['matricule'], a['nom'], a['prenom'], id_op, id_sous_projet, id_act, id_structure))
 
             conn.commit()
             print(f"Successfully seeded {len(agents)} agents and structure map.")

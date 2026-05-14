@@ -41,7 +41,7 @@ def endpoint_get_agents(regle_id):
         mysql_conn = get_mysql_connection()
         with mysql_conn.cursor() as cur:
             # 1. Récupérer les critères de la structure de la règle
-            sql_struct = "SELECT id_projet, id_operation, id_file, id_activite FROM ref_structure_map WHERE id = %s"
+            sql_struct = "SELECT id_projet, id_operation, id_sous_projet, id_activite FROM ref_structure_map WHERE id = %s"
             cur.execute(sql_struct, (id_structure,))
             struct = cur.fetchone()
             
@@ -63,7 +63,7 @@ def endpoint_get_agents(regle_id):
                 FROM ref_employes e
                 JOIN ref_structure_map m ON e.id_structure = m.id
                 LEFT JOIN ref_operations o ON m.id_operation = o.id
-                LEFT JOIN ref_files f ON m.id_file = f.id
+                LEFT JOIN ref_sous_projet f ON m.id_sous_projet = f.id
                 LEFT JOIN ref_activites a ON m.id_activite = a.id
                 LEFT JOIN matrice_primes_agents_gestion g 
                     ON e.matricule = g.agent_matricule AND g.matrice_id = %s
@@ -74,9 +74,9 @@ def endpoint_get_agents(regle_id):
             params = [regle_id, struct['id_projet'], struct['id_operation']]
 
             # Filtrage optionnel par file et activité
-            if struct['id_file']:
-                sql += " AND m.id_file = %s"
-                params.append(struct['id_file'])
+            if struct['id_sous_projet']:
+                sql += " AND m.id_sous_projet = %s"
+                params.append(struct['id_sous_projet'])
             
             if struct['id_activite']:
                 sql += " AND m.id_activite = %s"

@@ -27,14 +27,14 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
   const [selections, setSelections] = useState({
     projet_id: '',
     id_operation: '',
-    id_file: '',
+    id_sous_projet: '',
     id_activite: ''
   });
 
   const [refs, setReferences] = useState({
     projets: [],
     operations: [],
-    files: [],
+    sous_projets: [],
     activites: [],
     statuts: [],
     structure: []
@@ -56,7 +56,7 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
               setSelections({
                 projet_id: String(mapped.id_projet || ''),
                 id_operation: String(mapped.id_operation || ''),
-                id_file: String(mapped.id_file || ''),
+                id_sous_projet: String(mapped.id_sous_projet || ''),
                 id_activite: String(mapped.id_activite || '')
               });
             }
@@ -78,68 +78,72 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
   // Convertit les sélections string (venant des <select>) en entiers pour comparaison stricte
   const projId   = Number(selections.projet_id)   || 0;
   const opId     = Number(selections.id_operation) || 0;
-  const fileId   = Number(selections.id_file)      || 0;
+  const sousProjetId   = Number(selections.id_sous_projet)      || 0;
   const activId  = Number(selections.id_activite)  || 0;
 
-  // Cascade : Opérations disponibles pour le projet sélectionné
+  // Cascade : Sous-projets disponibles pour le projet sélectionné
+  const filteredSousProjets = useMemo(() => {
+    if (!projId) return [];
+    const sousProjetIds = new Set(
+      (refs.structure || [])
+        .filter(s => s.id_projet === projId && s.id_sous_projet !== null)
+        .map(s => s.id_sous_projet)
+    );
+    return (refs.sous_projets || []).filter(f => sousProjetIds.has(f.id));
+  }, [refs.structure, refs.sous_projets, projId]);
+
+  // Cascade : Opérations disponibles pour le projet + sous-projet
   const filteredOperations = useMemo(() => {
     if (!projId) return [];
     const opIds = new Set(
-      refs.structure
-        .filter(s => s.id_projet === projId)
+      (refs.structure || [])
+        .filter(s => 
+          s.id_projet === projId && 
+          (sousProjetId ? s.id_sous_projet === sousProjetId : true) && 
+          s.id_operation !== null
+        )
         .map(s => s.id_operation)
     );
-    return refs.operations.filter(o => opIds.has(o.id));
-  }, [refs.structure, refs.operations, projId]);
+    return (refs.operations || []).filter(o => opIds.has(o.id));
+  }, [refs.structure, refs.operations, projId, sousProjetId]);
 
-  // Cascade : Files disponibles pour le projet + opération sélectionnés
-  const filteredFiles = useMemo(() => {
-    if (!projId || !opId) return [];
-    const fileIds = new Set(
-      refs.structure
-        .filter(s => s.id_projet === projId && s.id_operation === opId && s.id_file !== null)
-        .map(s => s.id_file)
-    );
-    return refs.files.filter(f => fileIds.has(f.id));
-  }, [refs.structure, refs.files, projId, opId]);
-
-  // Cascade : Activités disponibles pour projet + opération (+ file si sélectionné)
+  // Cascade : Activités disponibles pour projet + sous-projet + opération
   const filteredActivites = useMemo(() => {
     if (!projId || !opId) return [];
     const actIds = new Set(
-      refs.structure
+      (refs.structure || [])
         .filter(s =>
           s.id_projet === projId &&
+          (sousProjetId ? s.id_sous_projet === sousProjetId : true) &&
           s.id_operation === opId &&
-          (fileId ? s.id_file === fileId : true) &&
           s.id_activite !== null
         )
         .map(s => s.id_activite)
     );
-    return refs.activites.filter(a => actIds.has(a.id));
-  }, [refs.structure, refs.activites, projId, opId, fileId]);
+    return (refs.activites || []).filter(a => actIds.has(a.id));
+  }, [refs.structure, refs.activites, projId, sousProjetId, opId]);
 
   const handleSelectionChange = (e) => {
     const { name, value } = e.target;
     const newSelections = { ...selections, [name]: value };
     
     // Reset les enfants si le parent change
-    if (name === 'projet_id')    { newSelections.id_operation = ''; newSelections.id_file = ''; newSelections.id_activite = ''; }
-    if (name === 'id_operation') { newSelections.id_file = ''; newSelections.id_activite = ''; }
-    if (name === 'id_file')      { newSelections.id_activite = ''; }
+    if (name === 'projet_id')      { newSelections.id_sous_projet = ''; newSelections.id_operation = ''; newSelections.id_activite = ''; }
+    if (name === 'id_sous_projet') { newSelections.id_operation = ''; newSelections.id_activite = ''; }
+    if (name === 'id_operation')   { newSelections.id_activite = ''; }
 
     setSelections(newSelections);
 
     // Trouver l'id_structure correspondant à la combinaison actuelle (comparaison entiers)
     const nProjId  = Number(newSelections.projet_id)   || 0;
     const nOpId    = Number(newSelections.id_operation) || 0;
-    const nFileId  = Number(newSelections.id_file)      || 0;
+    const nsousProjetId  = Number(newSelections.id_sous_projet)      || 0;
     const nActId   = Number(newSelections.id_activite)  || 0;
 
-    const match = refs.structure.find(s =>
+    const match = (refs.structure || []).find(s =>
       s.id_projet   === nProjId &&
       s.id_operation === nOpId &&
-      (s.id_file     ?? 0) === nFileId &&
+      (s.id_sous_projet     ?? 0) === nsousProjetId &&
       (s.id_activite ?? 0) === nActId
     );
     
@@ -210,22 +214,22 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="id_operation">
-                  Opération {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
+                <label htmlFor="id_sous_projet">
+                  Sous-projet {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
                 </label>
-                <CustomSelect id="id_operation" name="id_operation" value={selections.id_operation} onChange={handleSelectionChange} isDisabled={!selections.projet_id} placeholder={`-- ${filteredOperations.length} opération(s) --`} options={filteredOperations.map(o => ({ value: o.id, label: o.libelle }))} />
+                <CustomSelect id="id_sous_projet" name="id_sous_projet" value={selections.id_sous_projet} onChange={handleSelectionChange} isDisabled={!selections.projet_id} placeholder={`-- ${filteredSousProjets.length} sous-projet(s) --`} options={filteredSousProjets.map(f => ({ value: f.id, label: f.libelle }))} />
               </div>
               <div className="form-group">
-                <label htmlFor="id_file">
-                  File {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
+                <label htmlFor="id_operation">
+                  Opération {!selections.id_sous_projet && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Sous-projet d'abord)</span>}
                 </label>
-                <CustomSelect id="id_file" name="id_file" value={selections.id_file} onChange={handleSelectionChange} isDisabled={!selections.id_operation} placeholder={`-- ${filteredFiles.length} file(s) --`} options={filteredFiles.map(f => ({ value: f.id, label: f.libelle }))} />
+                <CustomSelect id="id_operation" name="id_operation" value={selections.id_operation} onChange={handleSelectionChange} isDisabled={!selections.id_sous_projet && !selections.projet_id} placeholder={`-- ${filteredOperations.length} opération(s) --`} options={filteredOperations.map(o => ({ value: o.id, label: o.libelle }))} />
               </div>
               <div className="form-group">
                 <label htmlFor="id_activite">
                   Activité {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
                 </label>
-                <CustomSelect id="id_activite" name="id_activite" value={selections.id_activite} onChange={handleSelectionChange} isDisabled={!selections.id_file} placeholder={`-- ${filteredActivites.length} activité(s) --`} options={filteredActivites.map(a => ({ value: a.id, label: a.libelle }))} />
+                <CustomSelect id="id_activite" name="id_activite" value={selections.id_activite} onChange={handleSelectionChange} isDisabled={!selections.id_operation} placeholder={`-- ${filteredActivites.length} activité(s) --`} options={filteredActivites.map(a => ({ value: a.id, label: a.libelle }))} />
               </div>
             </div>
 

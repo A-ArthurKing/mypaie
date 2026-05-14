@@ -16,17 +16,17 @@ def migrate():
     connection = get_mysql_connection()
     try:
         with connection.cursor() as cursor:
-            # 1. Add id_file and id_activite columns
-            print("Adding id_file and id_activite columns to ref_projets_mapping...")
+            # 1. Add id_sous_projet and id_activite columns
+            print("Adding id_sous_projet and id_activite columns to ref_projets_mapping...")
             try:
-                cursor.execute("ALTER TABLE ref_projets_mapping ADD COLUMN id_file INT UNSIGNED NULL AFTER id_projet")
-                print("Column id_file added.")
+                cursor.execute("ALTER TABLE ref_projets_mapping ADD COLUMN id_sous_projet INT UNSIGNED NULL AFTER id_projet")
+                print("Column id_sous_projet added.")
             except Exception as e:
-                if "Duplicate column name" in str(e): print("Column id_file already exists.")
+                if "Duplicate column name" in str(e): print("Column id_sous_projet already exists.")
                 else: raise e
             
             try:
-                cursor.execute("ALTER TABLE ref_projets_mapping ADD COLUMN id_activite INT UNSIGNED NULL AFTER id_file")
+                cursor.execute("ALTER TABLE ref_projets_mapping ADD COLUMN id_activite INT UNSIGNED NULL AFTER id_sous_projet")
                 print("Column id_activite added.")
             except Exception as e:
                 if "Duplicate column name" in str(e): print("Column id_activite already exists.")

@@ -12,7 +12,7 @@ import { useToast } from '../../../../Shared/Contexts/ToastContext';
 
 export default function LibraryTab({ refs, onRefresh }) {
   const addToast = useToast();
-  const { projets, operations, files, activites, structure } = refs;
+  const { projets, operations, sous_projets: sous_projets, activites, structure } = refs;
 
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [newProjet, setNewProjet] = useState('');
@@ -54,7 +54,7 @@ export default function LibraryTab({ refs, onRefresh }) {
   const handleAddFile = async (e) => {
     e.preventDefault();
     if (!newFile.trim()) return;
-    const ok = await handlePost('files', { libelle: newFile.trim() }, 'File créé');
+    const ok = await handlePost('sous-projets', { libelle: newFile.trim() }, 'Sous-projet créé');
     if (ok) setNewFile('');
   };
 
@@ -93,17 +93,17 @@ export default function LibraryTab({ refs, onRefresh }) {
         continue;
       }
       for (const bu of projectBus) {
-        const fileIds = [...new Set(
-          structure.filter(s => s.id_operation === bu.id).map(s => s.id_file).filter(Boolean)
+        const sousProjetIds = [...new Set(
+          structure.filter(s => s.id_operation === bu.id).map(s => s.id_sous_projet).filter(Boolean)
         )];
-        const buFiles = files.filter(f => fileIds.includes(f.id));
+        const buFiles = sous_projets.filter(f => sousProjetIds.includes(f.id));
         if (buFiles.length === 0) {
           rows.push({ projet, bu, file: null, activite: null, projectIdx });
           continue;
         }
         for (const file of buFiles) {
           const actMappings = structure.filter(
-            s => s.id_operation === bu.id && s.id_file === file.id && s.id_activite
+            s => s.id_operation === bu.id && s.id_sous_projet === file.id && s.id_activite
           );
           if (actMappings.length === 0) {
             rows.push({ projet, bu, file, activite: null, projectIdx });
@@ -117,7 +117,7 @@ export default function LibraryTab({ refs, onRefresh }) {
       }
     }
     return rows;
-  }, [projets, operations, structure, files, activites]);
+  }, [projets, operations, structure, sous_projets, activites]);
 
   return (
     <div className="lt-page">
@@ -131,7 +131,7 @@ export default function LibraryTab({ refs, onRefresh }) {
         <span className="lt-summary">
           {projets.length} projet{projets.length !== 1 ? 's' : ''} &middot;{' '}
           {operations.length} BU{operations.length !== 1 ? 's' : ''} &middot;{' '}
-          {files.length} file{files.length !== 1 ? 's' : ''} &middot;{' '}
+          {sous_projets.length} sous-projet{sous_projets.length !== 1 ? 's' : ''} &middot;{' '}
           {activites.length} activité{activites.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -163,18 +163,18 @@ export default function LibraryTab({ refs, onRefresh }) {
           </div>
 
           <div className="lt-add-card">
-            <div className="lt-add-card-title"><i className="fa-solid fa-layer-group"></i> Nouveau file</div>
+            <div className="lt-add-card-title"><i className="fa-solid fa-layer-group"></i> Nouveau sous-projet</div>
             <form className="lt-form" onSubmit={handleAddFile}>
               <input placeholder="Libellé *" value={newFile}
                 onChange={e => setNewFile(e.target.value)} required />
               <button type="submit" className="lt-btn-add"><i className="fa-solid fa-plus"></i></button>
             </form>
             <div className="lt-mini-list">
-              {files.map(f => (
+              {sous_projets.map(f => (
                 <div key={f.id} className="lt-mini-item">
                   <span>{f.libelle}</span>
                   <button className="lt-btn-del" onClick={() =>
-                    setDeleteTarget({ path: 'files', id: f.id, label: 'le file', name: f.libelle })}>
+                    setDeleteTarget({ path: 'sous-projets', id: f.id, label: 'le sous-projet', name: f.libelle })}>
                     <i className="fa-solid fa-trash-can"></i>
                   </button>
                 </div>
@@ -217,7 +217,7 @@ export default function LibraryTab({ refs, onRefresh }) {
               <tr>
                 <th><i className="fa-solid fa-folder-tree"></i> Projet</th>
                 <th><i className="fa-solid fa-building"></i> Business Unit</th>
-                <th><i className="fa-solid fa-layer-group"></i> File</th>
+                <th><i className="fa-solid fa-layer-group"></i> Sous-projet</th>
                 <th><i className="fa-solid fa-tag"></i> Activité</th>
               </tr>
             </thead>

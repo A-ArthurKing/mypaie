@@ -14,7 +14,7 @@ const EMPTY_FORM = {
   prenom: '',
   id_projet: '',
   id_operation: '',
-  id_file: '',
+  id_sous_projet: '',
   id_activite: '',
   id_statut: '',
   prime_langue: 0,
@@ -29,7 +29,7 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
   const {
     projets = [],
     operations = [],
-    files = [],
+    sous_projets = [],
     activites = [],
     statuts = [],
     structure = [],
@@ -43,13 +43,13 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
     : operations;
 
   const filteredFiles = form.id_projet && form.id_operation
-    ? files.filter(f =>
+    ? sous_projets.filter(f =>
         structure.some(
           s =>
             String(s.id_projet) === String(form.id_projet) &&
             String(s.id_operation) === String(form.id_operation) &&
-            s.id_file != null &&
-            String(s.id_file) === String(f.id)
+            s.id_sous_projet != null &&
+            String(s.id_sous_projet) === String(f.id)
         )
       )
     : [];
@@ -60,7 +60,7 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
           s =>
             String(s.id_projet) === String(form.id_projet) &&
             String(s.id_operation) === String(form.id_operation) &&
-            (!form.id_file || String(s.id_file) === String(form.id_file)) &&
+            (!form.id_sous_projet || String(s.id_sous_projet) === String(form.id_sous_projet)) &&
             s.id_activite != null &&
             String(s.id_activite) === String(a.id)
         )
@@ -70,9 +70,9 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
   const handleChange = (field, value) => {
     setForm(prev => {
       const next = { ...prev, [field]: value };
-      if (field === 'id_projet')    { next.id_operation = ''; next.id_file = ''; next.id_activite = ''; }
+      if (field === 'id_projet')    { next.id_operation = ''; next.id_sous_projet = ''; next.id_activite = ''; }
       if (field === 'id_operation') { 
-        next.id_file = ''; 
+        next.id_sous_projet = ''; 
         next.id_activite = ''; 
         // Automatisation prime langue
         const op = operations.find(o => String(o.id) === String(value));
@@ -82,7 +82,7 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
           next.prime_langue = 0;
         }
       }
-      if (field === 'id_file')      { next.id_activite = ''; }
+      if (field === 'id_sous_projet')      { next.id_activite = ''; }
       return next;
     });
   };
@@ -91,7 +91,7 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
     const match = structure.find(s =>
       String(s.id_projet) === String(form.id_projet) &&
       String(s.id_operation) === String(form.id_operation) &&
-      (form.id_file     ? String(s.id_file)     === String(form.id_file)     : !s.id_file) &&
+      (form.id_sous_projet     ? String(s.id_sous_projet)     === String(form.id_sous_projet)     : !s.id_sous_projet) &&
       (form.id_activite ? String(s.id_activite) === String(form.id_activite) : !s.id_activite)
     );
     return match ? match.id : null;
@@ -237,8 +237,8 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
             <div className="aam-modal__field">
               <label>File</label>
               <select
-                value={form.id_file}
-                onChange={e => handleChange('id_file', e.target.value)}
+                value={form.id_sous_projet}
+                onChange={e => handleChange('id_sous_projet', e.target.value)}
                 disabled={!form.id_operation || filteredFiles.length === 0}
               >
                 <option value="">Aucun / N/A</option>

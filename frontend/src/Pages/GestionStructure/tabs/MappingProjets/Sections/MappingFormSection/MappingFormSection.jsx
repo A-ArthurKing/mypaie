@@ -6,12 +6,12 @@
  * Module  : mypaie / Pages / GestionStructure / tabs / MappingProjets
  */
 export default function MappingFormSection({ 
-  tables, columns, uniqueValues, projects, files, activities,
+  tables, columns, uniqueValues, projects, sous_projets, activities,
   sourceTable, setSourceTable, 
   sourceColumn, setSourceColumn,
   sourceName, setSourceName, 
   idProjet, setIdProjet,
-  idFile, setIdFile,
+  idFile, setIdSousProjet,
   idActivite, setIdActivite,
   description, setDescription, 
   isSubmitting, handleSubmit,
@@ -106,9 +106,9 @@ export default function MappingFormSection({
             <label>5. File associé (Optionnel)</label>
             <div className="mp-input-wrapper">
               <i className="fa-solid fa-layer-group"></i>
-              <select value={idFile} onChange={(e) => setIdFile(e.target.value)}>
+              <select value={idFile} onChange={(e) => setIdSousProjet(e.target.value)}>
                 <option value="">-- Aucun --</option>
-                {files.map(f => (
+                {sous_projets.map(f => (
                   <option key={f.id} value={f.id}>{f.libelle}</option>
                 ))}
               </select>

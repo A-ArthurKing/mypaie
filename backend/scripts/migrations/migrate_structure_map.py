@@ -8,7 +8,7 @@ def migrate_to_structure_map():
             # 1. Identifier toutes les combinaisons uniques existantes chez les employés
             print("Collecte des combinaisons structurelles...")
             cur.execute("""
-                SELECT DISTINCT id_operation, id_file, id_activite 
+                SELECT DISTINCT id_operation, id_sous_projet, id_activite 
                 FROM ref_employes 
                 WHERE id_operation IS NOT NULL
             """)
@@ -23,9 +23,9 @@ def migrate_to_structure_map():
             print(f"Insertion de {len(combos)} combinaisons dans le Cerveau (map)...")
             for c in combos:
                 cur.execute("""
-                    INSERT IGNORE INTO ref_structure_map (id_projet, id_operation, id_file, id_activite)
+                    INSERT IGNORE INTO ref_structure_map (id_projet, id_operation, id_sous_projet, id_activite)
                     VALUES (%s, %s, %s, %s)
-                """, (id_projet_pvcp, c['id_operation'], c['id_file'], c['id_activite']))
+                """, (id_projet_pvcp, c['id_operation'], c['id_sous_projet'], c['id_activite']))
             
             conn.commit()
 
@@ -36,7 +36,7 @@ def migrate_to_structure_map():
                 JOIN ref_structure_map m ON 
                     m.id_projet = %s AND 
                     m.id_operation = e.id_operation AND 
-                    (m.id_file = e.id_file OR (m.id_file IS NULL AND e.id_file IS NULL)) AND 
+                    (m.id_sous_projet = e.id_sous_projet OR (m.id_sous_projet IS NULL AND e.id_sous_projet IS NULL)) AND 
                     (m.id_activite = e.id_activite OR (m.id_activite IS NULL AND e.id_activite IS NULL))
                 SET e.id_structure = m.id
             """, (id_projet_pvcp,))
@@ -48,7 +48,7 @@ def migrate_to_structure_map():
                 JOIN ref_structure_map m ON 
                     m.id_projet = %s AND 
                     m.id_operation = p.id_operation AND 
-                    (m.id_file = p.id_file OR (m.id_file IS NULL AND p.id_file IS NULL)) AND 
+                    (m.id_sous_projet = p.id_sous_projet OR (m.id_sous_projet IS NULL AND p.id_sous_projet IS NULL)) AND 
                     (m.id_activite = p.id_activite OR (m.id_activite IS NULL AND p.id_activite IS NULL))
                 SET p.id_structure = m.id
             """, (id_projet_pvcp,))

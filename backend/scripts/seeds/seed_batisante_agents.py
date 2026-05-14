@@ -39,25 +39,25 @@ def seed_db():
 
             # Insert operations and files with generic placeholders if not supplied
             cur.execute("INSERT IGNORE INTO ref_operations (libelle) VALUES ('BATISANTE')")
-            cur.execute("INSERT IGNORE INTO ref_files (libelle) VALUES ('-')")
+            cur.execute("INSERT IGNORE INTO ref_sous_projet (libelle) VALUES ('-')")
             cur.execute("INSERT IGNORE INTO ref_activites (libelle) VALUES ('-')")
             
             cur.execute("SELECT id FROM ref_operations WHERE libelle = 'BATISANTE'")
             id_op = cur.fetchone()['id']
-            cur.execute("SELECT id FROM ref_files WHERE libelle = '-'")
-            id_file = cur.fetchone()['id']
+            cur.execute("SELECT id FROM ref_sous_projet WHERE libelle = '-'")
+            id_sous_projet = cur.fetchone()['id']
             cur.execute("SELECT id FROM ref_activites WHERE libelle = '-'")
             id_act = cur.fetchone()['id']
 
             cur.execute("""
-                INSERT IGNORE INTO ref_structure_map (id_projet, id_operation, id_file, id_activite)
+                INSERT IGNORE INTO ref_structure_map (id_projet, id_operation, id_sous_projet, id_activite)
                 VALUES (%s, %s, %s, %s)
-            """, (id_projet, id_op, id_file, id_act))
+            """, (id_projet, id_op, id_sous_projet, id_act))
             
             cur.execute("""
                 SELECT id FROM ref_structure_map 
-                WHERE id_projet = %s AND id_operation = %s AND id_file = %s AND id_activite = %s
-            """, (id_projet, id_op, id_file, id_act))
+                WHERE id_projet = %s AND id_operation = %s AND id_sous_projet = %s AND id_activite = %s
+            """, (id_projet, id_op, id_sous_projet, id_act))
             
             id_structure = cur.fetchone()['id']
 
@@ -67,13 +67,13 @@ def seed_db():
                 nom, prenom, matricule = parts[0], parts[1], parts[2]
                 
                 cur.execute("""
-                    INSERT INTO ref_employes (matricule, nom, prenom, id_operation, id_file, id_activite, id_structure)
+                    INSERT INTO ref_employes (matricule, nom, prenom, id_operation, id_sous_projet, id_activite, id_structure)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON DUPLICATE KEY UPDATE 
                         nom=VALUES(nom), prenom=VALUES(prenom), 
-                        id_operation=VALUES(id_operation), id_file=VALUES(id_file), 
+                        id_operation=VALUES(id_operation), id_sous_projet=VALUES(id_sous_projet), 
                         id_activite=VALUES(id_activite), id_structure=VALUES(id_structure)
-                """, (matricule.strip(), nom.strip(), prenom.strip(), id_op, id_file, id_act, id_structure))
+                """, (matricule.strip(), nom.strip(), prenom.strip(), id_op, id_sous_projet, id_act, id_structure))
 
             conn.commit()
             print(f"Successfully seeded {len(lines)} BATISANTE agents.")

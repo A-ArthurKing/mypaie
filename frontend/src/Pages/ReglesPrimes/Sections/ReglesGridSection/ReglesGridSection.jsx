@@ -16,10 +16,10 @@ const PERIODICITE_LABELS = {
 
 function RegleCard({ regle, onClick, onEdit, onDelete, onDuplicate }) {
   const structureTags = [
-    regle.libelle_projet    && { key: 'projet',    label: regle.libelle_projet,    icon: 'fa-folder' },
-    regle.libelle_operation && { key: 'operation', label: regle.libelle_operation, icon: 'fa-network-wired' },
-    regle.libelle_file      && { key: 'file',      label: regle.libelle_file,      icon: 'fa-layer-group' },
-    regle.libelle_activite  && { key: 'activite',  label: regle.libelle_activite,  icon: 'fa-tag' },
+    regle.libelle_projet       && { key: 'projet',       label: regle.libelle_projet,       icon: 'fa-folder' },
+    regle.libelle_sous_projet  && { key: 'sous_projet',  label: regle.libelle_sous_projet,  icon: 'fa-layer-group' },
+    regle.libelle_operation    && { key: 'operation',    label: regle.libelle_operation,    icon: 'fa-network-wired' },
+    regle.libelle_activite     && { key: 'activite',     label: regle.libelle_activite,     icon: 'fa-tag' },
   ].filter(Boolean);
 
   return (

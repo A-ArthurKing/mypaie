@@ -1,7 +1,7 @@
 /*
  * Fichier : MappingProjets.jsx
  * Rôle    : Onglet « Mapping des projets » — lie les noms bruts de projets BigQuery
- *           aux projets, files et activités standards de la plateforme.
+ *           aux projets, sous_projets et activités standards de la plateforme.
  * Dépend  : HeaderSection, MappingFormSection, MappingTableSection, SocketContext, ToastContext
  * Module  : mypaie / Pages / GestionStructure / tabs
  */
@@ -20,7 +20,7 @@ export default function MappingProjets() {
   const addToast = useToast()
   const [mappings, setMappings] = useState([])
   const [projects, setProjects] = useState([])
-  const [files, setFiles] = useState([])
+  const [sous_projets, setSous_projets] = useState([])
   const [activities, setActivities] = useState([])
   const [tables, setTables] = useState([])
   const [columns, setColumns] = useState([])
@@ -35,7 +35,7 @@ export default function MappingProjets() {
   const [sourceColumn, setSourceColumn] = useState('')
   const [sourceName, setSourceName] = useState('') // Le nom brut choisi
   const [idProjet, setIdProjet] = useState('') // Le projet standard
-  const [idFile, setIdFile] = useState('') // Le file associé
+  const [idFile, setIdSousProjet] = useState('') // Le file associé
   const [idActivite, setIdActivite] = useState('') // L'activité associée
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -53,7 +53,7 @@ export default function MappingProjets() {
       const dataMappings = await resMappings.json()
       setMappings(dataMappings.data || [])
 
-      // 2. Charger les projets standards, files, activités et les tables BigQuery
+      // 2. Charger les projets standards, sous_projets, activités et les tables BigQuery
       const [resRefs, resTables] = await Promise.all([
         fetch(`${API_BASE_URL}/parametres/references`),
         fetch(`${API_BASE_URL}/parametres/introspection/tables`)
@@ -62,7 +62,7 @@ export default function MappingProjets() {
       if (resRefs.ok) {
         const dataRefs = await resRefs.json()
         setProjects(dataRefs.projets || [])
-        setFiles(dataRefs.files || [])
+        setSous_projets(dataRefs.sous_projets || [])
         setActivities(dataRefs.activites || [])
       }
       if (resTables.ok) {
@@ -133,7 +133,7 @@ export default function MappingProjets() {
         body: JSON.stringify({
           source_name: sourceName.trim(),
           id_projet: idProjet,
-          id_file: idFile || null,
+          id_sous_projet: idFile || null,
           id_activite: idActivite || null,
           description: description.trim()
         })
@@ -145,7 +145,7 @@ export default function MappingProjets() {
       setSourceColumn('')
       setSourceName('')
       setIdProjet('')
-      setIdFile('')
+      setIdSousProjet('')
       setIdActivite('')
       setDescription('')
       await fetchData()
@@ -160,7 +160,7 @@ export default function MappingProjets() {
   const handleEdit = (item) => {
     setSourceName(item.source_name)
     setIdProjet(item.id_projet)
-    setIdFile(item.id_file || '')
+    setIdSousProjet(item.id_sous_projet || '')
     setIdActivite(item.id_activite || '')
     setDescription(item.description || '')
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -205,7 +205,7 @@ export default function MappingProjets() {
           idProjet={idProjet}
           setIdProjet={setIdProjet}
           idFile={idFile}
-          setIdFile={setIdFile}
+          setIdSousProjet={setIdSousProjet}
           idActivite={idActivite}
           setIdActivite={setIdActivite}
           description={description}
@@ -214,7 +214,7 @@ export default function MappingProjets() {
           columns={columns}
           uniqueValues={uniqueValues}
           projects={projects}
-          files={files}
+          sous_projets={sous_projets}
           activities={activities}
           isSubmitting={isSubmitting}
           handleSubmit={handleSubmit}

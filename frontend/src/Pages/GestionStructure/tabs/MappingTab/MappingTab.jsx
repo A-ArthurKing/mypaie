@@ -12,8 +12,8 @@ import { useToast } from '../../../../Shared/Contexts/ToastContext';
 
 export default function MappingTab({ refs }) {
   const addToast = useToast();
-  const { projets, operations, files, activites, structure } = refs;
-  const [form, setForm] = useState({ id_projet: '', id_operation: '', id_file: '', id_activite: '' });
+  const { projets, operations, sous_projets, activites, structure } = refs;
+  const [form, setForm] = useState({ id_projet: '', id_sous_projet: '', id_operation: '', id_activite: '' });
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Filtrer les opérations selon le projet choisi
@@ -30,7 +30,7 @@ export default function MappingTab({ refs }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      setForm({ id_projet: '', id_operation: '', id_file: '', id_activite: '' });
+      setForm({ id_projet: '', id_sous_projet: '', id_operation: '', id_activite: '' });
     } catch (e) { console.error(e); }
   };
 
@@ -68,17 +68,17 @@ export default function MappingTab({ refs }) {
                 </select>
               </div>
               <div className="mt-field">
+                <label>Sous-projet / File (Optionnel)</label>
+                <select value={form.id_sous_projet} onChange={e => setForm({...form, id_sous_projet: e.target.value})}>
+                  <option value="">-- Aucun --</option>
+                  {(sous_projets || []).map(f => <option key={f.id} value={f.id}>{f.libelle}</option>)}
+                </select>
+              </div>
+              <div className="mt-field">
                 <label>Opération / BU</label>
                 <select value={form.id_operation} onChange={e => setForm({...form, id_operation: e.target.value})} disabled={!form.id_projet} required>
                   <option value="">-- Choisir --</option>
                   {filteredOps.map(o => <option key={o.id} value={o.id}>{o.libelle}</option>)}
-                </select>
-              </div>
-              <div className="mt-field">
-                <label>File (Optionnel)</label>
-                <select value={form.id_file} onChange={e => setForm({...form, id_file: e.target.value})}>
-                  <option value="">-- Aucun --</option>
-                  {files.map(f => <option key={f.id} value={f.id}>{f.libelle}</option>)}
                 </select>
               </div>
               <div className="mt-field">
@@ -106,8 +106,8 @@ export default function MappingTab({ refs }) {
             <thead>
               <tr>
                 <th>Projet</th>
+                <th>Sous-projet</th>
                 <th>Opération</th>
-                <th>File</th>
                 <th>Activité</th>
                 <th>Actions</th>
               </tr>
@@ -116,8 +116,8 @@ export default function MappingTab({ refs }) {
               {structure.map(s => (
                 <tr key={s.id} className="mt-row">
                   <td><span className="mt-badge mt-badge--projet">{projets.find(p => p.id === s.id_projet)?.libelle}</span></td>
+                  <td>{(sous_projets || []).find(f => f.id === s.id_sous_projet)?.libelle || <span className="mt-nil">—</span>}</td>
                   <td><span className="mt-badge mt-badge--op">{operations.find(o => o.id === s.id_operation)?.libelle}</span></td>
-                  <td>{files.find(f => f.id === s.id_file)?.libelle || <span className="mt-nil">—</span>}</td>
                   <td>{activites.find(a => a.id === s.id_activite)?.libelle || <span className="mt-nil">—</span>}</td>
                   <td>
                     <button className="mt-action-btn danger" onClick={() => setDeleteTarget(s)}>

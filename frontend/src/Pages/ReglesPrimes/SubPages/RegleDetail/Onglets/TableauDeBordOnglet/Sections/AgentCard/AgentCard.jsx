@@ -87,7 +87,7 @@ const AgentCard = ({
         <div className="agent-card__projet">
           <span className="agent-card__operation">{a.operation || '—'}</span>
           <span className="agent-card__meta">
-            {[a.file, a.activite].filter(Boolean).join(' · ')}
+            {[a.sous_projet, a.activite].filter(Boolean).join(' · ')}
           </span>
         </div>
 

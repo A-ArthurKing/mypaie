@@ -26,7 +26,7 @@ export const SocketProvider = ({ children }) => {
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('[Socket] Connecté au serveur temps réel');
+      // Connexion gérée silencieusement
     });
 
     newSocket.on('disconnect', () => {

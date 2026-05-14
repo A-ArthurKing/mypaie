@@ -5,14 +5,26 @@ Rôle    : Blueprint Flask exposant les endpoints REST pour les données de perf
 Module  : mypaie / backend / routes / performance
 """
 
+import threading
 import logging
 from flask import Blueprint, jsonify, request
 from services.performance.dw_api_performance_provider import get_performance_pvcp, get_perf_totaux_par_matricule
+from workers.etl_paie_performance import main as run_etl
 
 logger = logging.getLogger(__name__)
 
 performance_bp = Blueprint("performance", __name__)
 
+@performance_bp.route("/api/performance/etl/trigger", methods=["POST"])
+def endpoint_trigger_etl():
+    """Déclenche le worker ETL Performance en arrière-plan."""
+    try:
+        thread = threading.Thread(target=run_etl)
+        thread.start()
+        return jsonify({"message": "ETL Performance lancé en arrière-plan."}), 202
+    except Exception as err:
+        logger.error("Erreur lancement ETL : %s", err)
+        return jsonify({"error": str(err)}), 500
 
 @performance_bp.route("/api/performance/pvcp", methods=["GET"])
 def endpoint_performance_pvcp():

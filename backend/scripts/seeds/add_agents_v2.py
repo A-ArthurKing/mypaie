@@ -37,17 +37,17 @@ def add_new_agents():
             # Maps
             cur.execute("SELECT id, libelle FROM ref_operations")
             ops = {r['libelle']: r['id'] for r in cur.fetchall()}
-            cur.execute("SELECT id, libelle FROM ref_files")
+            cur.execute("SELECT id, libelle FROM ref_sous_projet")
             files = {r['libelle']: r['id'] for r in cur.fetchall()}
             cur.execute("SELECT id, libelle FROM ref_activites")
             acts = {r['libelle']: r['id'] for r in cur.fetchall()}
 
             sql = """
-                INSERT INTO ref_employes (matricule, nom, prenom, id_operation, id_file, id_activite)
+                INSERT INTO ref_employes (matricule, nom, prenom, id_operation, id_sous_projet, id_activite)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     nom=VALUES(nom), prenom=VALUES(prenom), 
-                    id_operation=VALUES(id_operation), id_file=VALUES(id_file), id_activite=VALUES(id_activite)
+                    id_operation=VALUES(id_operation), id_sous_projet=VALUES(id_sous_projet), id_activite=VALUES(id_activite)
             """
             data = []
             for m, n, p, op, f, act in new_agents:

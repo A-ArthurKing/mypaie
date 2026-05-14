@@ -15,7 +15,7 @@ import MappingProjets from './tabs/MappingProjets/MappingProjets';
 import useApiSWR from '../../Shared/Hooks/useApiSWR';
 import { TTL } from '../../Shared/Utils/cacheStorage';
 
-const REFS_FALLBACK = { projets: [], operations: [], files: [], activites: [], structure: [], kpis: {} };
+const REFS_FALLBACK = { projets: [], operations: [], sous_projets: [], activites: [], structure: [], kpis: {} };
 
 export default function GestionStructure() {
   const {

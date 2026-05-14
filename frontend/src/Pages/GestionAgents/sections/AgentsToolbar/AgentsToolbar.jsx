@@ -36,17 +36,17 @@ export default function AgentsToolbar({
   search, onSearchChange,
   projetFilter, onProjetFilterChange, projets,
   operationFilter, onOperationFilterChange, operations,
-  fileFilter, onFileFilterChange, files,
+  sous_projetFilter, onSous_projetFilterChange, sous_projets,
   activiteFilter, onActiviteFilterChange, activites,
   statutFilter, onStatutFilterChange, statutRefs,
   total, filtered,
 }) {
-  const hasActiveFilters = projetFilter || operationFilter || fileFilter || activiteFilter || statutFilter;
+  const hasActiveFilters = projetFilter || operationFilter || sous_projetFilter || activiteFilter || statutFilter;
 
   const clearAll = () => {
     onProjetFilterChange('');
     onOperationFilterChange('');
-    onFileFilterChange('');
+    onSous_projetFilterChange('');
     onActiviteFilterChange('');
     onStatutFilterChange('');
   };
@@ -102,11 +102,11 @@ export default function AgentsToolbar({
         />
         <FilterSelect
           icon="fa-file-lines"
-          label="File"
-          value={fileFilter}
-          onChange={onFileFilterChange}
-          options={files}
-          placeholder="Tous les files"
+          label="Sous-projet"
+          value={sous_projetFilter}
+          onChange={onSous_projetFilterChange}
+          options={sous_projets}
+          placeholder="Tous les sous-projets"
         />
         <FilterSelect
           icon="fa-tag"

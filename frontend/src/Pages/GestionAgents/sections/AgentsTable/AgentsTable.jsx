@@ -56,7 +56,7 @@ export default function AgentsTable({ agents, onEdit, onDelete }) {
                   : <span className="agta-nil">—</span>}
               </td>
               <td className="agta-td">
-                {agent.file || <span className="agta-nil">—</span>}
+                {agent.sous_projet || <span className="agta-nil">—</span>}
               </td>
               <td className="agta-td">
                 {agent.activite || <span className="agta-nil">—</span>}

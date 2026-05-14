@@ -4,7 +4,7 @@
  * Module  : mypaie / Pages / NotesQualite
  */
 
-import { useMemo, useEffect } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom'
 import useNotesQualite from './useNotesQualite'
 import DateRangePicker from '../../Components/DateRangePicker/DateRangePicker'
@@ -28,13 +28,16 @@ function NotesQualite() {
 
   const navigate = useNavigate()
   const location = useLocation()
+  const [showFormule, setShowFormule] = useState(false)
 
   // On cache le KPI global si on est dans le détail d'un projet
   const isDetail = location.pathname !== '/qualite' && location.pathname !== '/qualite/'
 
   // Moyenne globale visible uniquement sur la grille
   const moyenneGlobale = useMemo(() => {
-    if (statsGlobal) return Number(statsGlobal.moyenne_globale).toFixed(1)
+    if (statsGlobal && statsGlobal.moyenne_globale !== undefined && !isNaN(Number(statsGlobal.moyenne_globale))) {
+      return Number(statsGlobal.moyenne_globale).toFixed(1);
+    }
     if (projetsStats.length === 0) return 0
     const sum = projetsStats.reduce((acc, curr) => acc + (Number(curr.moyenne) || 0), 0)
     return (sum / projetsStats.length).toFixed(1)
@@ -55,8 +58,43 @@ function NotesQualite() {
         
         {!isDetail && (statsGlobal || projetsStats.length > 0) && !loading && (
           <div className="nq-kpi-global">
-            <span className="nq-kpi-global__label">Moyenne Globale</span>
+            <span className="nq-kpi-global__label">
+              Moyenne Globale
+              <i 
+                className="fa-solid fa-circle-info" 
+                style={{ marginLeft: '6px', cursor: 'pointer', color: '#007bff' }}
+                onClick={() => setShowFormule(!showFormule)}
+                title="Voir la formule de calcul"
+              />
+            </span>
             <span className="nq-kpi-global__value">{moyenneGlobale}%</span>
+            {showFormule && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: '0',
+                marginTop: '10px',
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                padding: '15px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                width: '300px',
+                zIndex: 10,
+                fontSize: '0.9rem',
+                color: '#333',
+                textAlign: 'left'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#2c3e50' }}>Formule utilisée</h4>
+                <p style={{ margin: '0 0 5px 0' }}>La moyenne globale est calculée de la manière suivante :</p>
+                <div style={{ backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                  Somme(Scores de toutes les évaluations sur la période) <br />
+                  ÷ <br />
+                  Nombre total d'évaluations
+                </div>
+                <p style={{ margin: '10px 0 0 0', fontSize: '0.8rem', color: '#666' }}>Toutes sources confondues sur la date d'évaluation.</p>
+              </div>
+            )}
           </div>
         )}
       </header>

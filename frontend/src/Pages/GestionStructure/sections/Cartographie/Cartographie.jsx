@@ -12,7 +12,7 @@ import { useToast } from '../../../../Shared/Contexts/ToastContext';
 
 export default function StructureExplorer({ refs, onRefresh }) {
   const addToast = useToast();
-  const { projets, operations, files, activites, structure } = refs;
+  const { projets, operations, sous_projets, activites, structure } = refs;
 
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -38,45 +38,45 @@ export default function StructureExplorer({ refs, onRefresh }) {
   }, [selectedProjectId, operations]);
 
   const getFilesForBu = (buId) => {
-    const fileIds = [...new Set(
-      structure.filter(s => s.id_operation === buId).map(s => s.id_file).filter(Boolean)
+    const sousProjetIds = [...new Set(
+      structure.filter(s => s.id_operation === buId).map(s => s.id_sous_projet).filter(Boolean)
     )];
-    return files.filter(f => fileIds.includes(f.id));
+    return sous_projets.filter(f => sousProjetIds.includes(f.id));
   };
 
-  const getActivitiesForBuFile = (buId, fileId) => {
+  const getActivitiesForBuFile = (buId, sousProjetId) => {
     const actIds = structure
-      .filter(s => s.id_operation === buId && s.id_file === fileId)
+      .filter(s => s.id_operation === buId && s.id_sous_projet === sousProjetId)
       .map(s => s.id_activite)
       .filter(Boolean);
     return activites.filter(a => actIds.includes(a.id));
   };
 
-  const getFileMappingId = (buId, fileId) => {
+  const getFileMappingId = (buId, sousProjetId) => {
     const row = structure.find(s =>
-      s.id_operation === buId && s.id_file === fileId && !s.id_activite
+      s.id_operation === buId && s.id_sous_projet === sousProjetId && !s.id_activite
     );
     return row?.id;
   };
 
-  const getActMappingId = (buId, fileId, actId) => {
+  const getActMappingId = (buId, sousProjetId, actId) => {
     const row = structure.find(s =>
-      s.id_operation === buId && s.id_file === fileId && s.id_activite === actId
+      s.id_operation === buId && s.id_sous_projet === sousProjetId && s.id_activite === actId
     );
     return row?.id;
   };
 
   const getAvailableFiles = (buId) => {
     const linked = new Set(
-      structure.filter(s => s.id_operation === buId).map(s => s.id_file).filter(Boolean)
+      structure.filter(s => s.id_operation === buId).map(s => s.id_sous_projet).filter(Boolean)
     );
-    return files.filter(f => !linked.has(f.id));
+    return sous_projets.filter(f => !linked.has(f.id));
   };
 
-  const getAvailableActivities = (buId, fileId) => {
+  const getAvailableActivities = (buId, sousProjetId) => {
     const linked = new Set(
       structure
-        .filter(s => s.id_operation === buId && s.id_file === fileId)
+        .filter(s => s.id_operation === buId && s.id_sous_projet === sousProjetId)
         .map(s => s.id_activite)
         .filter(Boolean)
     );
@@ -102,8 +102,8 @@ export default function StructureExplorer({ refs, onRefresh }) {
     } catch { addToast('Erreur', 'error'); }
   };
 
-  const handleLinkFile = async (buId, fileId) => {
-    if (!fileId) return;
+  const handleLinkFile = async (buId, sousProjetId) => {
+    if (!sousProjetId) return;
     try {
       const res = await fetch('/api/parametres/structure/mapping', {
         method: 'POST',
@@ -111,7 +111,7 @@ export default function StructureExplorer({ refs, onRefresh }) {
         body: JSON.stringify({
           id_projet: selectedProjectId,
           id_operation: buId,
-          id_file: fileId,
+          id_sous_projet: sousProjetId,
           id_activite: null
         })
       });
@@ -125,7 +125,7 @@ export default function StructureExplorer({ refs, onRefresh }) {
     } catch { addToast('Erreur', 'error'); }
   };
 
-  const handleLinkActivity = async (buId, fileId, actId) => {
+  const handleLinkActivity = async (buId, sousProjetId, actId) => {
     if (!actId) return;
     try {
       const res = await fetch('/api/parametres/structure/mapping', {
@@ -134,12 +134,12 @@ export default function StructureExplorer({ refs, onRefresh }) {
         body: JSON.stringify({
           id_projet: selectedProjectId,
           id_operation: buId,
-          id_file: fileId,
+          id_sous_projet: sousProjetId,
           id_activite: actId
         })
       });
       if (res.ok) {
-        const key = `${buId}-${fileId}`;
+        const key = `${buId}-${sousProjetId}`;
         addToast('Activité associée', 'success');
         setLinkActForKey(prev => ({ ...prev, [key]: '' }));
         onRefresh();
@@ -269,7 +269,7 @@ export default function StructureExplorer({ refs, onRefresh }) {
 
                     {/* Files linked to this BU */}
                     {!collapsedBus.has(bu.id) && (
-                    <div className="se-files-area">
+                    <div className="se-sous_projets-area">
                       {buFiles.length === 0 && (
                         <div className="se-empty-inline">Aucun file lié à cette BU</div>
                       )}

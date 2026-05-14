@@ -19,7 +19,7 @@ import { useToast } from '../../Shared/Contexts/ToastContext';
 import useApiSWR from '../../Shared/Hooks/useApiSWR';
 import { TTL } from '../../Shared/Utils/cacheStorage';
 
-const REFS_FALLBACK = { projets: [], operations: [], files: [], activites: [], statuts: [], structure: [] };
+const REFS_FALLBACK = { projets: [], operations: [], sous_projets: [], activites: [], statuts: [], structure: [] };
 
 export default function Agents() {
   const {
@@ -42,7 +42,7 @@ export default function Agents() {
   const [search, setSearch] = useState('');
   const [projetFilter, setProjetFilter] = useState('');
   const [operationFilter, setOperationFilter] = useState('');
-  const [fileFilter, setFileFilter] = useState('');
+  const [sous_projetFilter, setFileFilter] = useState('');
   const [activiteFilter, setActiviteFilter] = useState('');
   const [statutFilter, setStatutFilter] = useState('');
 
@@ -108,10 +108,10 @@ export default function Agents() {
       .map(a => a.operation)
       .filter(Boolean)
   )].sort();
-  const uniqueFiles = [...new Set(
+  const uniqueSousProjets = [...new Set(
     agents
       .filter(a => (!projetFilter || a.projet === projetFilter) && (!operationFilter || a.operation === operationFilter))
-      .map(a => a.file)
+      .map(a => a.sous_projet)
       .filter(Boolean)
   )].sort();
   const uniqueActivites  = [...new Set(
@@ -119,7 +119,7 @@ export default function Agents() {
       .filter(a =>
         (!projetFilter    || a.projet    === projetFilter)    &&
         (!operationFilter || a.operation === operationFilter) &&
-        (!fileFilter      || a.file      === fileFilter)
+        (!sous_projetFilter      || a.sous_projet === sous_projetFilter)
       )
       .map(a => a.activite)
       .filter(Boolean)
@@ -137,7 +137,7 @@ export default function Agents() {
       (a.activite  || '').toLowerCase().includes(term);
     const matchProjet    = projetFilter    ? (a.projet    || '') === projetFilter    : true;
     const matchOperation = operationFilter ? (a.operation || '') === operationFilter : true;
-    const matchFile      = fileFilter      ? (a.file      || '') === fileFilter      : true;
+    const matchFile      = sous_projetFilter      ? (a.sous_projet || '') === sous_projetFilter      : true;
     const matchActivite  = activiteFilter  ? (a.activite  || '') === activiteFilter  : true;
     const matchStatut    = statutFilter    ? (a.statut    || '') === statutFilter    : true;
     return matchSearch && matchProjet && matchOperation && matchFile && matchActivite && matchStatut;
@@ -160,9 +160,9 @@ export default function Agents() {
         operationFilter={operationFilter}
         onOperationFilterChange={v => { setOperationFilter(v); setFileFilter(''); setActiviteFilter(''); }}
         operations={uniqueOperations}
-        fileFilter={fileFilter}
-        onFileFilterChange={v => { setFileFilter(v); setActiviteFilter(''); }}
-        files={uniqueFiles}
+        sous_projetFilter={sous_projetFilter}
+        onSous_projetFilterChange={v => { setFileFilter(v); setActiviteFilter(''); }}
+        sous_projets={uniqueSousProjets}
         activiteFilter={activiteFilter}
         onActiviteFilterChange={setActiviteFilter}
         activites={uniqueActivites}
