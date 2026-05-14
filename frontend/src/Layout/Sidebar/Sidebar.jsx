@@ -15,7 +15,6 @@ const NAV_ITEMS = [
   { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance' },
   { id: 'agents',      label: 'Gestion agents', icon: 'fa-solid fa-users-gear',   path: '/agents'      },
   { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
-  { id: 'parametres',  label: 'Paramètres',    icon: 'fa-solid fa-gear',         path: '/parametres'  },
 ]
 
 function Sidebar() {
