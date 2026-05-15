@@ -1,3 +1,9 @@
+.grille-section-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .grille-section {
     background-color: white;
     border-radius: 8px;
@@ -129,3 +135,197 @@
 .grille-row-data:hover td.grille-cell-cible {
     background-color: var(--color-bg-light);
 }
+
+/* ── Badges indicateurs ── */
+.grille-ind-badge {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+.grille-ind-badge--direct {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+.grille-ind-badge--malus {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fdba74;
+}
+
+/* ── Extras (paliers, malus, règles métier) ── */
+.gs-extras {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gs-extra-card {
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    background: white;
+}
+
+.gs-extra-card--paliers {
+    border-left: 4px solid #22c55e;
+}
+
+.gs-extra-card--malus {
+    border-left: 4px solid #f97316;
+}
+
+.gs-extra-card__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.gs-extra-card--paliers .gs-extra-card__title {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.gs-extra-card--malus .gs-extra-card__title {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.gs-extra-badge {
+    margin-left: auto;
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.gs-extra-badge--direct {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.gs-extra-badge--malus {
+    background: #ffedd5;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.gs-extra-badge--human {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+.gs-extra-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.gs-extra-table th,
+.gs-extra-table td {
+    padding: 7px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.gs-extra-table th {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.gs-extra-table tr:last-child td {
+    border-bottom: none;
+}
+
+.gs-extra-row--zero td {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+.gs-extra-cell--montant {
+    font-weight: 700;
+    color: #15803d;
+    text-align: right !important;
+}
+
+.gs-extra-cell--malus {
+    font-weight: 700;
+    color: #c2410c;
+    text-align: right !important;
+}
+
+/* ── Encadré règles métier ── */
+.gs-regles-metier {
+    border-radius: 8px;
+    border: 1px solid #fde68a;
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+    overflow: hidden;
+}
+
+.gs-regles-metier__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #92400e;
+    border-bottom: 1px solid #fde68a;
+    background: #fef3c7;
+}
+
+.gs-regles-metier__header i {
+    color: #d97706;
+}
+
+.gs-regles-metier__desc {
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    color: #78350f;
+    margin: 0;
+    font-style: italic;
+    border-bottom: 1px solid #fde68a;
+}
+
+.gs-regles-metier__list {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+}
+
+.gs-regle {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    color: #78350f;
+}
+
+.gs-regle i {
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.gs-regle--disqualifiant i { color: #dc2626; }
+.gs-regle--malus i         { color: #f97316; }
+.gs-regle--prorata i       { color: #2563eb; }

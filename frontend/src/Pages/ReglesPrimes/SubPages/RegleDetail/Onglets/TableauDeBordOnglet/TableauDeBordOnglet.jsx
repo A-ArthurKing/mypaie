@@ -5,11 +5,12 @@
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import './TableauDeBordOnglet.css';
 import ToolbarSection from './Sections/ToolbarSection/ToolbarSection';
 import AgentCard from './Sections/AgentCard/AgentCard';
 import KpiInfoModal from '../../../../../../Components/KpiInfoModal/KpiInfoModal';
+import { useSocket } from '../../../../../../Shared/Contexts/SocketContext';
 
 // ─── Helpers de Normalisation ────────────────────────────────────────────────
 
@@ -98,6 +99,7 @@ export default function TableauDeBordOnglet({ regle }) {
   const [modalData, setModalData] = useState(null);
   const [statutRefs, setStatutRefs] = useState([]);
   const [kpiRefsFlat, setKpiRefsFlat] = useState({});
+  const socket = useSocket();
 
   // État local pour gérer les modifications temporaires (optimistic UI)
   const [localAgentsData, setLocalAgentsData] = useState({});
@@ -152,6 +154,12 @@ export default function TableauDeBordOnglet({ regle }) {
       .catch(err => console.error("Erreur statuts:", err));
 
     if (!regle?.id) return;
+    fetchAgents();
+  }, [regle?.id]);
+
+  // ─── Fetch agents (extrait pour être réutilisé par socket) ───────────────
+  const fetchAgents = useCallback(() => {
+    if (!regle?.id) return;
     setLoading(true);
     setError(null);
     fetch(`/api/regles/${regle.id}/agents`)
@@ -183,6 +191,26 @@ export default function TableauDeBordOnglet({ regle }) {
       .catch(() => setError("Impossible de contacter le SIRH."))
       .finally(() => setLoading(false));
   }, [regle?.id]);
+
+  // ─── Temps réel : re-fetch agents dès qu'une modification est détectée ───
+  useEffect(() => {
+    if (!socket || !regle?.id) return;
+    const handleAgentChange = (data) => {
+      // agent_data_updated contient regle_id — filtrer si possible
+      if (data?.regle_id && String(data.regle_id) !== String(regle.id)) return;
+      fetchAgents();
+    };
+    socket.on('agent_data_updated', handleAgentChange);
+    socket.on('agent_updated',      handleAgentChange);
+    socket.on('agent_created',      handleAgentChange);
+    socket.on('agent_deleted',      handleAgentChange);
+    return () => {
+      socket.off('agent_data_updated', handleAgentChange);
+      socket.off('agent_updated',      handleAgentChange);
+      socket.off('agent_created',      handleAgentChange);
+      socket.off('agent_deleted',      handleAgentChange);
+    };
+  }, [socket, regle?.id, fetchAgents]);
 
   // Fetch heures et qualité du mois sélectionné
   useEffect(() => {
@@ -824,6 +852,40 @@ export default function TableauDeBordOnglet({ regle }) {
         onClose={() => setShowFormulaModal(false)}
         data={modalData}
       />
+
+      {/* ── Règles appliquées manuellement ── */}
+      {(() => {
+        const reglesMetier = regle?.grille_objectifs?.regles_metier || [];
+        if (reglesMetier.length === 0) return null;
+        const TYPE_META = {
+          disqualifiant:      { icon: 'fa-ban',           cls: 'tdb-regle--disqualifiant' },
+          malus_conditionnel: { icon: 'fa-circle-minus',  cls: 'tdb-regle--malus' },
+          prorata:            { icon: 'fa-calendar-days', cls: 'tdb-regle--prorata' },
+        };
+        return (
+          <div className="tdb-regles-metier">
+            <div className="tdb-regles-metier__header">
+              <i className="fa-solid fa-gavel"></i>
+              Règles appliquées manuellement
+            </div>
+            <p className="tdb-regles-metier__desc">
+              Ces conditions ne sont pas calculées automatiquement. Elles doivent être vérifiées et appliquées
+              par le responsable lors de la validation des primes.
+            </p>
+            <ul className="tdb-regles-metier__list">
+              {reglesMetier.map((r, i) => {
+                const { icon, cls } = TYPE_META[r.type] || { icon: 'fa-circle-info', cls: '' };
+                return (
+                  <li key={i} className={`tdb-regle ${cls}`}>
+                    <i className={`fa-solid ${icon}`}></i>
+                    <span>{r.description}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })()}
     </div>
   );
 }

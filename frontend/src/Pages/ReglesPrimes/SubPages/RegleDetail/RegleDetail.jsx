@@ -4,7 +4,7 @@
  * Module  : mypaie / Pages / ReglesPrimes / SubPages
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './RegleDetail.css';
 import ObjectifsOnglet from './Onglets/ObjectifsOnglet/ObjectifsOnglet'
@@ -14,6 +14,7 @@ import useApiSWR from '../../../../Shared/Hooks/useApiSWR';
 import { fetchRegle } from '../../../../Shared/Utils/apiFetchers';
 import { clearCacheKey, TTL } from '../../../../Shared/Utils/cacheStorage';
 import AiSidebar from '../../Components/AiSidebar/AiSidebar';
+import { useSocket } from '../../../../Shared/Contexts/SocketContext';
 
 const ONGLETS = [
   { id: 'objectifs', label: 'Objectifs & Scoring', icon: 'fa-solid fa-bullseye' },
@@ -28,6 +29,7 @@ export default function RegleDetail() {
 
   const cacheKey = `regle:${regleId}`;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const socket = useSocket();
 
   const { data: regle, loading, error, revalidate } = useApiSWR(
     regleId ? cacheKey : null,
@@ -36,6 +38,22 @@ export default function RegleDetail() {
   );
 
   const erreur = error?.message ?? null;
+
+  // ── Temps réel : rafraîchit la règle dès qu'une modification est détectée ──
+  useEffect(() => {
+    if (!socket || !regleId) return;
+    const handleRegleUpdate = (data) => {
+      if (data?.regle_id && String(data.regle_id) !== String(regleId)) return;
+      clearCacheKey(cacheKey);
+      revalidate();
+    };
+    socket.on('regle_updated',         handleRegleUpdate);
+    socket.on('regle_configs_updated', handleRegleUpdate);
+    return () => {
+      socket.off('regle_updated',         handleRegleUpdate);
+      socket.off('regle_configs_updated', handleRegleUpdate);
+    };
+  }, [socket, regleId, cacheKey, revalidate]);
 
   // L'onglet actif est lu depuis l'URL (?tab=...) ou 'objectifs' par défaut
   const ongletActif = searchParams.get('tab') || 'objectifs';

@@ -5,7 +5,8 @@
  * Module  : mypaie / Layout
  */
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../Shared/Contexts/AuthContext'
 import './Sidebar.css'
 
 // Définition des entrées de navigation
@@ -19,6 +20,13 @@ const NAV_ITEMS = [
 
 function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
     <aside className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}>
@@ -79,6 +87,9 @@ function Sidebar() {
               <span className="sidebar__user-name">Administrateur</span>
               <span className="sidebar__user-role">Gestionnaire Paie</span>
             </div>
+            <button className="sidebar__logout-btn" onClick={handleLogout} title="Se déconnecter">
+              <i className="fa-solid fa-right-from-bracket"></i>
+            </button>
           </div>
         )}
       </div>

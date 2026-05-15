@@ -6,9 +6,10 @@ Module  : mypaie / backend / routes / agents
 """
 
 import logging
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
+import json
 from services.agents.sirh_agents_provider import get_agents_sirh
-from services.agents.gemini_agent_provider import process_chat_message
+from services.agents.gemini_agent_provider import process_chat_message, process_chat_message_stream
 from services.agents.agents_data_provider import (
     get_agents_manual_data, 
     save_agent_manual_data,
@@ -18,16 +19,25 @@ from services.agents.agents_data_provider import (
     update_agent,
     delete_agent,
 )
+from services.agents.ai_history_provider import (
+    create_conversation,
+    get_conversations,
+    get_messages,
+    add_message,
+    lock_conversation,
+    truncate_conversation
+)
 from services.regles_primes.dw_api_regles_provider import get_regle_by_id
 
 agents_bp = Blueprint("agents", __name__)
 
+MAX_MESSAGES_PER_CONV = 40
 
 @agents_bp.route("/api/agents/chat", methods=["POST"])
 def endpoint_agent_chat():
     """
     Endpoint pour le chat de l'assistant IA (Gemini).
-    Attend un JSON : { "message": "...", "regle_id": 12 (optionnel), "history": [...] (optionnel) }
+    Attend un JSON : { "message": "...", "regle_id": 12, "conversation_id": 1 (optionnel) }
     """
     try:
         data = request.json
@@ -36,13 +46,79 @@ def endpoint_agent_chat():
         
         message = data.get("message")
         regle_id = data.get("regle_id")
-        history = data.get("history", [])
+        conversation_id = data.get("conversation_id")
         
-        result = process_chat_message(message, regle_id, history)
-        return jsonify(result), 200
-        
+        if not regle_id:
+            return jsonify({"error": "regle_id est requis"}), 400
+
+        # Si aucune conversation en cours, on en crée une
+        if not conversation_id:
+            conversation_id = create_conversation(regle_id)
+            # Ajout du message de bienvenue automatique
+            add_message(conversation_id, "bot", "Bonjour ! Je suis l'assistant IA de myPaie. Je peux répondre à vos questions sur cette règle de prime, ses objectifs (KPIs) et ses paramètres. Comment puis-je vous aider ?")
+
+        # Vérifier le nombre de messages (bloquer si > MAX_MESSAGES_PER_CONV)
+        history_db = get_messages(conversation_id)
+        if len(history_db) >= MAX_MESSAGES_PER_CONV:
+            lock_conversation(conversation_id)
+            return jsonify({
+                "response": "Cette conversation a atteint la limite de mémoire pour garantir la précision des réponses. Veuillez démarrer une nouvelle conversation.",
+                "is_locked": True,
+                "conversation_id": conversation_id
+            }), 200
+
+        add_message(conversation_id, "user", message)
+
+        def generate():
+            full_bot_response = ""
+            is_locked = len(history_db) + 2 >= MAX_MESSAGES_PER_CONV
+            if is_locked:
+                lock_conversation(conversation_id)
+
+            meta = {"conversation_id": conversation_id, "is_locked": is_locked}
+            yield f"data: {json.dumps({'meta': meta})}\n\n"
+
+            for chunk in process_chat_message_stream(message, regle_id, history_db):
+                full_bot_response += chunk
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            
+            add_message(conversation_id, "bot", full_bot_response)
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+        return Response(generate(), mimetype='text/event-stream')
+
     except Exception as e:
         logger.error("Erreur endpoint POST /api/agents/chat : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+@agents_bp.route("/api/regles/<int:regle_id>/conversations", methods=["GET"])
+def endpoint_get_conversations(regle_id):
+    """Retourne l'historique des conversations pour une règle donnée."""
+    try:
+        convs = get_conversations(regle_id)
+        return jsonify({"data": convs}), 200
+    except Exception as e:
+        logger.error("Erreur GET conversations : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+@agents_bp.route("/api/conversations/<int:conv_id>/messages", methods=["GET"])
+def endpoint_get_messages(conv_id):
+    """Retourne tous les messages d'une conversation spécifique."""
+    try:
+        msgs = get_messages(conv_id)
+        return jsonify({"data": msgs}), 200
+    except Exception as e:
+        logger.error("Erreur GET messages : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+@agents_bp.route("/api/conversations/<int:conv_id>/messages/<int:msg_id>/truncate", methods=["DELETE"])
+def endpoint_truncate_messages(conv_id, msg_id):
+    """Supprime tous les messages à partir d'un message donné pour permettre de l'éditer."""
+    try:
+        truncate_conversation(conv_id, msg_id)
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error("Erreur DELETE messages truncate : %s", e)
         return jsonify({"error": str(e)}), 500
 
 

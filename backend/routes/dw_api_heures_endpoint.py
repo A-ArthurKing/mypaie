@@ -10,7 +10,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from tools.socket_io import socketio
+from core.socket import socketio
 from routes.heures_agents.heures_agents_routes import heures_agents_bp
 from routes.notes_qualite.notes_qualite_routes import notes_qualite_bp
 from routes.performance.performance_routes import performance_bp

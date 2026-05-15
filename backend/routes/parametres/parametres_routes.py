@@ -24,7 +24,7 @@ from services.parametres.structure_provider import (
 )
 from services.parametres.reference_provider import get_all_references, invalidate_references_cache
 from services.parametres.dw_api_introspection_provider import list_bigquery_tables, list_table_columns, get_unique_column_values
-from tools.socket_io import emit_update
+from core.socket import emit_update
 
 logger = logging.getLogger(__name__)
 

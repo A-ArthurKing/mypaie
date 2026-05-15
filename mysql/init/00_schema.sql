@@ -218,6 +218,29 @@ CREATE TABLE IF NOT EXISTS matrice_paliers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- TABLE : ai_conversations et ai_messages
+-- Rôle  : Historique des chats avec l'assistant IA
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ai_conversations (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    regle_id INT UNSIGNED NOT NULL,
+    titre VARCHAR(255) DEFAULT 'Nouvelle conversation',
+    is_locked TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ai_conv_regle FOREIGN KEY (regle_id) REFERENCES matrice_primes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ai_messages (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT UNSIGNED NOT NULL,
+    sender ENUM('user', 'bot') NOT NULL,
+    text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ai_msg_conv FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- TABLE : matrice_kpis_mapping
 -- Rôle  : Correspondance colonnes BigQuery ? KPIs standards
 --         Supporte aussi les formules calculées (is_formula=1)

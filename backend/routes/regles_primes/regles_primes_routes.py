@@ -7,7 +7,7 @@ Module  : mypaie / backend / routes / regles_primes
 
 import logging
 from flask import Blueprint, jsonify, request
-from tools.socket_io import emit_update
+from core.socket import emit_update
 from services.regles_primes.dw_api_regles_provider import (
     create_regle, get_regles, get_regle_by_id, update_regle_grille,
     get_regle_configs, create_regle_config, set_active_config,

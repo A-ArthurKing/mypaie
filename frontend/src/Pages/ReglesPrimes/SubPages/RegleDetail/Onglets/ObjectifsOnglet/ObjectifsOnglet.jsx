@@ -5,7 +5,7 @@
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / Onglets
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import './ObjectifsOnglet.css';
 import KpiGridSection from './Sections/KpiGridSection/KpiGridSection';
 import DescriptionSection from './Sections/DescriptionSection/DescriptionSection';
@@ -63,7 +63,7 @@ export default function ObjectifsOnglet({ regle, onRefresh }) {
   };
 
   // Real-time updates
-  useState(() => {
+  useEffect(() => {
     if (!socket || !regle?.id) return;
     const handleUpdate = (data) => {
       if (data && data.regle_id && String(data.regle_id) !== String(regle.id)) return;
@@ -71,7 +71,7 @@ export default function ObjectifsOnglet({ regle, onRefresh }) {
     };
     socket.on('regle_configs_updated', handleUpdate);
     return () => socket.off('regle_configs_updated', handleUpdate);
-  });
+  }, [socket, regle?.id]);
 
   if (!regle) return null;
 
