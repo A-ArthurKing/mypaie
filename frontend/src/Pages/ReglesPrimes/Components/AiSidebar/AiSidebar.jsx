@@ -3,6 +3,10 @@ import "./AiSidebar.css";
 import useApiSWR from "../../../../Shared/Hooks/useApiSWR";
 import { useToast } from "../../../../Shared/Contexts/ToastContext";
 
+// Compteur global pour garantir des IDs de message uniques (évite les doublons Date.now())
+let _msgIdCounter = 0;
+const nextMsgId = () => ++_msgIdCounter;
+
 // Helper fetch avec token JWT (identique à fetchJson dans apiFetchers)
 function authFetch(url, options = {}) {
   const token = localStorage.getItem('mypaie_auth_token');
@@ -215,14 +219,14 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
         
         addToast(`Configuration "${grilleName}" activée avec succès !`, 'success');
         setMessages(prev => [...prev, { 
-          id: Date.now(), 
+          id: nextMsgId(), 
           sender: "bot", 
           text: `✅ Configuration **"${grilleName}"** appliquée avec succès ! Le tableau de bord est à jour.` 
         }]);
       } catch (err) {
         addToast(err.message || "Erreur lors de l'application de la grille", 'error');
         setMessages(prev => [...prev, { 
-          id: Date.now(), 
+          id: nextMsgId(), 
           sender: "bot", 
           text: `❌ Erreur lors de l'application : ${err.message}` 
         }]);
@@ -243,12 +247,10 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
   };
 
   const sendMessageToBot = async (userText) => {
-    // On met un faux ID temporel pour l'affichage immédiat
-    setMessages(prev => [...prev, { id: Date.now(), sender: "user", text: userText }]);
-    
-    // Create an empty bot message that we will stream into
-    const botMsgId = Date.now() + 1;
-    setMessages(prev => [...prev, { id: botMsgId, sender: "bot", text: "" }]);
+    const userMsgId = nextMsgId();
+    const botMsgId  = nextMsgId();
+    setMessages(prev => [...prev, { id: userMsgId, sender: "user", text: userText }]);
+    setMessages(prev => [...prev, { id: botMsgId,  sender: "bot",  text: "" }]);
     setIsLoading(true);
 
     try {
@@ -312,7 +314,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
 
     } catch (err) {
       console.error(err);
-      setMessages(prev => [...prev, { id: Date.now()+2, sender: "bot", text: "Désolé, je rencontre une erreur de connexion : " + err.message }]);
+        setMessages(prev => [...prev, { id: nextMsgId(), sender: "bot", text: "Désolé, je rencontre une erreur de connexion : " + err.message }]);
     } finally {
       setIsLoading(false);
     }

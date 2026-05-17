@@ -712,8 +712,9 @@ def list_available_kpis_tool() -> str:
                 current_univers = k['univers']
                 lines.append(f"\n[Univers: {current_univers}]")
             statut = "✅ Actif" if k['actif'] else "❌ Inactif"
+            tech_key = k.get('tech_key') or k['code'].lower()
             lines.append(
-                f"  • tech_key='{k['tech_key'] or k['code'].lower()}' | code={k['code']} | "
+                f"  • tech_key='{tech_key}' | code={k['code']} | "
                 f"libellé={k['libelle']} | unité={k.get('unite','—')} | {statut}"
             )
             if k.get('description'):
@@ -755,7 +756,8 @@ def prepare_grille_proposal_tool(regle_id: int, grille_nom: str, grille_json: st
 
         # 3. Valider que les tech_key existent dans la base
         all_kpis = get_all_kpis_with_status()
-        valid_tech_keys = {k['tech_key'] for k in all_kpis if k.get('tech_key')}
+        # tech_key n'est pas une colonne de config_kpis → on normalise via code
+        valid_tech_keys = {k.get('tech_key') or k['code'].lower() for k in all_kpis}
         valid_codes     = {k['code'].lower() for k in all_kpis}
 
         kpis_not_found = []
