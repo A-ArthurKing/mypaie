@@ -88,10 +88,23 @@ RÈGLES DE COMPORTEMENT STRICTES
    - Si la description contient une formule, explique-la en langage naturel.
    - Si aucune description n'est disponible, dis-le honnêtement.
 
-5. KPIs MANQUANTS :
-   Si l'utilisateur mentionne un KPI qui n'existe pas dans la liste retournée par list_available_kpis_tool,
-   signale-le explicitement : "⚠️ Le KPI '[nom]' n'est pas référencé dans la base. Voici les KPIs disponibles : ..."
-   Propose un KPI alternatif similaire si possible.
+5. KPIs MANQUANTS — PROCÉDURE OBLIGATOIRE :
+   Si list_available_kpis_tool retourne une liste vide ou si un KPI mentionné est introuvable :
+
+   CAS A — Aucun KPI dans la base :
+   → Dis CLAIREMENT à l'utilisateur :
+     "Pour paramétrer cette grille, je dois connaître les indicateurs disponibles.
+      Aucun KPI n'est encore configuré dans votre référentiel.
+      **Étape à suivre :** Allez dans **Paramètres → KPIs** et créez les indicateurs que vous
+      souhaitez utiliser (ex : Chiffre d'Affaires, Taux de Conversion, Satisfaction Client…).
+      Revenez ensuite ici et je construirai la grille automatiquement."
+   → NE PAS continuer à essayer de créer la grille. NE PAS inventer de KPIs. ARRÊT IMMÉDIAT.
+
+   CAS B — KPI mentionné mais introuvable :
+   → Signale-le : "⚠️ Le KPI '[nom]' n'existe pas dans votre référentiel."
+   → Liste les KPIs disponibles (libellé humain seulement).
+   → Propose un KPI similaire si possible. Sinon guide vers Paramètres → KPIs.
+   → NE PAS générer de grille avec un KPI inventé.
 
 6. CRÉATION AUTOMATIQUE DE GRILLE — APPEL IMMÉDIAT ET INCONDITIONNEL :
    ▸ RÈGLE ABSOLUE : Dès que tu as au moins UN KPI configuré + UN statut (ou "Tous" par défaut),
@@ -703,7 +716,16 @@ def list_available_kpis_tool() -> str:
     try:
         kpis = get_all_kpis_with_status()
         if not kpis:
-            return "Aucun KPI standard n'est configuré dans la base de données."
+            return (
+                "⚠️ AUCUN KPI n'est configuré dans la base de données.\n"
+                "ACTION REQUISE : Dis à l'utilisateur qu'il doit d'abord créer ses KPIs "
+                "dans l'onglet **Paramètres → KPIs** avant de pouvoir configurer une grille de primes.\n"
+                "Guide-le avec ce message :\n"
+                "'Pour paramétrer cette grille, je dois d'abord connaître les indicateurs disponibles.\n"
+                "Aucun KPI n'est encore configuré. Veuillez aller dans **Paramètres → KPIs** et créer "
+                "les indicateurs que vous souhaitez utiliser (ex: Chiffre d'Affaires, Taux de Conversion, "
+                "Satisfaction Client…). Revenez ensuite ici et je pourrai construire la grille automatiquement.'"
+            )
 
         lines = ["--- KPIs DISPONIBLES ---\n"]
         current_univers = None
@@ -767,9 +789,22 @@ def prepare_grille_proposal_tool(regle_id: int, grille_nom: str, grille_json: st
                 kpis_not_found.append(mk)
 
         if kpis_not_found:
+            kpis_disponibles = ", ".join(
+                f"{k['libelle']} (code: {k['code'].lower()})"
+                for k in all_kpis if k.get('actif', True)
+            ) or "aucun KPI actif"
             return (
-                f"⚠️ Les KPIs suivants sont introuvables dans la base : {', '.join(kpis_not_found)}. "
-                f"Vérifie les tech_key via list_available_kpis_tool et corrige la grille avant de réessayer."
+                f"❌ BLOCAGE — KPIs manquants dans la base de données.\n\n"
+                f"Les indicateurs suivants sont utilisés dans la grille mais n'existent PAS dans 'config_kpis' :\n"
+                f"  → {', '.join(kpis_not_found)}\n\n"
+                f"KPIs actuellement disponibles : {kpis_disponibles}\n\n"
+                f"INSTRUCTION POUR L'IA : Dis à l'utilisateur :\n"
+                f"'Je ne peux pas créer cette grille car les KPIs suivants n'existent pas encore dans votre référentiel : "
+                f"{', '.join(kpis_not_found)}.\n"
+                f"Pour débloquer la situation :\n"
+                f"1. Allez dans **Paramètres → KPIs** et créez ces indicateurs manquants.\n"
+                f"2. Revenez ici et relancez votre demande.\n"
+                f"Les KPIs déjà disponibles sont : {kpis_disponibles}'"
             )
 
         # 4. S'assurer que les IDs d'indicateurs sont uniques (générer si nécessaire)
