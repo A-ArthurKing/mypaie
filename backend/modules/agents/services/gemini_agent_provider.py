@@ -875,8 +875,12 @@ def _load_context_notes_for_prompt(regle_id: int) -> str:
 
 def process_chat_message_stream(message: str, regle_id: int = None, history: list = None):
     """
-    Traite un message utilisateur via Gemini 2.5 Flash de façon streamée, 
-    avec accès aux outils contextuels de la règle courante.
+    Traite un message utilisateur via Gemini 2.5 Flash.
+
+    Stratégie : mode bloquant (AFC gère le tool-calling loop complet),
+    puis pseudo-streaming du texte final par petits morceaux.
+    Raison : google-genai==0.3.0 ne supporte pas le tool-calling automatique
+    en mode stream — le flux s'arrête au premier chunk 'function_call'.
     """
     client = get_gemini_client()
 
@@ -912,20 +916,24 @@ def process_chat_message_stream(message: str, regle_id: int = None, history: lis
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.2,
-                tools=[get_regle_info_tool, list_available_kpis_tool, get_context_notes_tool, save_context_note_tool, get_active_grille_json_tool, get_real_performance_tool, prepare_grille_proposal_tool]
+                tools=[get_regle_info_tool, list_available_kpis_tool, get_context_notes_tool,
+                       save_context_note_tool, get_active_grille_json_tool,
+                       get_real_performance_tool, prepare_grille_proposal_tool]
             )
         )
 
-        response = chat.send_message_stream(context_msg)
-        for chunk in response:
-            try:
-                if chunk.text:
-                    yield chunk.text
-            except ValueError:
-                # Ignore les chunks qui contiennent uniquement des appels de fonctions (outils)
-                pass
+        # Mode bloquant : AFC exécute les tools automatiquement jusqu'à la réponse finale
+        response = chat.send_message(context_msg)
+        final_text = response.text or ""
+        logger.info(f"[Gemini] Réponse reçue ({len(final_text)} chars) pour regle_id={regle_id}")
+
+        # Pseudo-streaming : on découpe le texte en petits morceaux
+        CHUNK_SIZE = 12
+        for i in range(0, len(final_text), CHUNK_SIZE):
+            yield final_text[i:i + CHUNK_SIZE]
+
     except Exception as e:
-        logger.error(f"Erreur Gemini Stream : {e}")
+        logger.error(f"Erreur Gemini : {e}", exc_info=True)
         yield f"\n[Erreur technique lors de la génération: {str(e)}]"
 
 
