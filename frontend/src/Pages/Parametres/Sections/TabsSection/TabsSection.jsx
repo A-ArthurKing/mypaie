@@ -13,28 +13,22 @@ export default function TabsSection() {
   return (
     <nav className="parametres-tabs">
       <NavLink
-        to="/parametres/structure"
+        to="/parametres/structure-projets"
         className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
       >
-        <i className="fa-solid fa-sitemap" /> Structure
-      </NavLink>
-      <NavLink
-        to="/parametres/mapping-projets"
-        className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
-      >
-        <i className="fa-solid fa-code-merge" /> Mapping Projets
+        <i className="fa-solid fa-sitemap" /> Structure & Projets
       </NavLink>
       <NavLink 
-        to="/parametres/mapping-kpis" 
+        to="/parametres/indicateurs" 
         className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
       >
-        <i className="fa-solid fa-chart-bar" /> Mapping KPIs
+        <i className="fa-solid fa-chart-bar" /> Indicateurs & KPIs
       </NavLink>
       <NavLink
-        to="/parametres/kpi-registry"
+        to="/parametres/utilisateurs"
         className={({ isActive }) => `parametres-tab ${isActive ? 'parametres-tab--active' : ''}`}
       >
-        <i className="fa-solid fa-sliders" /> KPI Registry
+        <i className="fa-solid fa-users" /> Utilisateurs
       </NavLink>
     </nav>
   );

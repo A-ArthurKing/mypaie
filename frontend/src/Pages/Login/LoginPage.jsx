@@ -92,8 +92,8 @@ const LoginPage = () => {
       
       <div className="login-illustration">
         <div className="illustration-content">
-          <h2>Vos performances et vos primes, en toute transparence</h2>
-          <p>Que vous soyez collaborateur ou manager, suivez l'atteinte de vos objectifs, analysez vos résultats et pilotez vos primes en temps réel sur une plateforme unifiée.</p>
+          <h2>Performances et primes en temps réel</h2>
+          <p>Suivez l'atteinte de vos objectifs et analysez vos résultats en un seul endroit.</p>
         </div>
       </div>
     </div>

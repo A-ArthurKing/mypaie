@@ -1,6 +1,15 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
 import "./AiSidebar.css";
 import useApiSWR from "../../../../Shared/Hooks/useApiSWR";
+import { useToast } from "../../../../Shared/Contexts/ToastContext";
+
+// Helper fetch avec token JWT (identique à fetchJson dans apiFetchers)
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem('mypaie_auth_token');
+  const headers = { ...options.headers };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers });
+}
 
 // ── Rendu Markdown léger (sans dépendance externe) ──────────────────────────
 function parseInline(text, baseKey = 0) {
@@ -135,6 +144,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
   
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const addToast = useToast();
 
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInputValue, setEditInputValue] = useState("");
@@ -142,7 +152,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
   // Charger la liste des conversations (Historique)
   const { data: conversations = [], revalidate: refreshHistory } = useApiSWR(
     isOpen && view === 'history' && regleId ? `ai_conversations:${regleId}` : null,
-    () => fetch(`/api/regles/${regleId}/conversations`).then(r => r.json()).then(d => d.data || [])
+    () => authFetch(`/api/regles/${regleId}/conversations`).then(r => r.json()).then(d => d.data || [])
   );
 
   useEffect(() => {
@@ -162,7 +172,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
   const loadConversation = async (convId, lockedStatus) => {
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/conversations/${convId}/messages`);
+      const res = await authFetch(`/api/conversations/${convId}/messages`);
       const data = await res.json();
       if (data.data) {
         setMessages(data.data);
@@ -189,9 +199,8 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
       try {
         setIsLoading(true);
         const grilleName = payload.nom || payload.grille_nom || "Nouvelle version IA";
-        // Le payload est le JSON complet de la grille (categories, indicateurs, statuts, paliers + nom)
         const { nom, grille_nom, ...grilleContent } = payload;
-        const res = await fetch(`/api/regles/${regleId}/configs`, {
+        const res = await authFetch(`/api/regles/${regleId}/configs`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -204,12 +213,14 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Erreur de création");
         
+        addToast(`Configuration "${grilleName}" activée avec succès !`, 'success');
         setMessages(prev => [...prev, { 
           id: Date.now(), 
           sender: "bot", 
           text: `✅ Configuration **"${grilleName}"** appliquée avec succès ! Le tableau de bord est à jour.` 
         }]);
       } catch (err) {
+        addToast(err.message || "Erreur lors de l'application de la grille", 'error');
         setMessages(prev => [...prev, { 
           id: Date.now(), 
           sender: "bot", 
@@ -241,7 +252,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/agents/chat', {
+      const response = await authFetch('/api/agents/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -326,7 +337,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
 
     if (currentConvId && msgId) {
       try {
-        await fetch(`/api/conversations/${currentConvId}/messages/${msgId}/truncate`, {
+        await authFetch(`/api/conversations/${currentConvId}/messages/${msgId}/truncate`, {
           method: 'DELETE'
         });
         setIsLocked(false);
@@ -472,6 +483,12 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
                     setInput(e.target.value);
                     e.target.style.height = 'auto';
                     e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
                   }}
                   disabled={isLoading}
                 />

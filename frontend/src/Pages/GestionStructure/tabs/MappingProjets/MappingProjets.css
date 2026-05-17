@@ -128,7 +128,6 @@
 }
 
 .mp-input-wrapper input,
-.mp-input-wrapper select,
 .mp-input-wrapper textarea {
     width: 100%;
     padding: 10px 14px 10px 40px;
@@ -142,15 +141,13 @@
 }
 
 .mp-input-wrapper input:focus,
-.mp-input-wrapper select:focus,
 .mp-input-wrapper textarea:focus {
     border-color: var(--color-accent);
     box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
-.mp-input-wrapper select {
-    appearance: none;
-    cursor: pointer;
+.mp-react-select {
+    width: 100%;
 }
 
 .mp-input-wrapper textarea {

@@ -34,8 +34,10 @@ export default function StructureExplorer({ refs, onRefresh }) {
 
   const projectBus = useMemo(() => {
     if (!selectedProjectId) return [];
-    return operations.filter(op => op.id_projet === selectedProjectId);
-  }, [selectedProjectId, operations]);
+    // Récupère les IDs d'opérations uniques liés à ce projet via la table de mapping "structure"
+    const opIds = [...new Set(structure.filter(s => s.id_projet === selectedProjectId && s.id_operation).map(s => s.id_operation))];
+    return operations.filter(op => opIds.includes(op.id));
+  }, [selectedProjectId, operations, structure]);
 
   const getFilesForBu = (buId) => {
     const sousProjetIds = [...new Set(

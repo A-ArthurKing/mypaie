@@ -12,12 +12,14 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from core.socket import socketio
-from routes.heures_agents.heures_agents_routes import heures_agents_bp
-from routes.notes_qualite.notes_qualite_routes import notes_qualite_bp
-from routes.performance.performance_routes import performance_bp
-from routes.regles_primes.regles_primes_routes import regles_primes_bp
-from routes.parametres.parametres_routes import parametres_bp
-from routes.agents.agents_routes import agents_bp
+from modules.heures_agents.routes import heures_agents_bp
+from modules.notes_qualite.routes import notes_qualite_bp
+from modules.performance.routes import performance_bp
+from modules.regles_primes.routes import regles_primes_bp
+from modules.parametres.routes import parametres_bp
+from modules.agents.routes import agents_bp
+from modules.auth.routes import auth_bp
+from modules.users.routes import users_bp
 # #endregion
 
 # #region CONFIGURATION
@@ -46,6 +48,8 @@ app.register_blueprint(performance_bp)
 app.register_blueprint(regles_primes_bp)
 app.register_blueprint(parametres_bp)
 app.register_blueprint(agents_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(users_bp)
 # #endregion
 
 

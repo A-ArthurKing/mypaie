@@ -8,11 +8,8 @@ import logging
 from flask import Blueprint, jsonify, request
 from services.parametres.mapping_provider import (
     get_mappings, delete_mapping,
-    get_kpi_mappings, add_kpi_mapping, delete_kpi_mapping,
-    get_mysql_kpi_mappings, add_mysql_kpi_mapping, delete_mysql_kpi_mapping,
-    add_standard_kpi, update_standard_kpi,
     get_mysql_project_mappings, add_mysql_project_mapping, delete_mysql_project_mapping,
-    get_all_kpis_with_status, toggle_kpi_actif, get_etl_sources, get_kpi_mappings_by_source,
+    get_all_kpis_with_status, toggle_kpi_actif
 )
 from services.parametres.structure_provider import (
     add_project, update_project, delete_project,
@@ -22,7 +19,7 @@ from services.parametres.structure_provider import (
     add_structure_mapping, delete_structure_mapping,
 )
 from services.parametres.reference_provider import get_all_references, invalidate_references_cache
-from services.parametres.introspection_provider import list_bigquery_tables, list_table_columns, get_unique_column_values
+from services.parametres.introspection_provider import list_bigquery_tables, list_table_columns, get_unique_column_values, discover_gold_kpis
 from core.socket import emit_update
 
 logger = logging.getLogger(__name__)
@@ -62,6 +59,20 @@ def endpoint_unique_values():
         return jsonify({"error": "Paramètres 'table' et 'column' requis"}), 400
     return jsonify({"data": get_unique_column_values(table_id, column_name)}), 200
 
+# ===== Découverte Dynamique des KPIs (Pont Data-App) =====
+# Avec la nouvelle architecture "Metadata-Driven", l'application ne s'appuie plus sur une table 
+# de mapping technique (qui a été supprimée de MySQL). Elle est devenue "aveugle" par défaut.
+# Pour lister les KPIs existants (pour peupler les menus déroulants lors de la création d'une grille),
+# l'UI doit interroger directement la couche "Gold" de BigQuery.
+# 
+# Cette route interroge les tables de synthèse (paie_performance_mensuelle / paie_qualite_mensuelle)
+# pour récupérer dynamiquement la liste fraîche de tous les kpi_code générés par les ETLs.
+# Elle accepte un paramètre optionnel ?projet= pour filtrer les résultats.
+@parametres_bp.route("/api/parametres/introspection/gold-kpis", methods=["GET"])
+def endpoint_discover_gold_kpis():
+    projet = request.args.get("projet")
+    # Appelle le provider BQ pour scanner les tables Gold (très léger et rapide)
+    return jsonify({"data": discover_gold_kpis(projet)}), 200
 
 # --- KPIs STANDARDS ---
 

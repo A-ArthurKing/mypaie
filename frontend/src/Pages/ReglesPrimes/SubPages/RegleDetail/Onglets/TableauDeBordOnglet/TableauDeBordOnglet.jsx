@@ -104,17 +104,9 @@ export default function TableauDeBordOnglet({ regle }) {
   // État local pour gérer les modifications temporaires (optimistic UI)
   const [localAgentsData, setLocalAgentsData] = useState({});
 
-  // Heures — sélecteur de mois
-  const [heuresMap, setHeuresMap] = useState({});
-  const [loadingHeures, setLoadingHeures] = useState(false);
-
-  // Qualité
-  const [qualiteMap, setQualiteMap] = useState({});
-  const [loadingQualite, setLoadingQualite] = useState(false);
-
-  // DMT (performance)
-  const [dmtMap, setDmtMap] = useState({});
-  const [loadingDmt, setLoadingDmt] = useState(false);
+  // Unification des données (nouveau système Step 4)
+  const [unifiedMap, setUnifiedMap] = useState({});
+  const [loadingUnified, setLoadingUnified] = useState(false);
 
   // Affichage DMT : 's' = secondes brutes, 'min' = Xm XXs
   const [dmtUnit, setDmtUnit] = useState('s');
@@ -212,103 +204,41 @@ export default function TableauDeBordOnglet({ regle }) {
     };
   }, [socket, regle?.id, fetchAgents]);
 
-  // Fetch heures et qualité du mois sélectionné
+  // Fetch unifié (Heures + Qualité + Performance + Virtuels)
   useEffect(() => {
-    if (agents.length === 0) return;
+    if (agents.length === 0 || !regle?.id) return;
     
     const { date_debut, date_fin } = selectedMonthRange;
     const matricules = agents.map(a => a.matricule).filter(Boolean).join(',');
 
-    // 1. Fetch Heures
-    setLoadingHeures(true);
-    setHeuresMap({});
-    fetch(`/api/heures/totaux?date_debut=${date_debut}&date_fin=${date_fin}&matricules=${matricules}`)
+    setLoadingUnified(true);
+    fetch(`/api/regles/${regle.id}/calcul?date_debut=${date_debut}&date_fin=${date_fin}&matricules=${matricules}`)
       .then(res => res.json())
-      .then(data => setHeuresMap(data.data || {}))
-      .catch(err => console.error('[AgentsOnglet] Erreur fetch heures:', err))
-      .finally(() => setLoadingHeures(false));
+      .then(data => setUnifiedMap(data.data || {}))
+      .catch(err => console.error('[TableauDeBord] Erreur calcul unifié:', err))
+      .finally(() => setLoadingUnified(false));
 
-    // 2. Fetch Qualité — avec fallback par nom d'agent si matricule IS NULL en BQ
-    setLoadingQualite(true);
-    setQualiteMap({});
-    // Construit le mapping { "nom prenom": matricule, "prenom nom": matricule }
-    // pour le fallback quand paie_qualite.matricule est NULL (agent_mapping absent)
-    const agentsMap = {};
-    agents.forEach(a => {
-      const mat    = String(a.matricule || '');
-      const nom    = (a.nom    || '').trim().toLowerCase();
-      const prenom = (a.prenom || '').trim().toLowerCase();
-      if (mat && nom && prenom) {
-        agentsMap[`${nom} ${prenom}`]    = mat;
-        agentsMap[`${prenom} ${nom}`]    = mat;
-      }
-    });
-    const agentsMapParam = encodeURIComponent(JSON.stringify(agentsMap));
-    fetch(`/api/qualite/totaux?date_debut=${date_debut}&date_fin=${date_fin}&matricules=${matricules}&agents_map=${agentsMapParam}`)
-      .then(res => res.json())
-      .then(data => setQualiteMap(data.data || {}))
-      .catch(err => console.error('[AgentsOnglet] Erreur fetch qualité:', err))
-      .finally(() => setLoadingQualite(false));
-
-    // 3. Fetch DMT + CVR (performance)
-    setLoadingDmt(true);
-    setDmtMap({});
-    fetch(`/api/performance/totaux?date_debut=${date_debut}&date_fin=${date_fin}&matricules=${matricules}`)
-      .then(res => res.json())
-      .then(data => setDmtMap(data.data || {}))
-      .catch(err => console.error('[AgentsOnglet] Erreur fetch perf totaux:', err))
-      .finally(() => setLoadingDmt(false));
-
-  }, [agents, selectedMonthRange]);
+  }, [agents, selectedMonthRange, regle?.id]);
 
   // ─── Calcul Assiduité & Malus ──────────────────────────────────────────────
 
   /** Résoud la valeur réelle depuis les maps de state selon la clé metric */
   const getRealValue = (metricKey, mat) => {
     const m = String(mat);
-    const perfData = dmtMap[m] || {};
-    const hourData = heuresMap[m] || {};
+    const agentData = unifiedMap[m] || {};
+    const kpis = agentData.kpis || {};
     
-    switch (metricKey) {
-      // PERF
-      case 'dmt':                  return perfData.dmt ?? null;
-      case 'taux_conversion_calc': return perfData.cvr ?? null;
-      case 'taux_conversion':      return perfData.cvr ?? null;
-      case 'tx_mea':               return perfData.tx_mea ?? null;
-      case 'chiffre_affaire':      return perfData.avg_ca ?? null;
-      case 'nb_appels':            return perfData.nb_appels ?? null;
-      case 'in_call_nbr':          return perfData.nb_appels ?? null;
-      case 'nb_ventes':            return perfData.nb_ventes ?? null;
-      case 'booking_nbr':          return perfData.nb_ventes ?? null;
-      case 'csat':                 return perfData.csat_moyen ?? null;
-      case 'csat_moyen':           return perfData.csat_moyen ?? null;
-      case 'nb_csat':              return perfData.nb_csat ?? null;
-      case 'avg_nbr':              return perfData.avg_nbr ?? null;
-      case 'temps_production':     return perfData.temps_production ?? null;
-      case 'logged_min':           return perfData.temps_production ?? null;
-      case 'temps_appel':          return perfData.temps_appel ?? null;
-      
-      // QUALITE
-      case 'note_globale':         return qualiteMap[m] ?? null;
-      
-      // HEURES (Source: map détaillée {hp, ht, hf, hc, total})
-      case 'heure_hp':             return hourData.hp != null ? hourData.hp / 3600000 : null;
-      case 'heure_ht':             return hourData.ht != null ? hourData.ht / 3600000 : null;
-      case 'heure_hf':             return hourData.hf != null ? hourData.hf / 3600000 : null;
-      case 'heure_hc':             return hourData.hc != null ? hourData.hc / 3600000 : null;
-      case 'heure_total':          return hourData.total != null ? hourData.total / 3600000 : null;
-      
-      // Legacy fallbacks / Alias
-      case 'cvr':                  return perfData.cvr ?? null;
-      case 'avg_ca':               return perfData.avg_ca ?? null;
-      case 'qualite':              return qualiteMap[m] ?? null;
-      case 'heures':               return hourData.total != null ? hourData.total / 3600000 : null;
+    // Si la clé existe directement dans les KPIs calculés par le backend
+    if (metricKey && kpis[metricKey] !== undefined) return kpis[metricKey];
 
-      // Fallback dynamique : métriques calculées par le moteur de formules backend
-      // Tout tech_key retourné par l'API est automatiquement disponible ici
-      default:
-        if (metricKey && perfData[metricKey] !== undefined) return perfData[metricKey] ?? null;
-        return null;
+    // Mappings de compatibilité pour les anciens codes UI
+    switch (metricKey) {
+      case 'dmt':                  return kpis.dmt ?? null;
+      case 'taux_conversion_calc': return kpis.cvr ?? null;
+      case 'chiffre_affaire':      return kpis.avg_ca ?? null;
+      case 'note_globale':         return kpis.NOTE_QUALITE ?? null;
+      case 'heure_total':          return kpis.HEURE_TOTAL ?? null;
+      default:                     return null;
     }
   };
 

@@ -1,6 +1,6 @@
 /*
  * Fichier : AuthContext.jsx
- * Rôle    : Gestion de l'état d'authentification de l'utilisateur.
+ * Rôle    : Gestion de l'état d'authentification de l'utilisateur avec backend JWT.
  * Module  : mypaie / src / Shared / Contexts
  */
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -8,32 +8,72 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('mypaie_auth_token') !== null;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email, password) => {
-    // Simulation d'une API d'authentification
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (email && password) {
-          localStorage.setItem('mypaie_auth_token', 'mock_token_123');
-          setIsAuthenticated(true);
-          resolve();
-        } else {
-          reject(new Error("Email ou mot de passe invalide."));
+  // Vérifier le token au chargement
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = localStorage.getItem('mypaie_auth_token');
+      if (token) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.user);
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem('mypaie_auth_token');
+          }
+        } catch (e) {
+          console.error("Erreur de vérification token", e);
         }
-      }, 800);
-    });
+      }
+      setIsLoading(false);
+    };
+    checkToken();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur de connexion");
+      }
+      
+      localStorage.setItem('mypaie_auth_token', data.token);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      return data.user;
+    } catch (err) {
+      throw err;
+    }
   };
 
   const logout = () => {
     localStorage.removeItem('mypaie_auth_token');
     setIsAuthenticated(false);
+    setUser(null);
   };
 
+  if (isLoading) {
+    return <div className="loading-app">Chargement...</div>;
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

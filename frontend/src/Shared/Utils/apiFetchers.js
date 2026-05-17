@@ -19,10 +19,26 @@ function toQuery(params = {}) {
   return sp.toString();
 }
 
-// Wrapper fetch JSON avec gestion d'erreur
-async function fetchJson(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+// Wrapper fetch JSON avec gestion d'erreur et token JWT
+async function fetchJson(url, options = {}) {
+  const token = localStorage.getItem('mypaie_auth_token');
+  const headers = {
+    ...options.headers,
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const r = await fetch(url, { ...options, headers });
+  if (!r.ok) {
+    if (r.status === 401) {
+      // Déconnexion forcée si token invalide/expiré
+      localStorage.removeItem('mypaie_auth_token');
+      window.location.href = '/login';
+    }
+    throw new Error(`HTTP ${r.status} ${r.statusText}`);
+  }
   return r.json();
 }
 // #endregion

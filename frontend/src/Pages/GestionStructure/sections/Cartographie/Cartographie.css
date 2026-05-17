@@ -202,8 +202,8 @@
 }
 
 .se-file-card {
-    background: #eef2ff;
-    border: 1px solid #c7d4f5;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 7px;
     overflow: hidden;
 }
@@ -213,8 +213,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 7px 12px;
-    background: #dde8ff;
-    border-bottom: 1px solid #c7d4f5;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .se-file-title {
@@ -223,11 +223,11 @@
     gap: 7px;
     font-size: 0.84rem;
     font-weight: 600;
-    color: #3730a3;
+    color: var(--color-text-primary);
 }
 
 .se-file-title i {
-    color: #6366f1;
+    color: var(--color-accent);
     font-size: 0.78rem;
 }
 
@@ -244,15 +244,15 @@
     align-items: center;
     gap: 8px;
     padding: 5px 8px;
-    background: white;
+    background: var(--color-bg-app);
     border-radius: 5px;
-    border: 1px solid #e8edf8;
+    border: 1px solid var(--color-border-subtle);
     font-size: 0.81rem;
     color: var(--color-text-secondary);
 }
 
 .se-act-item i {
-    color: #10b981;
+    color: var(--color-success);
     font-size: 0.7rem;
     flex-shrink: 0;
 }
@@ -271,6 +271,7 @@
 
 .se-assoc-row select {
     flex: 1;
+    min-width: 0; /* Empêche le select de forcer la largeur de son conteneur */
     padding: 5px 8px;
     border: 1px dashed var(--color-border);
     border-radius: 6px;
@@ -280,6 +281,7 @@
     cursor: pointer;
     outline: none;
     transition: border-color 0.15s;
+    box-sizing: border-box;
 }
 
 .se-assoc-row select:focus {
@@ -288,6 +290,8 @@
 
 .se-assoc-file {
     margin-top: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .se-assoc-file select {

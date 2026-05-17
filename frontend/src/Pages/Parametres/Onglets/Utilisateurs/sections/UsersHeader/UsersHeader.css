@@ -1,0 +1,38 @@
+.utilisateurs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.header-info h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-xl);
+}
+
+.header-info p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.btn-add-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-add-user:hover {
+    background: var(--color-accent-hover);
+    transform: translateY(-1px);
+}

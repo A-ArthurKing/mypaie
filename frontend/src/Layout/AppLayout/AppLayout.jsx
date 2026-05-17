@@ -5,6 +5,7 @@
  * Module  : mypaie / Layout
  */
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from '../../Shared/Contexts/AuthContext'
 import Sidebar from '../Sidebar/Sidebar'
 import MobileMenu from '../MobileMenu/MobileMenu'
 import HeuresAgents from '../../Pages/HeuresAgents/HeuresAgents'
@@ -14,6 +15,17 @@ import Agents from '../../Pages/GestionAgents/GestionAgents'
 import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
 import Parametres from '../../Pages/Parametres/Parametres'
 import './AppLayout.css'
+
+// Composant pour protéger les routes selon le rôle
+const RoleRoute = ({ children, allowedRoles }) => {
+  const { user } = useAuth();
+  const userRole = user?.role || 'Collaborateur';
+  
+  if (!allowedRoles.includes(userRole)) {
+    return <Navigate to="/performance" replace />;
+  }
+  return children;
+};
 
 function AppLayout() {
   return (
@@ -26,14 +38,38 @@ function AppLayout() {
       {/* ── Zone de contenu principale ── */}
       <main className="app-layout__main">
         <Routes>
-          <Route path="/heures/*" element={<HeuresAgents />} />
-          <Route path="/qualite/*" element={<NotesQualite />} />
-          <Route path="/performance/*" element={<Performance />} />
-          <Route path="/agents/*" element={<Agents />} />
-          <Route path="/regles-primes/*" element={<ReglesPrimes />} />
-          <Route path="/parametres/*" element={<Parametres />} />
-          {/* Redirection par défaut vers les heures */}
-          <Route path="*" element={<Navigate to="/heures" replace />} />
+          <Route path="/heures/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie', 'Manager']}>
+              <HeuresAgents />
+            </RoleRoute>
+          } />
+          <Route path="/qualite/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie', 'Manager']}>
+              <NotesQualite />
+            </RoleRoute>
+          } />
+          <Route path="/performance/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie', 'Manager', 'Collaborateur']}>
+              <Performance />
+            </RoleRoute>
+          } />
+          <Route path="/agents/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie', 'Manager']}>
+              <Agents />
+            </RoleRoute>
+          } />
+          <Route path="/regles-primes/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie']}>
+              <ReglesPrimes />
+            </RoleRoute>
+          } />
+          <Route path="/parametres/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur']}>
+              <Parametres />
+            </RoleRoute>
+          } />
+          {/* Redirection par défaut */}
+          <Route path="*" element={<Navigate to="/performance" replace />} />
         </Routes>
       </main>
 

@@ -25,23 +25,6 @@ CREATE TABLE IF NOT EXISTS matrice_statuts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- TABLE : matrice_kpis
--- Rôle  : Définition des KPIs utilisables dans les matrices
--- ============================================================
-CREATE TABLE IF NOT EXISTS matrice_kpis (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(30) NOT NULL UNIQUE COMMENT 'Code technique (CSAT, CONV, CA...)',
-    libelle VARCHAR(100) NOT NULL,
-    unite VARCHAR(20) COMMENT 'Unité de mesure (%, EUR, appels...)',
-    univers ENUM('PERF','QUALITE','HEURES') NOT NULL DEFAULT 'PERF',
-    tech_key VARCHAR(50) NULL COMMENT 'Clé technique dans le DW',
-    description TEXT,
-    actif TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
 -- TABLES DE RéFéRENCE STRUCTURELLES
 -- Ordre : projets ? operations ? files ? activites ? structure_map
 -- ============================================================
@@ -183,23 +166,6 @@ CREATE TABLE IF NOT EXISTS matrice_primes_configs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- TABLE : matrice_objectifs
--- Rôle  : Objectifs KPI associés é chaque matrice
--- ============================================================
-CREATE TABLE IF NOT EXISTS matrice_objectifs (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    matrice_id INT UNSIGNED NOT NULL,
-    kpi_id     INT UNSIGNED NOT NULL,
-    objectif_valeur DECIMAL(10,2) NOT NULL COMMENT 'Valeur cible du KPI',
-    poids DECIMAL(5,2) NOT NULL DEFAULT 1.00 COMMENT 'Poids dans la note globale',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_obj_matrice FOREIGN KEY (matrice_id) REFERENCES matrice_primes(id) ON DELETE CASCADE,
-    CONSTRAINT fk_obj_kpi     FOREIGN KEY (kpi_id)     REFERENCES matrice_kpis(id)   ON DELETE RESTRICT,
-    UNIQUE KEY uq_matrice_kpi (matrice_id, kpi_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
 -- TABLE : matrice_paliers
 -- Rôle  : Paliers de primes selon la note globale (0-100)
 -- ============================================================
@@ -241,47 +207,6 @@ CREATE TABLE IF NOT EXISTS ai_messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- TABLE : matrice_kpis_mapping
--- Rôle  : Correspondance colonnes BigQuery ? KPIs standards
---         Supporte aussi les formules calculées (is_formula=1)
--- ============================================================
-CREATE TABLE IF NOT EXISTS matrice_kpis_mapping (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    univers      ENUM('PERF','QUALITE','HEURES') NOT NULL,
-    source_table VARCHAR(200) NOT NULL COMMENT 'Table/Vue dans BigQuery',
-    source_column VARCHAR(100) NULL COMMENT 'Colonne source (NULL si is_formula=1)',
-    is_formula   TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = valeur calculee par formule',
-    formula      TEXT NULL COMMENT 'Expression SQL (ex: SAFE_DIVIDE(SUM(nb_ventes), NULLIF(SUM(nb_appels),0)))',
-    standard_kpi_code VARCHAR(30) NOT NULL COMMENT 'Code KPI standard (APPELS, CA, CSAT...)',
-    dest_table   VARCHAR(100) NULL COMMENT 'Table BQ destination (ex: paie_performance_tv)',
-    dest_column  VARCHAR(100) NULL COMMENT 'Colonne BQ destination (NULL si helper)',
-    data_type    ENUM('FLOAT','INT','BOOL','DURATION_MIN','PERCENT') NOT NULL DEFAULT 'FLOAT',
-    is_helper    TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = colonne intermediaire pour formule, non stockee en BQ',
-    id_projet    INT UNSIGNED NULL COMMENT 'Portee projet (NULL = tous les projets)',
-    description  TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_source_scoped (source_table, source_column, univers, id_projet)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
--- DONNÉES DE RÉFÉRENCE : KPIs standards
--- ============================================================
-INSERT INTO matrice_kpis (code, libelle, unite, univers, tech_key, description)
-VALUES
-    ('CSAT',   'Satisfaction Client',          '%',      'QUALITE', 'csat_moyen',           'Score moyen de satisfaction client sur la période'),
-    ('CONV',   'Taux de Conversion',           '%',      'PERF',    'taux_conversion_calc', 'Ratio ventes / appels entrants'),
-    ('CA',     'Chiffre d''Affaires',          'EUR',    'PERF',    'chiffre_affaire',      'Total du chiffre d''affaires généré'),
-    ('APPELS', 'Nombre d''Appels',             'appels', 'PERF',    'in_call_nbr',          'Volume total d''appels traités'),
-    ('DMT',    'Durée Moyenne de Traitement',  'min',    'PERF',    'dmt',                  'Temps moyen de traitement par appel'),
-    ('LOGGED', 'Heures Loguées',               'h',      'HEURES',  'logged_min',           'Nombre d''heures effectivement loguées')
-ON DUPLICATE KEY UPDATE
-    libelle = VALUES(libelle),
-    unite   = VALUES(unite),
-    univers = VALUES(univers),
-    tech_key = VALUES(tech_key);
-
--- ============================================================
 -- DONNéES DE RéFéRENCE : Statuts agents
 -- ============================================================
 INSERT INTO matrice_statuts (code, libelle)
@@ -316,3 +241,38 @@ CREATE TABLE IF NOT EXISTS ref_etl_config (
     updated_at          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY (projet)
 );
+
+-- ============================================================
+-- TABLE : app_users
+-- Rôle  : Utilisateurs de la plateforme (RBAC)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS app_users (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    nom VARCHAR(100) NOT NULL,
+    prenom VARCHAR(100) NOT NULL,
+    role ENUM('Collaborateur', 'Manager', 'Gestionnaire Paie', 'Super Administrateur') NOT NULL DEFAULT 'Collaborateur',
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================
+-- TABLE : config_kpis
+-- Rôle  : Référentiel des indicateurs (Dictionnaire)
+--         Supporte les KPIs Natifs (BigQuery) et Virtuels (Formules)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS config_kpis (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code_kpi VARCHAR(50) NOT NULL UNIQUE,
+    libelle VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL,
+    univers ENUM('PERF', 'QUALITE', 'HEURES') NOT NULL,
+    type ENUM('NATIVE', 'VIRTUAL') DEFAULT 'NATIVE',
+    formule TEXT DEFAULT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

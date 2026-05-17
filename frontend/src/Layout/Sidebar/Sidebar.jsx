@@ -7,26 +7,37 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../Shared/Contexts/AuthContext'
+import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal'
 import './Sidebar.css'
 
-// Définition des entrées de navigation
+// Définition des entrées de navigation avec rôles autorisés
 const NAV_ITEMS = [
-  { id: 'heures',      label: 'Heures agents',  icon: 'fa-solid fa-clock',        path: '/heures'      },
-  { id: 'qualite',     label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite'     },
-  { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance' },
-  { id: 'agents',      label: 'Gestion agents', icon: 'fa-solid fa-users-gear',   path: '/agents'      },
-  { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
+  { id: 'heures',      label: 'Heures agents',  icon: 'fa-solid fa-clock',        path: '/heures', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
+  { id: 'qualite',     label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
+  { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager', 'Collaborateur'] },
+  { id: 'agents',      label: 'Gestion agents', icon: 'fa-solid fa-users-gear',   path: '/agents', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
+  { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes', roles: ['Super Administrateur', 'Gestionnaire Paie'] },
 ]
 
 function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
-  const { logout } = useAuth()
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true)
+  }
+
+  const confirmLogout = () => {
+    setIsLogoutModalOpen(false)
     logout()
     navigate('/login')
   }
+
+  // Filtrer la navigation selon le rôle de l'utilisateur
+  const userRole = user?.role || 'Collaborateur'
+  const filteredNavItems = NAV_ITEMS.filter(item => item.roles.includes(userRole))
 
   return (
     <aside className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}>
@@ -50,7 +61,7 @@ function Sidebar() {
       {/* ── Navigation principale ── */}
       <nav className="sidebar__nav">
         <ul className="sidebar__nav-list">
-          {NAV_ITEMS.map(item => (
+          {filteredNavItems.map(item => (
             <li key={item.id}>
               <NavLink
                 to={item.path}
@@ -68,14 +79,16 @@ function Sidebar() {
       {/* ── Pied de sidebar ── */}
       <div className="sidebar__footer">
         <nav className="sidebar__nav-footer">
-          <NavLink
-            to="/parametres"
-            className={({ isActive }) => `sidebar__nav-item${isActive ? ' sidebar__nav-item--active' : ''}`}
-            title={collapsed ? 'Paramètres' : undefined}
-          >
-            <i className="fa-solid fa-gear sidebar__nav-icon" />
-            {!collapsed && <span className="sidebar__nav-label">Paramètres</span>}
-          </NavLink>
+          {userRole === 'Super Administrateur' && (
+            <NavLink
+              to="/parametres"
+              className={({ isActive }) => `sidebar__nav-item${isActive ? ' sidebar__nav-item--active' : ''}`}
+              title={collapsed ? 'Paramètres' : undefined}
+            >
+              <i className="fa-solid fa-gear sidebar__nav-icon" />
+              {!collapsed && <span className="sidebar__nav-label">Paramètres</span>}
+            </NavLink>
+          )}
         </nav>
 
         {!collapsed && (
@@ -84,16 +97,26 @@ function Sidebar() {
               <i className="fa-solid fa-user" />
             </div>
             <div className="sidebar__user-info">
-              <span className="sidebar__user-name">Administrateur</span>
-              <span className="sidebar__user-role">Gestionnaire Paie</span>
+              <span className="sidebar__user-name">{user?.prenom} {user?.nom}</span>
+              <span className="sidebar__user-role">{user?.role}</span>
             </div>
-            <button className="sidebar__logout-btn" onClick={handleLogout} title="Se déconnecter">
+            <button className="sidebar__logout-btn" onClick={handleLogoutClick} title="Se déconnecter">
               <i className="fa-solid fa-right-from-bracket"></i>
             </button>
           </div>
         )}
       </div>
 
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+        title="Déconnexion"
+        message="Êtes-vous sûr de vouloir vous déconnecter de votre session ?"
+        confirmText="Me déconnecter"
+        cancelText="Annuler"
+        type="warning"
+      />
     </aside>
   )
 }

@@ -22,17 +22,12 @@ export default function MappingProjets() {
   const [projects, setProjects] = useState([])
   const [sous_projets, setSous_projets] = useState([])
   const [activities, setActivities] = useState([])
-  const [tables, setTables] = useState([])
-  const [columns, setColumns] = useState([])
   const [uniqueValues, setUniqueValues] = useState([])
   const [loading, setLoading] = useState(true)
-  const [loadingCols, setLoadingColumns] = useState(false)
   const [loadingValues, setLoadingValues] = useState(false)
   const [error, setError] = useState(null)
   
   // States pour le formulaire
-  const [sourceTable, setSourceTable] = useState('')
-  const [sourceColumn, setSourceColumn] = useState('')
   const [sourceName, setSourceName] = useState('') // Le nom brut choisi
   const [idProjet, setIdProjet] = useState('') // Le projet standard
   const [idFile, setIdSousProjet] = useState('') // Le file associé
@@ -53,22 +48,23 @@ export default function MappingProjets() {
       const dataMappings = await resMappings.json()
       setMappings(dataMappings.data || [])
 
-      // 2. Charger les projets standards, sous_projets, activités et les tables BigQuery
-      const [resRefs, resTables] = await Promise.all([
-        fetch(`${API_BASE_URL}/parametres/references`),
-        fetch(`${API_BASE_URL}/parametres/introspection/tables`)
-      ]);
-
+      // 2. Charger les projets standards, sous_projets, activités
+      const resRefs = await fetch(`${API_BASE_URL}/parametres/references`);
       if (resRefs.ok) {
         const dataRefs = await resRefs.json()
         setProjects(dataRefs.projets || [])
         setSous_projets(dataRefs.sous_projets || [])
         setActivities(dataRefs.activites || [])
       }
-      if (resTables.ok) {
-        const dataTables = await resTables.json()
-        setTables(dataTables.data || [])
-      }
+
+      // 3. Charger les valeurs uniques (noms bruts) depuis la table Gold
+      setLoadingValues(true);
+      fetch(`${API_BASE_URL}/parametres/introspection/unique-values?table=paie_performance_mensuelle&column=projet`)
+        .then(res => res.json())
+        .then(data => setUniqueValues(data.data || []))
+        .catch(err => console.error("Erreur valeurs BQ:", err))
+        .finally(() => setLoadingValues(false));
+        
     } catch (err) {
       setError(err.message)
     } finally {
@@ -86,40 +82,6 @@ export default function MappingProjets() {
     socket.on('mapping_projets_updated', fetchData);
     return () => socket.off('mapping_projets_updated');
   }, [socket]);
-
-  // Charger les colonnes quand la table change
-  useEffect(() => {
-    if (!sourceTable) {
-      setColumns([]);
-      setSourceColumn('');
-      return;
-    }
-    setLoadingColumns(true);
-    fetch(`${API_BASE_URL}/parametres/introspection/columns?table=${sourceTable}`)
-      .then(res => res.json())
-      .then(data => {
-        setColumns(data.data || []);
-        // Auto-sélection si une colonne contient "projet"
-        const projCol = (data.data || []).find(c => c.name.toLowerCase().includes('projet'));
-        if (projCol) setSourceColumn(projCol.name);
-      })
-      .catch(err => console.error("Erreur colonnes:", err))
-      .finally(() => setLoadingColumns(false));
-  }, [sourceTable]);
-
-  // Charger les valeurs uniques quand la colonne change
-  useEffect(() => {
-    if (!sourceTable || !sourceColumn) {
-      setUniqueValues([]);
-      return;
-    }
-    setLoadingValues(true);
-    fetch(`${API_BASE_URL}/parametres/introspection/unique-values?table=${sourceTable}&column=${sourceColumn}`)
-      .then(res => res.json())
-      .then(data => setUniqueValues(data.data || []))
-      .catch(err => console.error("Erreur valeurs:", err))
-      .finally(() => setLoadingValues(false));
-  }, [sourceTable, sourceColumn]);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -141,8 +103,6 @@ export default function MappingProjets() {
 
       if (!response.ok) throw new Error('Erreur lors de la sauvegarde')
       
-      setSourceTable('')
-      setSourceColumn('')
       setSourceName('')
       setIdProjet('')
       setIdSousProjet('')
@@ -196,10 +156,6 @@ export default function MappingProjets() {
 
       <div className="mp-tab-content">
         <MappingFormSection 
-          sourceTable={sourceTable}
-          setSourceTable={setSourceTable}
-          sourceColumn={sourceColumn}
-          setSourceColumn={setSourceColumn}
           sourceName={sourceName}
           setSourceName={setSourceName}
           idProjet={idProjet}
@@ -210,15 +166,12 @@ export default function MappingProjets() {
           setIdActivite={setIdActivite}
           description={description}
           setDescription={setDescription}
-          tables={tables}
-          columns={columns}
           uniqueValues={uniqueValues}
           projects={projects}
           sous_projets={sous_projets}
           activities={activities}
           isSubmitting={isSubmitting}
           handleSubmit={handleSubmit}
-          loadingCols={loadingCols}
           loadingValues={loadingValues}
         />
 

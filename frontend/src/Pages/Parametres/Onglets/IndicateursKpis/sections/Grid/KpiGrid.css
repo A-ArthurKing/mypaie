@@ -1,0 +1,56 @@
+.kr-grid-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.kr-univers-section {
+    background: transparent;
+}
+
+.kr-univers-header {
+    padding: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    margin-bottom: 10px;
+}
+
+.kr-univers-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.kr-univers-badge--PERF    { background: #e0f2fe; color: #0369a1; }
+.kr-univers-badge--QUALITE { background: #dcfce7; color: #15803d; }
+.kr-univers-badge--HEURES  { background: #fef3c7; color: #b45309; }
+
+.kr-univers-header h3 {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.kr-univers-count {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    padding: 2px 8px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.kr-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+}

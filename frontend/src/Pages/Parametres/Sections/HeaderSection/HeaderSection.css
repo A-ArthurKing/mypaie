@@ -1,16 +1,23 @@
 .parametres-header {
-    margin-bottom: 24px;
+    margin-bottom: 4px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
 }
 
 .parametres-title {
     margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--color-text-main);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+    line-height: 1.2;
 }
 
 .parametres-subtitle {
-    margin: 4px 0 0 0;
-    font-size: 14px;
+    margin: 0;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
+    font-weight: var(--weight-medium);
 }
