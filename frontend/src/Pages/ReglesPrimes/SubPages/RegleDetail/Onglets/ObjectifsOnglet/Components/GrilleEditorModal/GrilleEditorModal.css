@@ -303,6 +303,87 @@
     padding: 20px;
 }
 
+/* #region PALIERS VALEUR (mode_prime = montant_direct) */
+.gem-indicator-block {
+    margin-bottom: 12px;
+}
+
+.gem-indicator-block:last-of-type {
+    margin-bottom: 4px;
+}
+
+.gem-pv-section {
+    background: var(--color-surface-2, #0d0d1a);
+    border: 1px solid var(--color-accent-soft, #2a2a3d);
+    border-top: none;
+    border-radius:  var(--radius-md);  
+    padding: 14px 16px 16px;
+    margin: 0.5rem 0;
+}
+
+.gem-pv-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-accent, #a78bfa);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.gem-pv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    margin-bottom: 10px;
+}
+
+.gem-pv-table th {
+    color: var(--color-text-muted);
+    font-weight: 600;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.gem-pv-table td {
+    padding: 4px 6px;
+}
+
+.gem-cell-input {
+    width: 100%;
+    background: var(--color-surface) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--color-text-primary) !important;
+    padding: 6px 10px !important;
+    font-size: 0.82rem !important;
+}
+
+.gem-cell-input:focus {
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 2px var(--color-accent-soft) !important;
+    outline: none;
+}
+
+.gem-pv-type-select {
+    width: 100%;
+    background: var(--color-surface) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--color-text-primary) !important;
+    padding: 6px 8px !important;
+    font-size: 0.82rem !important;
+}
+
+.gem-pv-table tr:hover td {
+    background: rgba(167, 139, 250, 0.04);
+}
+/* #endregion */
+
 .gem-categories-mgmt {
     background: var(--color-surface);
     padding: 24px;
