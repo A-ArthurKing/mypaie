@@ -10,7 +10,7 @@
     justify-content: center;
     z-index: var(--z-modal);
     animation: fadeIn 0.2s ease-out;
-    padding: 2rem;
+    padding: 1rem;
 }
 
 .modal-content {
@@ -30,7 +30,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--color-border-subtle);
 }
 
@@ -65,7 +65,7 @@
 }
 
 .modal-body {
-    padding: 24px;
+    padding: 0.5rem;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -114,6 +114,8 @@
 .form-row {
     display: flex;
     gap: 12px;
+        flex-direction: column;
+    width: 100%;
 }
 
 .form-row .form-group {

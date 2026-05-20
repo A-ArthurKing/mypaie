@@ -250,6 +250,62 @@ def endpoint_delete_kpi_registry(code):
 
 
 # ==================================================================
+#  KPI ALIASES (MDM)
+# ==================================================================
+
+@parametres_bp.route("/api/parametres/kpi-aliases", methods=["GET"])
+def endpoint_get_kpi_aliases():
+    try:
+        from core.db.mysql import get_mysql_connection
+        with get_mysql_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, projet, code_brut_source, code_kpi_officiel, created_at FROM config_kpi_aliases ORDER BY created_at DESC")
+                res = [dict(r) for r in cur.fetchall()]
+        return jsonify({"data": res}), 200
+    except Exception as e:
+        logger.error("Erreur GET kpi-aliases: %s", e)
+        return jsonify({"error": str(e)}), 500
+
+@parametres_bp.route("/api/parametres/kpi-aliases", methods=["POST"])
+def endpoint_post_kpi_alias():
+    data = request.json or {}
+    projet = data.get("projet", "").strip()
+    code_brut = data.get("code_brut_source", "").strip()
+    code_officiel = data.get("code_kpi_officiel", "").strip()
+    if not projet or not code_brut or not code_officiel:
+         return jsonify({"error": "Champs manquants"}), 400
+    try:
+        from core.db.mysql import get_mysql_connection
+        with get_mysql_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO config_kpi_aliases (projet, code_brut_source, code_kpi_officiel) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE code_kpi_officiel = VALUES(code_kpi_officiel)",
+                    (projet, code_brut, code_officiel)
+                )
+            conn.commit()
+        from core.socket import emit_update
+        emit_update("kpi_alias_updated")
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        logger.error("Erreur POST kpi-alias: %s", e)
+        return jsonify({"error": str(e)}), 500
+
+@parametres_bp.route("/api/parametres/kpi-aliases/<int:alias_id>", methods=["DELETE"])
+def endpoint_delete_kpi_alias(alias_id):
+    try:
+        from core.db.mysql import get_mysql_connection
+        with get_mysql_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM config_kpi_aliases WHERE id = %s", (alias_id,))
+            conn.commit()
+        from core.socket import emit_update
+        emit_update("kpi_alias_updated")
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ==================================================================
 #  MAPPING PROJETS
 # ==================================================================
 

@@ -25,7 +25,8 @@ from modules.agents.services.ai_history_provider import (
     get_messages,
     add_message,
     lock_conversation,
-    truncate_conversation
+    truncate_conversation,
+    delete_conversation
 )
 from modules.regles_primes.services.dw_api_regles_provider import get_regle_by_id
 
@@ -119,6 +120,16 @@ def endpoint_truncate_messages(conv_id, msg_id):
         return jsonify({"success": True}), 200
     except Exception as e:
         logger.error("Erreur DELETE messages truncate : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+@agents_bp.route("/api/conversations/<int:conv_id>", methods=["DELETE"])
+def endpoint_delete_conversation(conv_id):
+    """Supprime complètement une conversation et ses messages."""
+    try:
+        delete_conversation(conv_id)
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error("Erreur DELETE conversation : %s", e)
         return jsonify({"error": str(e)}), 500
 
 

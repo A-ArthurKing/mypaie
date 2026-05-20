@@ -7,6 +7,9 @@ from datetime import datetime
 from google.cloud import bigquery
 from dotenv import load_dotenv
 
+# Importer la connexion MySQL existante du backend
+from config.db_mysql_connector import get_mysql_connection
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("etl_perf")
@@ -56,12 +59,56 @@ def seed():
             (2, 'PERFORMANCE', 'VENUM_PERFORMANCE', 'dataset_venum.venum_data_outils_client_performance', 'JSON', 'METRICS', 'MATRICULE', 'IMPORT_DATETIME')
         """).result()
 
+def get_kpi_aliases_sql():
+    try:
+        conn = get_mysql_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT projet, code_brut_source, code_kpi_officiel FROM config_kpi_aliases")
+        aliases = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        if not aliases:
+            return "u.kpi_nom as kpi_code"
+
+        # Build a CASE WHEN statement to rewrite kpi_code in BigQuery
+        cases = []
+        for a in aliases:
+            cases.append(f"WHEN '{src.projet_nom}' = '{a['projet']}' AND u.kpi_nom = '{a['code_brut_source']}' THEN '{a['code_kpi_officiel']}'")
+        
+        if not cases:
+             return "u.kpi_nom as kpi_code"
+
+        case_sql = "CASE " + " ".join(cases) + " ELSE u.kpi_nom END as kpi_code"
+        return case_sql
+
+    except Exception as e:
+        log.error(f"Failed to fetch aliases from MySQL: {e}")
+        return "u.kpi_nom as kpi_code"
+
 def run():
     sources = list(client.query(f"SELECT * FROM {TABLE_CONFIG} WHERE is_active = TRUE AND univers = 'PERFORMANCE'").result())
     for src in sources:
         log.info(f"Projet : {src.projet_nom}")
         if src.type_structure == "JSON":
-            sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, u.kpi_nom as kpi_code, u.kpi_valeur as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_matricule} IS NOT NULL"
+            try:
+                conn = get_mysql_connection()
+                cur = conn.cursor()
+                cur.execute("SELECT projet, code_brut_source, code_kpi_officiel FROM config_kpi_aliases WHERE projet = %s", (src.projet_nom,))
+                aliases = cur.fetchall()
+                cur.close()
+                conn.close()
+            except Exception as e:
+                aliases = []
+                log.error(f"MySQL Error: {e}")
+
+            if aliases:
+                cases = " ".join([f"WHEN u.kpi_nom = '{a['code_brut_source']}' THEN '{a['code_kpi_officiel']}'" for a in aliases])
+                kpi_code_sql = f"CASE {cases} ELSE u.kpi_nom END"
+            else:
+                kpi_code_sql = "u.kpi_nom"
+
+            sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, u.kpi_valeur as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_matricule} IS NOT NULL"
         else:
             continue
         client.query(f"MERGE {TABLE_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()

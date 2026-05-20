@@ -67,7 +67,7 @@ const AgentCard = ({
   ptsFinal,
   anyLoading,
   dmtUnit,
-  heuresMap,
+  unifiedKpis,
   handleUpdateLocalData,
   handleShowFormula
 }) => {
@@ -238,7 +238,7 @@ const AgentCard = ({
           </div>
           <div className="agent-card__prod-hours">
             <span className="label">Heures Prod.</span>
-            <span className="val">{(heuresMap[String(a.matricule)]?.hp / 3600000 || 0).toFixed(1)}h</span>
+            <span className="val">{(unifiedKpis?.HEURE_HP || 0).toFixed(1)}h</span>
           </div>
         </div>
       </div>

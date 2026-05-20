@@ -11,7 +11,7 @@ import MobileMenu from '../MobileMenu/MobileMenu'
 import HeuresAgents from '../../Pages/HeuresAgents/HeuresAgents'
 import NotesQualite from '../../Pages/NotesQualite/NotesQualite'
 import Performance from '../../Pages/Performance/Performance'
-import Agents from '../../Pages/GestionAgents/GestionAgents'
+import Collaborateurs from '../../Pages/GestionCollaborateurs/GestionCollaborateurs'
 import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
 import Parametres from '../../Pages/Parametres/Parametres'
 import './AppLayout.css'
@@ -53,9 +53,9 @@ function AppLayout() {
               <Performance />
             </RoleRoute>
           } />
-          <Route path="/agents/*" element={
+          <Route path="/collaborateurs/*" element={
             <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie', 'Manager']}>
-              <Agents />
+              <Collaborateurs />
             </RoleRoute>
           } />
           <Route path="/regles-primes/*" element={

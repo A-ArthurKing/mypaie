@@ -57,8 +57,8 @@ export default function ObjectifsOnglet({ regle, onRefresh }) {
   }, [configs]);
 
   // Invalidate + revalidate helper
-  const refreshConfigs = () => {
-    clearCacheKey(configsCacheKey);
+  const refreshConfigs = (silent = false) => {
+    if (!silent) clearCacheKey(configsCacheKey);
     revalidateConfigs();
   };
 
@@ -67,7 +67,7 @@ export default function ObjectifsOnglet({ regle, onRefresh }) {
     if (!socket || !regle?.id) return;
     const handleUpdate = (data) => {
       if (data && data.regle_id && String(data.regle_id) !== String(regle.id)) return;
-      refreshConfigs();
+      refreshConfigs(true); // Silent refresh
     };
     socket.on('regle_configs_updated', handleUpdate);
     return () => socket.off('regle_configs_updated', handleUpdate);

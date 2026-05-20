@@ -53,6 +53,15 @@
     color: var(--color-accent);
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.regle-detail__sync-icon {
+    font-size: 0.7rem;
+    color: var(--color-accent);
+    opacity: 0.8;
 }
 
 .regle-detail__nom {

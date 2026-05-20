@@ -31,7 +31,7 @@ export default function RegleDetail() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const socket = useSocket();
 
-  const { data: regle, loading, error, revalidate } = useApiSWR(
+  const { data: regle, loading, error, revalidate, isValidating } = useApiSWR(
     regleId ? cacheKey : null,
     () => fetchRegle(regleId),
     { ttl: TTL.HEAVY }
@@ -44,7 +44,7 @@ export default function RegleDetail() {
     if (!socket || !regleId) return;
     const handleRegleUpdate = (data) => {
       if (data?.regle_id && String(data.regle_id) !== String(regleId)) return;
-      clearCacheKey(cacheKey);
+      // Rafraîchissement silencieux (sans clearCacheKey pour éviter le loader plein écran)
       revalidate();
     };
     socket.on('regle_updated',         handleRegleUpdate);
@@ -53,7 +53,7 @@ export default function RegleDetail() {
       socket.off('regle_updated',         handleRegleUpdate);
       socket.off('regle_configs_updated', handleRegleUpdate);
     };
-  }, [socket, regleId, cacheKey, revalidate]);
+  }, [socket, regleId, revalidate]);
 
   // L'onglet actif est lu depuis l'URL (?tab=...) ou 'objectifs' par défaut
   const ongletActif = searchParams.get('tab') || 'objectifs';
@@ -101,7 +101,10 @@ export default function RegleDetail() {
         {/* ── Header ── */}
         <header className="regle-detail__header">
           <div className="regle-detail__header-left">
-            <span className="regle-detail__projet">{regle.projet || '—'}</span>
+            <span className="regle-detail__projet">
+              {regle.projet || '—'}
+              {isValidating && <i className="fa-solid fa-rotate fa-spin regle-detail__sync-icon"></i>}
+            </span>
             <h1 className="regle-detail__nom">{regle.nom}</h1>
             <span className="regle-detail__code">{regle.code}</span>
           </div>
@@ -137,7 +140,7 @@ export default function RegleDetail() {
         </button>
       )}
       
-      <AiSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} regleId={regleId} />
+      <AiSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} regleId={regleId} onRefresh={handleRefresh} />
     </div>
   );
 }

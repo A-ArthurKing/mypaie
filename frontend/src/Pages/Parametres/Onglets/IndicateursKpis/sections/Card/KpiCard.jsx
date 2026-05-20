@@ -34,11 +34,25 @@ export default function KpiCard({ kpi, toggling, onToggle, onEdit, onDelete }) {
         )}
       </div>
 
+
       <div className="kr-kpi-card__info">
         {isVirtual ? (
           <div className="kr-formula-tag">
             <i className="fa-solid fa-calculator" />
-            <code>{kpi.formule || 'N/A'}</code>
+            <div className="kr-formula-content">
+              {kpi.formule && kpi.formule.startsWith('((') && kpi.formule.includes('/ ') && kpi.formule.includes(') * 100') ? (
+                <span className="kr-formula-hint"><i className="fa-solid fa-percent" /> Converti en %</span>
+              ) : kpi.formule && kpi.formule.includes(' / ') && !kpi.formule.includes('* 100') ? (
+                <span className="kr-formula-hint"><i className="fa-solid fa-divide" /> Moyenne</span>
+              ) : kpi.formule && kpi.formule.includes(' + ') && !kpi.formule.includes(' / ') ? (
+                <span className="kr-formula-hint"><i className="fa-solid fa-plus" /> Somme</span>
+              ) : kpi.formule && kpi.formule.startsWith('((') && kpi.formule.includes(') / ') && kpi.formule.includes(') / 100) * 100') ? (
+                <span className="kr-formula-hint"><i className="fa-solid fa-divide" /> Moyenne & Conversion en %</span>
+              ) : kpi.formule && kpi.formule.includes(') / ') && kpi.formule.includes(') * 100') ? (
+                <span className="kr-formula-hint"><i className="fa-solid fa-divide" /> Moyenne & Conversion en %</span>
+              ) : null}
+              <code>{kpi.formule || 'N/A'}</code>
+            </div>
           </div>
         ) : (
           <div className="kr-source-tag">

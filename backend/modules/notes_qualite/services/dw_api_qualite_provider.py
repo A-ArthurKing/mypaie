@@ -59,31 +59,29 @@ def get_qualite_agents(
     """
     client = get_bigquery_client()
 
+    # ── Nouveau schéma Silver : (matricule, date_ref, projet, kpi_code, kpi_value) ──
     table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
-    # Test avec Date_Evaluation (Nom officiel Eval Plus)
-    colonnes_str = "agent, matricule, projet, Date_Evaluation as date_evaluation, score_global, nb_evaluations, metrics"
 
-    where_clauses = [
-        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%batisante%%' OR LOWER(projet) LIKE '%%axione%%' OR LOWER(projet) LIKE '%%venum%%')"
-    ]
+    where_clauses = ["kpi_value IS NOT NULL"]
     query_params = []
 
     if date_debut:
-        where_clauses.append("date_evaluation >= @date_debut")
+        where_clauses.append("date_ref >= @date_debut")
         query_params.append(
             {"name": "date_debut", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_debut.split()[0]}}
         )
 
     if date_fin:
-        where_clauses.append("date_evaluation <= @date_fin")
+        where_clauses.append("date_ref <= @date_fin")
         query_params.append(
             {"name": "date_fin", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_fin.split()[0]}}
         )
 
+    # Dans le nouveau schéma, le filtre 'agent' correspond au matricule
     if agent:
-        where_clauses.append("agent = @agent")
+        where_clauses.append("matricule = @matricule_filter")
         query_params.append(
-            {"name": "agent", "parameterType": {"type": "STRING"}, "parameterValue": {"value": agent}}
+            {"name": "matricule_filter", "parameterType": {"type": "STRING"}, "parameterValue": {"value": agent}}
         )
 
     if projet:
@@ -92,20 +90,32 @@ def get_qualite_agents(
             {"name": "projet", "parameterType": {"type": "STRING"}, "parameterValue": {"value": projet}}
         )
 
-    where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+    where_str = f"WHERE {' AND '.join(where_clauses)}"
 
+    # Agrège les kpi_code par session (matricule + date + projet) → score_global = AVG(kpi_value)
     data_query = f"""
-        SELECT {colonnes_str}
+        SELECT
+            matricule AS agent,
+            matricule,
+            projet,
+            date_ref AS date_evaluation,
+            ROUND(AVG(kpi_value), 2) AS score_global,
+            COUNT(DISTINCT kpi_code) AS nb_evaluations
         FROM {table_ref}
         {where_str}
-        ORDER BY date_evaluation DESC
+        GROUP BY matricule, projet, date_ref
+        ORDER BY date_ref DESC
         LIMIT @limit OFFSET @offset
     """
-    
+
     count_query = f"""
         SELECT COUNT(*) AS total
-        FROM {table_ref}
-        {where_str}
+        FROM (
+            SELECT matricule, projet, date_ref
+            FROM {table_ref}
+            {where_str}
+            GROUP BY matricule, projet, date_ref
+        )
     """
 
     pagination_params = query_params + [
@@ -148,25 +158,23 @@ def get_qualite_stats_projets(
     client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
-    where_clauses = [
-        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%batisante%%' OR LOWER(projet) LIKE '%%axione%%' OR LOWER(projet) LIKE '%%venum%%')"
-    ]
+    where_clauses = ["kpi_value IS NOT NULL"]
     query_params  = []
 
     if date_debut:
-        where_clauses.append("date_evaluation >= @date_debut")
+        where_clauses.append("date_ref >= @date_debut")
         query_params.append({"name": "date_debut", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_debut.split()[0]}})
     if date_fin:
-        where_clauses.append("date_evaluation <= @date_fin")
+        where_clauses.append("date_ref <= @date_fin")
         query_params.append({"name": "date_fin", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_fin.split()[0]}})
 
-    where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-    
+    where_str = f"WHERE {' AND '.join(where_clauses)}"
+
     query = f"""
-        SELECT 
+        SELECT
             projet,
-            AVG(score_global) as moyenne,
-            SUM(nb_evaluations) as nbEvaluations
+            ROUND(AVG(kpi_value), 2) AS moyenne,
+            COUNT(DISTINCT CONCAT(matricule, '_', CAST(date_ref AS STRING))) AS nbEvaluations
         FROM {table_ref}
         {where_str}
         GROUP BY 1
@@ -207,54 +215,39 @@ def get_qualite_totaux_par_matricule(
     client = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
-    # ─── Construction du prédicat d'identité (matricule OU nom d'agent) ─────
-    identity_parts = []
-    query_params   = []
+    # ── Nouveau schéma Silver : on filtre par matricule uniquement ────────────
+    # La colonne 'agent' (nom) n'existe plus dans le schéma Silver.
+    if not matricules:
+        return {}
 
-    if matricules:
-        identity_parts.append("(matricule IS NOT NULL AND matricule IN UNNEST(@matricules))")
-        query_params.append(bq.ArrayQueryParameter("matricules", "STRING", [str(m) for m in matricules]))
-
-    if nom_matricule_map:
-        agent_names = list(nom_matricule_map.keys())
-        identity_parts.append("(matricule IS NULL AND LOWER(TRIM(agent)) IN UNNEST(@agent_names))")
-        query_params.append(bq.ArrayQueryParameter("agent_names", "STRING", agent_names))
-
-    identity_clause = "(" + " OR ".join(identity_parts) + ")"
+    query_params = [
+        bq.ArrayQueryParameter("matricules", "STRING", [str(m) for m in matricules]),
+    ]
     where_clauses = [
-        identity_clause,
-        "(LOWER(projet) LIKE '%%pvcp%%' OR LOWER(projet) LIKE '%%batisante%%' OR LOWER(projet) LIKE '%%axione%%' OR LOWER(projet) LIKE '%%venum%%')"
+        "matricule IN UNNEST(@matricules)",
+        "kpi_value IS NOT NULL",
     ]
 
     if date_debut:
-        where_clauses.append("date_evaluation >= @date_debut")
+        where_clauses.append("date_ref >= @date_debut")
         query_params.append(bq.ScalarQueryParameter("date_debut", "DATE", date_debut))
     if date_fin:
-        where_clauses.append("date_evaluation <= @date_fin")
+        where_clauses.append("date_ref <= @date_fin")
         query_params.append(bq.ScalarQueryParameter("date_fin", "DATE", date_fin))
 
     sql = f"""
-        SELECT agent, matricule, ROUND(AVG(score_global), 2) AS moyenne
+        SELECT
+            matricule,
+            ROUND(AVG(kpi_value), 2) AS moyenne
         FROM {table_ref}
         WHERE {" AND ".join(where_clauses)}
-        GROUP BY agent, matricule
+        GROUP BY matricule
     """
 
     try:
         job_config = bq.QueryJobConfig(query_parameters=query_params)
         rows = [dict(r) for r in client.query(sql, job_config=job_config).result()]
-
-        result = {}
-        for r in rows:
-            mat = r.get("matricule")
-            if not mat:
-                # Fallback via le nom normalisé fourni par le frontend
-                nom_norm = (r.get("agent") or "").strip().lower()
-                mat = nom_matricule_map.get(nom_norm)
-            if mat:
-                result[str(mat)] = r["moyenne"]
-
-        return result
+        return {str(r["matricule"]): r["moyenne"] for r in rows if r.get("matricule")}
     except GoogleCloudError as err:
         logger.error("Erreur BigQuery totaux qualité par matricule: %s", err)
         raise
@@ -274,22 +267,21 @@ def get_qualite_stats_global(
     client    = get_bigquery_client()
     table_ref = f"`{GCP_PROJECT_ID}.gcp_my_paie.paie_qualite`"
 
-    where_clauses = []
+    where_clauses = ["kpi_value IS NOT NULL"]
     query_params  = []
 
-    # Correction : Utilisation du nom de colonne exact 'date_evaluation' (minuscules)
     if date_debut:
-        where_clauses.append("Date_Evaluation >= @date_debut")
+        where_clauses.append("date_ref >= @date_debut")
         query_params.append({"name": "date_debut", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_debut.split()[0]}})
     if date_fin:
-        where_clauses.append("Date_Evaluation <= @date_fin")
+        where_clauses.append("date_ref <= @date_fin")
         query_params.append({"name": "date_fin", "parameterType": {"type": "DATE"}, "parameterValue": {"value": date_fin.split()[0]}})
 
-    where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+    where_str = f"WHERE {' AND '.join(where_clauses)}"
     sql = f"""
-        SELECT 
-            AVG(score_global) as moyenne_globale,
-            SUM(nb_evaluations) as nb_total
+        SELECT
+            ROUND(AVG(kpi_value), 2) AS moyenne_globale,
+            COUNT(DISTINCT CONCAT(matricule, '_', CAST(date_ref AS STRING))) AS nb_total
         FROM {table_ref}
         {where_str}
     """

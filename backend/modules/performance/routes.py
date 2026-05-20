@@ -65,6 +65,11 @@ def endpoint_performance_pvcp():
         )
         return jsonify(result), 200
     except Exception as err:
+        err_str = str(err)
+        # Table BigQuery absente (ETL non encore lancé) → résultat vide, pas de crash
+        if "Not found" in err_str or "notFound" in err_str or "404" in err_str:
+            logger.warning("Table BigQuery performance introuvable (ETL non lancé) : %s", err_str)
+            return jsonify({"data": [], "total": 0, "warning": "Données de performance non disponibles (ETL non lancé)."}), 200
         logger.error("Erreur endpoint /api/performance/pvcp : %s", err)
         return jsonify({"error": "Erreur serveur lors de la récupération des données performance."}), 500
 

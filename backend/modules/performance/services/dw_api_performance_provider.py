@@ -124,13 +124,30 @@ def get_performance_pvcp(
     # Requêtes selon granularité
     if granularity in ["month", "week"]:
         sql_data = f"""
-            SELECT *, matricule AS agent_id_hash, agent_nom AS agent_name
+            SELECT 
+                matricule AS agent_id_hash,
+                ANY_VALUE(matricule) AS agent_name,
+                matricule,
+                {date_col},
+                ANY_VALUE(projet) AS projet,
+                SUM(IF(kpi_code IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0))        AS in_call_nbr,
+                SUM(IF(kpi_code IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0))        AS booking_nbr,
+                SUM(IF(kpi_code IN ('in_call_min_nbr', 'temps_appel'), valeur_sum, 0))  AS call_min,
+                SUM(IF(kpi_code IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS logged_min,
+                SUM(IF(kpi_code IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS worked_min,
+                SUM(nb_jours)                                                           AS nb_records,
+                MAX(last_update)                                                        AS date_ajout,
+                SUM(IF(kpi_code IN ('net_booking_rental_amt_eur', 'chiffre_affaire'), valeur_sum, 0)) AS chiffre_affaire,
+                SAFE_DIVIDE(SUM(IF(kpi_code IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0)), NULLIF(SUM(IF(kpi_code IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0)), 0)) * 100 AS taux_conversion_calc,
+                AVG(IF(kpi_code IN ('tx_mea'), valeur_avg, 0))                          AS tx_mea,
+                SAFE_DIVIDE(SUM(IF(kpi_code IN ('csat_nbr', 'csat'), valeur_sum, 0)), NULLIF(SUM(IF(kpi_code IN ('total_csat_num', 'nb_csat'), valeur_sum, 0)), 0)) AS csat_moyen
             FROM {table_ref}
             {where_str}
-            ORDER BY {date_col} DESC, agent_nom ASC
+            GROUP BY matricule, {date_col}
+            ORDER BY {date_col} DESC, matricule ASC
             LIMIT @limit OFFSET @offset
         """
-        sql_count = f"SELECT COUNT(*) AS total FROM {table_ref} {where_str}"
+        sql_count = f"SELECT COUNT(*) AS total FROM (SELECT matricule FROM {table_ref} {where_str} GROUP BY matricule, {date_col})"
     else:
         sql_data = query_performance_detail(table_ref, where_str)
         sql_count = query_performance_count(table_ref, where_str)
@@ -154,14 +171,14 @@ def get_performance_pvcp(
 
             r["metrics_full"] = {
                 "in_call_nbr":               r.get("in_call_nbr"),
-                "booking_nbr":               r.get("nb_ventes") if granularity in ["month", "week"] else r.get("booking_nbr"),
-                "in_call_min_nbr":           r.get("temps_appel") if granularity in ["month", "week"] else r.get("call_min"),
-                "call_worked_time_min_nbr":  r.get("temps_appel") if granularity in ["month", "week"] else r.get("worked_min"),
-                "agent_logged_time_min_nbr": r.get("temps_production") if granularity in ["month", "week"] else r.get("logged_min"),
+                "booking_nbr":               r.get("booking_nbr"),
+                "in_call_min_nbr":           r.get("call_min"),
+                "call_worked_time_min_nbr":  r.get("worked_min"),
+                "agent_logged_time_min_nbr": r.get("logged_min"),
                 "chiffre_affaire":           r.get("chiffre_affaire"),
-                "taux_conversion_calc":      r.get("taux_conversion") if granularity in ["month", "week"] else r.get("taux_conversion_calc"),
-                "csat_moyen":                r.get("csat"),
-                "nb_records":                r.get("nb_records") if granularity == "month" else (1 if granularity == "week" else r.get("nb_records")),
+                "taux_conversion_calc":      r.get("taux_conversion_calc"),
+                "csat_moyen":                r.get("csat_moyen"),
+                "nb_records":                r.get("nb_records"),
                 "is_consolidated":           True,
                 "granularity":               granularity,
                 "date_val":                  r.get("mois") if granularity == "month" else r.get("date_ref"),
@@ -229,22 +246,16 @@ def get_perf_totaux_par_matricule(
     sql = f"""
         SELECT
             matricule,
-            -- Métriques calculées (basées sur les noms de colonnes de la table Gold)
-            SAFE_DIVIDE(SUM(temps_appel), SUM(nb_appels)) * 60              AS dmt_sec,
-            SAFE_DIVIDE(SUM(nb_ventes),   SUM(nb_appels)) * 100             AS cvr_pct,
-            AVG(tx_mea)                                                     AS tx_mea_avg,
-            AVG(chiffre_affaire)                                            AS avg_ca,
-            SAFE_DIVIDE(SUM(csat * nb_csat), NULLIF(SUM(nb_csat), 0))      AS csat_moyen,
-            SAFE_DIVIDE(SUM(chiffre_affaire), NULLIF(SUM(nb_ventes), 0))   AS avg_nbr,
-            -- Agrégats bruts
-            SUM(nb_ventes)                                                  AS nb_ventes_total,
-            SUM(nb_appels)                                                  AS nb_appels_total,
-            SUM(nb_csat)                                                    AS nb_csat_total,
-            SUM(chiffre_affaire)                                            AS sum_chiffre_affaire,
-            SUM(temps_production)                                           AS sum_temps_production,
-            SUM(temps_appel)                                                AS sum_temps_appel,
-            SUM(csat)                                                       AS sum_csat,
-            AVG(taux_conversion)                                            AS avg_taux_conversion
+            -- Extraction pivotée depuis le modèle EAV (paie_performance_mensuelle)
+            SUM(IF(LOWER(kpi_code) IN ('net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur'), valeur_sum, 0)) AS sum_chiffre_affaire,
+            SUM(IF(LOWER(kpi_code) IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0)) AS nb_ventes_total,
+            SUM(IF(LOWER(kpi_code) IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0)) AS nb_appels_total,
+            SUM(IF(LOWER(kpi_code) IN ('in_call_min_nbr', 'temps_appel'), valeur_sum, 0)) AS sum_temps_appel,
+            SUM(IF(LOWER(kpi_code) IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS sum_temps_production,
+            SUM(IF(LOWER(kpi_code) IN ('csat_nbr', 'csat'), valeur_sum, 0)) AS sum_csat,
+            SUM(IF(LOWER(kpi_code) IN ('total_csat_num', 'nb_csat'), valeur_sum, 0)) AS nb_csat_total,
+            AVG(IF(LOWER(kpi_code) IN ('tx_mea'), valeur_avg, 0)) AS tx_mea_avg,
+            AVG(IF(LOWER(kpi_code) IN ('taux_conversion', 'is_converted', 'taux_conversion_calc'), valeur_avg, 0)) AS avg_taux_conversion
         FROM {table_ref}
         {where_str}
         GROUP BY matricule
@@ -259,18 +270,31 @@ def get_perf_totaux_par_matricule(
         result = {}
         for r in rows:
             mat = str(r["matricule"])
+            
+            nb_appels = r["nb_appels_total"] or 0
+            temps_appel = r["sum_temps_appel"] or 0
+            nb_ventes = r["nb_ventes_total"] or 0
+            ca = r["sum_chiffre_affaire"] or 0
+            nb_csat = r["nb_csat_total"] or 0
+            sum_csat = r["sum_csat"] or 0
+            
+            dmt_sec = (temps_appel / nb_appels * 60) if nb_appels > 0 else None
+            cvr_pct = (nb_ventes / nb_appels * 100) if nb_appels > 0 else None
+            avg_ca = ca / nb_ventes if nb_ventes > 0 else None
+            csat_moyen = (sum_csat / nb_csat) if nb_csat > 0 else None
+            avg_nbr = ca / nb_ventes if nb_ventes > 0 else None
 
             # Métriques hardcodées (Compatibilité ascendante)
             entry = {
-                "dmt":       round(r["dmt_sec"], 1)       if r["dmt_sec"]    is not None else None,
-                "cvr":       round(r["cvr_pct"], 2)       if r["cvr_pct"]    is not None else None,
+                "dmt":       round(dmt_sec, 1)       if dmt_sec    is not None else None,
+                "cvr":       round(cvr_pct, 2)       if cvr_pct    is not None else None,
                 "tx_mea":    round(r["tx_mea_avg"], 2)    if r["tx_mea_avg"] is not None else None,
-                "avg_ca":    round(r["avg_ca"], 2)        if r["avg_ca"]     is not None else None,
-                "csat_moyen":round(r["csat_moyen"], 2)    if r["csat_moyen"] is not None else None,
-                "avg_nbr":   round(r["avg_nbr"], 2)       if r["avg_nbr"]    is not None else None,
-                "nb_ventes": int(r["nb_ventes_total"])    if r["nb_ventes_total"] is not None else None,
-                "nb_appels": int(r["nb_appels_total"])    if r["nb_appels_total"] is not None else None,
-                "nb_csat":   int(r["nb_csat_total"])      if r["nb_csat_total"]   is not None else None,
+                "avg_ca":    round(avg_ca, 2)        if avg_ca     is not None else None,
+                "csat_moyen":round(csat_moyen, 2)    if csat_moyen is not None else None,
+                "avg_nbr":   round(avg_nbr, 2)       if avg_nbr    is not None else None,
+                "nb_ventes": int(nb_ventes)          if nb_ventes is not None else None,
+                "nb_appels": int(nb_appels)          if nb_appels is not None else None,
+                "nb_csat":   int(nb_csat)            if nb_csat   is not None else None,
             }
 
             # Contexte de données brutes pour le moteur (noms normalisés)
@@ -288,6 +312,9 @@ def get_perf_totaux_par_matricule(
             }
             # Ajouter aussi les clés minuscules par sécurité
             formula_ctx.update({k.lower(): v for k, v in formula_ctx.items()})
+
+            # Fusionner les métriques brutes dans l'entrée pour les rendre disponibles au frontend
+            entry.update(formula_ctx)
 
             # Évaluation dynamique de chaque KPI Virtuel défini dans le registre
             for code, kpi in kpi_registry.items():

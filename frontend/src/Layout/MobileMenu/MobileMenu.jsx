@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { id: 'heures',      label: 'Heures',      icon: 'fa-solid fa-clock',        path: '/heures'      },
   { id: 'qualite',     label: 'Qualité',     icon: 'fa-solid fa-star',         path: '/qualite'     },
   { id: 'performance', label: 'Performance', icon: 'fa-solid fa-chart-line',   path: '/performance' },
-  { id: 'agents',      label: 'Agents',      icon: 'fa-solid fa-users-gear',   path: '/agents'      },
+  { id: 'collaborateurs', label: 'Collaborateurs', icon: 'fa-solid fa-users-gear',   path: '/collaborateurs' },
   { id: 'structure',   label: 'Structure',   icon: 'fa-solid fa-building-user', path: '/structure'  },
   { id: 'regles',      label: 'Règles',      icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
   { id: 'params',      label: 'Paramètres',  icon: 'fa-solid fa-gear',         path: '/parametres'    },

@@ -57,18 +57,18 @@ def discover_gold_kpis(projet: str = None) -> List[Dict]:
     where_clause = f"WHERE projet = '{projet}'" if projet else ""
     
     query = f"""
-        SELECT DISTINCT kpi_code, 'PERF' as univers 
+        SELECT DISTINCT kpi_code, projet, 'PERF' as univers 
         FROM {perf_table}
         {where_clause}
         UNION ALL
-        SELECT DISTINCT kpi_code, 'QUALITE' as univers 
+        SELECT DISTINCT kpi_code, projet, 'QUALITE' as univers 
         FROM {qual_table}
         {where_clause}
-        ORDER BY univers, kpi_code
+        ORDER BY univers, projet, kpi_code
     """
     try:
         rows = client.query(query).result()
-        return [{"kpi_code": row["kpi_code"], "univers": row["univers"]} for row in rows]
+        return [{"kpi_code": row["kpi_code"], "projet": row["projet"], "univers": row["univers"]} for row in rows]
     except Exception as e:
         logger.error(f"Erreur discover_gold_kpis : {e}")
         return []

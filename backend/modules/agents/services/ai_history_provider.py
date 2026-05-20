@@ -114,3 +114,23 @@ def truncate_conversation(conversation_id: int, from_message_id: int):
         logger.error("Erreur truncate_conversation: %s", e)
     finally:
         if conn: conn.close()
+
+def delete_conversation(conversation_id: int):
+    """Supprime complètement une conversation et tous ses messages associés."""
+    conn = None
+    try:
+        conn = get_mysql_connection()
+        with conn.cursor() as cur:
+            # Note: Les messages peuvent être supprimés en cascade selon la config DB,
+            # mais on le fait explicitement par sécurité
+            sql_msgs = "DELETE FROM ai_messages WHERE conversation_id = %s"
+            cur.execute(sql_msgs, (conversation_id,))
+            
+            sql_conv = "DELETE FROM ai_conversations WHERE id = %s"
+            cur.execute(sql_conv, (conversation_id,))
+            conn.commit()
+    except Exception as e:
+        logger.error("Erreur delete_conversation: %s", e)
+        raise e
+    finally:
+        if conn: conn.close()

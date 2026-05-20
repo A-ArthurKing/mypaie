@@ -2,6 +2,7 @@
 import "./AiSidebar.css";
 import useApiSWR from "../../../../Shared/Hooks/useApiSWR";
 import { useToast } from "../../../../Shared/Contexts/ToastContext";
+import ConfirmationModal from "../../../../Components/ConfirmationModal/ConfirmationModal";
 
 // Compteur global pour garantir des IDs de message uniques (évite les doublons Date.now())
 let _msgIdCounter = 0;
@@ -138,7 +139,7 @@ function MarkdownMessage({ text, onActionClick }) {
 
 const INITIAL_MESSAGE = { id: 0, sender: "bot", text: "Bonjour ! Je suis l'assistant IA de myPaie. Je peux répondre à vos questions sur cette règle de prime, ses objectifs (KPIs) et ses paramètres. Comment puis-je vous aider ?" };
 
-export default function AiSidebar({ isOpen, onClose, regleId }) {
+export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -152,6 +153,9 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
 
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInputValue, setEditInputValue] = useState("");
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [convToDelete, setConvToDelete] = useState(null);
 
   // Charger la liste des conversations (Historique)
   const { data: conversations = [], revalidate: refreshHistory } = useApiSWR(
@@ -198,7 +202,7 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
     setView('chat');
   };
 
-  const handleActionClick = async (actionType, payload) => {
+  const handleActionClick = async (actionType, payload, msgId) => {
     if (actionType === 'create_grille') {
       try {
         setIsLoading(true);
@@ -218,11 +222,22 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
         if (!res.ok) throw new Error(data.error || "Erreur de création");
         
         addToast(`Configuration "${grilleName}" activée avec succès !`, 'success');
+        
+        // Mettre à jour le message source pour transformer `json_grille_proposal` en `json_grille_applied`
+        setMessages(prev => prev.map(m => {
+          if (m.id === msgId) {
+            return { ...m, text: m.text.replace('```json_grille_proposal', '```json_grille_applied') };
+          }
+          return m;
+        }));
+
         setMessages(prev => [...prev, { 
           id: nextMsgId(), 
           sender: "bot", 
           text: `✅ Configuration **"${grilleName}"** appliquée avec succès ! Le tableau de bord est à jour.` 
         }]);
+
+        if (onRefresh) onRefresh();
       } catch (err) {
         addToast(err.message || "Erreur lors de l'application de la grille", 'error');
         setMessages(prev => [...prev, { 
@@ -358,6 +373,36 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
     await sendMessageToBot(newText);
   };
 
+  const requestDeleteConversation = (e, convId) => {
+    e.stopPropagation(); // Évite de cliquer sur la ligne
+    setConvToDelete(convId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteConversation = async () => {
+    if (!convToDelete) return;
+    const convId = convToDelete;
+    setDeleteModalOpen(false);
+    setConvToDelete(null);
+    
+    try {
+      const res = await authFetch(`/api/conversations/${convId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error("Erreur serveur");
+      
+      addToast("Conversation supprimée.", "success");
+      refreshHistory(); // Recharge la liste
+      
+      // Si la conv supprimée était celle en cours, on reset la vue
+      if (currentConvId === convId) {
+        startNewChat();
+        setView('history');
+      }
+    } catch (err) {
+      addToast("Impossible de supprimer la conversation", "error");
+      console.error(err);
+    }
+  };
+
   return (
     <aside className="ai-sidebar">
       <div className="ai-sidebar__header">
@@ -398,13 +443,22 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
                   className={`ai-sidebar__history-item ${conv.id === currentConvId ? 'active' : ''}`}
                   onClick={() => loadConversation(conv.id, conv.is_locked)}
                 >
-                  <div className="ai-sidebar__history-item-title">
-                    {conv.is_locked && <i className="fa-solid fa-lock" title="Verrouillée (limite atteinte)"></i>}
-                    {conv.titre}
+                  <div className="ai-sidebar__history-item-content">
+                    <div className="ai-sidebar__history-item-title">
+                      {Boolean(conv.is_locked) && <i className="fa-solid fa-lock" title="Verrouillée (limite atteinte)"></i>}
+                      {conv.titre}
+                    </div>
+                    <div className="ai-sidebar__history-item-date">
+                      {new Date(conv.updated_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className="ai-sidebar__history-item-date">
-                    {new Date(conv.updated_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </div>
+                  <button 
+                    className="ai-sidebar__history-delete-btn"
+                    onClick={(e) => requestDeleteConversation(e, conv.id)}
+                    title="Supprimer la conversation"
+                  >
+                    <i className="fa-regular fa-trash-can"></i>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -440,15 +494,31 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
                         <button className="btn-save" onClick={() => submitEdit(msg.id)}>Envoyer</button>
                       </div>
                     </div>
+                  ) : msg.sender === 'bot' && msg.text === "" && isLoading ? (
+                    <div className="ai-message--loading">
+                      <i className="fa-solid fa-ellipsis fa-fade"></i>
+                    </div>
                   ) : msg.sender === 'bot' ? (
-                    <MarkdownMessage text={msg.text} onActionClick={handleActionClick} />
+                    <MarkdownMessage text={msg.text} msgId={msg.id} onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} />
                   ) : (
                     msg.text
                   )}
                 </div>
+                {msg.sender === 'bot' && msg.text && (
+                  <button 
+                    className="ai-message__action-btn" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(msg.text);
+                      addToast("Texte copié !", "success");
+                    }}
+                    title="Copier le texte"
+                  >
+                    <i className="fa-regular fa-copy"></i>
+                  </button>
+                )}
                 {msg.sender === 'user' && !isLoading && editingMessageId !== msg.id && (
                   <button 
-                    className="ai-message__edit-btn" 
+                    className="ai-message__action-btn" 
                     onClick={() => startEditing(msg)}
                     title="Éditer et renvoyer ce message"
                   >
@@ -457,13 +527,6 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
                 )}
               </div>
             ))}
-            {isLoading && (
-              <div className="ai-message-wrapper ai-message-wrapper--bot">
-                <div className="ai-message ai-message--bot ai-message--loading">
-                  <i className="fa-solid fa-ellipsis fa-fade"></i>
-                </div>
-              </div>
-            )}
             <div ref={chatEndRef} />
           </div>
 
@@ -506,6 +569,19 @@ export default function AiSidebar({ isOpen, onClose, regleId }) {
           </div>
         </>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setConvToDelete(null);
+        }}
+        onConfirm={confirmDeleteConversation}
+        title="Supprimer la conversation"
+        message="Voulez-vous vraiment supprimer cette conversation ? Cette action est irréversible."
+        confirmText="Supprimer"
+        type="danger"
+      />
     </aside>
   );
 }

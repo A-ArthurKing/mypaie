@@ -159,7 +159,7 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
             <span className="aam-modal__icon">
               <i className="fa-solid fa-user-plus"></i>
             </span>
-            <h2 className="aam-modal__title">Ajouter un agent</h2>
+            <h2 className="aam-modal__title">Ajouter un collaborateur</h2>
           </div>
           <button className="aam-modal__close" onClick={handleClose} type="button">
             <i className="fa-solid fa-xmark"></i>

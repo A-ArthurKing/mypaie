@@ -25,14 +25,9 @@ export default function KpiHeader({
         </p>
       </div>
       <div className="kr-header__actions">
-        <button className="kr-add-btn" onClick={() => handleOpenAdd('VIRTUAL')}>
+        <button className="kr-add-btn" onClick={() => handleOpenAdd('NATIVE')}>
           <i className="fa-solid fa-plus-circle" style={{ marginRight: '6px' }}></i>
-          Nouveau KPI Virtuel
-        </button>
-
-        <button className="kr-norm-btn" onClick={() => handleOpenAdd('NATIVE')}>
-          <i className="fa-solid fa-wand-magic-sparkles" style={{ marginRight: '6px' }}></i>
-          Normaliser BigQuery
+          Ajouter / Normaliser
         </button>
 
         <button className="kr-sync-btn" onClick={handleSyncGold} disabled={syncing}>
@@ -63,9 +58,14 @@ export default function KpiHeader({
             control: (base, state) => ({
               ...base,
               ...customSelectStyles.control(base, state),
-              minHeight: '34px',
+              minHeight: '30px',
+              height: '30px',
               width: '180px',
               borderWidth: '1px'
+            }),
+            indicatorsContainer: (base) => ({
+              ...base,
+              height: '28px'
             })
           }}
           isSearchable={false}

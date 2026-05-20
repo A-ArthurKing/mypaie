@@ -20,7 +20,67 @@ client = bigquery.Client(project=PROJECT_ID)
 
 TABLE_CONFIG = f"`{PROJECT_ID}.{DATASET_PAIE}.config_etl_sources`"
 TABLE_SILVER = f"`{PROJECT_ID}.{DATASET_PAIE}.paie_qualite`"
-TABLE_GOLD = f"`{PROJECT_ID}.{DATASET_PAIE}.paie_qualite_mensuelle`"
+TABLE_GOLD   = f"`{PROJECT_ID}.{DATASET_PAIE}.paie_qualite_mensuelle`"
+
+# ── Dictionnaire d'alias kpi_code scopé par projet ──────────────────────────
+# Cause : plusieurs fichiers sources utilisent des noms légèrement différents
+#         pour le même critère (double underscore, singulier/pluriel, DE vs DU).
+# Format : { projet: { kpi_code_brut: kpi_code_canonique } }
+KPI_ALIASES: dict[str, dict[str, str]] = {
+    "PVCP_FR": {
+        "PRLVEMENT__DE_LA_CB":                         "PRLVEMENT_DE_LA_CB",
+        "VRIFICATION__OBLIGATOIRE_EN_CAS_DACTION":     "VRIFICATION_OBLIGATOIRE_EN_CAS_DACTION",
+        "QUALIT_DU_CONSEIL_ET_VALORISATION_DE_LOFFRE": "QUALIT_DE_CONSEIL_ET_VALORISATION_DE_LOFFRE",
+    },
+    "PVCP_GE": {
+        # Deux fichiers sources avec nomenclature différente, zéro overlap d'agents
+        "ENGAGED_LISTENING": "ENGAGE_LISTENING",
+        "ANTICIPATION":      "PERSONALIZED_ANTICIPATION",
+    },
+}
+
+# ── Échelle max des scores par projet ────────────────────────────────────────
+# PVCP_GE utilise une échelle 0-9 au lieu de 0-100 → normalisation obligatoire.
+# Toute valeur est ramenée à une base 100 dans la couche Silver.
+SCALE_MAX_PAR_PROJET: dict[str, float] = {
+    "PVCP_GE":   9.0,
+    "PVCP_FR":   100.0,
+    "PVCP_BE":   100.0,
+    "BATISANTE": 100.0,
+    "VENUM":     100.0,
+}
+
+
+def _kpi_code_expr(raw_col: str, projet: str) -> str:
+    """
+    Génère une expression SQL BigQuery qui :
+      1. Supprime les espaces en début/fin et collapse les espaces multiples.
+      2. Applique les aliases kpi_code spécifiques au projet (CASE WHEN).
+    """
+    # Nettoyage de base : TRIM + collapse espaces multiples
+    cleaned = f"TRIM(REGEXP_REPLACE(TRIM({raw_col}), r'\\s+', ' '))"
+    aliases = KPI_ALIASES.get(projet, {})
+    if not aliases:
+        return cleaned
+    when_clauses = " ".join(
+        f"WHEN {cleaned} = '{raw}' THEN '{canonical}'"
+        for raw, canonical in aliases.items()
+    )
+    return f"CASE {when_clauses} ELSE {cleaned} END"
+
+
+def _kpi_value_expr(raw_col: str, projet: str) -> str:
+    """
+    Génère une expression SQL BigQuery qui normalise kpi_value sur base 100
+    selon l'échelle déclarée dans SCALE_MAX_PAR_PROJET.
+    Ex. PVCP_GE (0-9) : valeur * (100/9) ≈ valeur * 11.1111
+    """
+    base = f"CAST({raw_col} AS FLOAT64)"
+    max_scale = SCALE_MAX_PAR_PROJET.get(projet, 100.0)
+    if max_scale == 100.0:
+        return base
+    factor = round(100.0 / max_scale, 10)
+    return f"ROUND({base} * {factor}, 4)"
 
 DDL_CONFIG = f"""
 CREATE TABLE IF NOT EXISTS {TABLE_CONFIG} (
@@ -61,10 +121,28 @@ def run():
     for src in sources:
         log.info(f"Projet : {src.projet_nom}")
         mat_expr = f"COALESCE(CAST({src.colonne_matricule} AS STRING), {src.colonne_agent_fallback})" if src.colonne_matricule else src.colonne_agent_fallback
+        projet = src.projet_nom
         if src.type_structure == "JSON":
-            sql = f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, u.kpi_nom as kpi_code, u.kpi_valeur as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_agent_fallback} IS NOT NULL"
+            kpi_code_sql  = _kpi_code_expr("u.kpi_nom", projet)
+            kpi_value_sql = _kpi_value_expr("u.kpi_valeur", projet)
+            sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
+                   f" '{projet}' as projet,"
+                   f" ({kpi_code_sql}) as kpi_code,"
+                   f" ({kpi_value_sql}) as kpi_value,"
+                   f" CURRENT_TIMESTAMP() as processed_at"
+                   f" FROM `{PROJECT_ID}.{src.table_source}`,"
+                   f" UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u"
+                   f" WHERE {src.colonne_agent_fallback} IS NOT NULL")
         else:
-            sql = f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, {src.colonne_kpi_code} as kpi_code, CAST({src.colonne_kpi_value} AS FLOAT64) as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM `{PROJECT_ID}.{src.table_source}` WHERE {src.colonne_agent_fallback} IS NOT NULL"
+            kpi_code_sql  = _kpi_code_expr(src.colonne_kpi_code, projet)
+            kpi_value_sql = _kpi_value_expr(src.colonne_kpi_value, projet)
+            sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
+                   f" '{projet}' as projet,"
+                   f" ({kpi_code_sql}) as kpi_code,"
+                   f" ({kpi_value_sql}) as kpi_value,"
+                   f" CURRENT_TIMESTAMP() as processed_at"
+                   f" FROM `{PROJECT_ID}.{src.table_source}`"
+                   f" WHERE {src.colonne_agent_fallback} IS NOT NULL")
         client.query(f"MERGE {TABLE_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
 
 def gold():

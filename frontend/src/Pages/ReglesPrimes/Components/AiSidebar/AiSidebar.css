@@ -1,7 +1,6 @@
 ﻿/* ── Sidebar container ── */
 .ai-sidebar {
   width: 300px;
-  background-color: var(--color-bg-panel);
   border-left: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -10,8 +9,12 @@
   top: 0;
   height: 100vh;
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.07);
-  z-index: 50;
-}
+  z-index: 50;  background-color: var(--color-bg-sidebar);
+  margin: 0.5rem;
+    border-radius: 0.5rem;
+    max-height: 97dvh;
+    max-height: 97vh;
+  }
 
 /* ── Header ── */
 .ai-sidebar__header {
@@ -22,6 +25,7 @@
   justify-content: space-between;
   background-color: var(--color-bg-alt);
   flex-shrink: 0;
+  color: var(--color-surface);
 }
 
 .ai-sidebar__header-actions {
@@ -34,8 +38,8 @@
 .ai-sidebar__close {
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
-  font-size: 1.1rem;
+  color: var(--color-surface) !important;
+  font-size: 1.1rem !important;
   cursor: pointer;
   transition: color 0.2s;
   padding: 0.4rem;
@@ -57,7 +61,7 @@
   margin: 0;
   font-size: 0.88rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-surface);
   display: flex;
   align-items: center;
   gap: 9px;
@@ -139,26 +143,33 @@
   border: 1px solid var(--color-border);
 }
 
-.ai-message__edit-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  padding: 4px;
+.ai-message__action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+  padding: 6px;
   cursor: pointer;
-  border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+  border-radius: 6px;
+  opacity: 0.4;
+  transition: all 0.2s ease;
   align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.ai-message-wrapper:hover .ai-message__edit-btn {
-  opacity: 1;
+.ai-message-wrapper:hover .ai-message__action-btn {
+  opacity: 0.9;
 }
 
-.ai-message__edit-btn:hover {
-  color: var(--color-accent);
-  background: var(--color-bg-hover);
+.ai-message__action-btn:hover {
+  opacity: 1 !important;
+  color: #ffffff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .ai-message__edit-inline {
@@ -172,7 +183,7 @@
   width: 100%;
   min-width: 200px;
   background-color: transparent;
-  color: #fff;
+  color: var(--color-surface) !important;
   border: none;
   outline: none;
   font-family: inherit;
@@ -181,12 +192,12 @@
   resize: none;
   padding: 0;
   margin: 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+  border: 1px dashed red !important; /* Just to visualize the input area during development */
   border-radius: 0;
 }
 
 .ai-sidebar__input--edit:focus {
-  border-bottom: 1px solid #fff;
+  border: 1px solid #fff;
   background-color: transparent;
 }
 
@@ -261,11 +272,13 @@
 .ai-sidebar__input-area {
   padding: 9px 12px;
   border-top: 1px solid var(--color-border);
-  background-color: var(--color-bg-alt);
+  background-color: #743e61;;
   display: flex;
   gap: 8px;
   align-items: flex-end;
   flex-shrink: 0;
+  margin: 0.5rem;
+  border-radius: 1rem;
 }
 
 .ai-sidebar__input {
@@ -273,25 +286,26 @@
   resize: none;
   padding: 7px 10px;
   border-radius: 7px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg-input);
-  color: var(--color-text-primary);
+  border: none !important;
+  background-color: transparent;
+  color: var(--color-surface);
   font-family: inherit;
   font-size: 0.82rem;
   outline: none;
   line-height: 1.4;
-  min-height: 36px;
+  min-height: 100px;
   max-height: 150px;
   overflow-y: auto;
 }
 
-.ai-sidebar__input:focus {
-  border-color: var(--color-accent);
+.ai-sidebar__input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
+
 
 .ai-sidebar__send {
   background-color: var(--color-accent);
-  color: #fff;
+  color: var(--color-surface);
   border: none;
   border-radius: 7px;
   width: 32px;
@@ -349,7 +363,7 @@
 .ai-sidebar__history-title {
   font-size: 0.85rem;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
+  color: var(--color-surface);
   margin-bottom: 1rem;
   letter-spacing: 0.05em;
 }
@@ -377,6 +391,34 @@
   border: 1px solid var(--color-border);
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-sidebar__history-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-sidebar__history-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-danger, #ef4444);
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.ai-sidebar__history-item:hover .ai-sidebar__history-delete-btn {
+  opacity: 1;
+}
+
+.ai-sidebar__history-delete-btn:hover {
+  background: #fee2e2;
 }
 
 .ai-sidebar__history-item:hover {
@@ -446,6 +488,12 @@
   overflow: hidden;
   background: white;
   box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+  transition: all 0.3s;
+}
+
+.ai-grille-proposal.applied {
+  border-color: var(--color-border-subtle, #e5e7eb);
+  box-shadow: none;
 }
 
 .ai-grille-proposal-title {
@@ -457,6 +505,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.ai-grille-proposal.applied .ai-grille-proposal-title {
+  background: var(--color-border-subtle, #e5e7eb);
+  color: var(--color-text-muted, #6b7280);
 }
 
 .ai-grille-proposal-body {
@@ -474,6 +527,20 @@
   font-size: 0.8rem;
   color: var(--color-text-secondary, #6b7280);
   margin: 0 0 0.75rem;
+}
+
+.ai-grille-proposal.applied .ai-grille-proposal-body strong {
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ai-grille-proposal-status {
+  font-size: 0.8rem;
+  color: var(--color-success, #22c55e) !important;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
 }
 
 .ai-btn-apply-grille {

@@ -97,32 +97,29 @@ def query_qualite_stats_global(table_ref, where_str):
 
 def query_performance_detail(table_ref, where_str):
     """
-    Récupération consolidée de la performance par agent.
-    Les colonnes sont lues directement depuis paie_performance (déjà normalisées).
-    La résolution du nom de projet se fait côté Python depuis MySQL (ref_projets_mapping),
-    plus de JOIN BigQuery — suppression de la dépendance à projet_mapping BQ.
+    Récupération consolidée de la performance par agent avec pivot EAV.
     """
     return f"""
         SELECT
             r.matricule                                                             AS agent_id_hash,
-            r.agent_nom                                                             AS agent_name,
+            ANY_VALUE(r.matricule)                                                  AS agent_name,
             r.matricule                                                             AS matricule,
-            ANY_VALUE(r.operation)                                                  AS agent_group,
+            ANY_VALUE(r.projet)                                                     AS agent_group,
             ANY_VALUE(r.projet)                                                     AS projet,
-            SUM(r.nb_appels)                                                        AS in_call_nbr,
-            SUM(r.nb_ventes)                                                        AS booking_nbr,
-            SUM(r.temps_appel)                                                      AS call_min,
-            SUM(r.temps_production)                                                 AS logged_min,
-            SUM(r.temps_production)                                                 AS worked_min,
-            COUNT(*)                                                                AS nb_records,
-            MAX(r.date_ref)                                                         AS date_ajout,
-            SUM(r.chiffre_affaire)                                                  AS chiffre_affaire,
-            SAFE_DIVIDE(SUM(r.nb_ventes), NULLIF(SUM(r.nb_appels), 0)) * 100       AS taux_conversion_calc,
-            AVG(r.tx_mea)                                                           AS tx_mea,
-            SAFE_DIVIDE(SUM(r.csat * r.nb_csat), NULLIF(SUM(r.nb_csat), 0))       AS csat_moyen
+            SUM(IF(kpi_code IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0))        AS in_call_nbr,
+            SUM(IF(kpi_code IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0))        AS booking_nbr,
+            SUM(IF(kpi_code IN ('in_call_min_nbr', 'temps_appel'), valeur_sum, 0))  AS call_min,
+            SUM(IF(kpi_code IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS logged_min,
+            SUM(IF(kpi_code IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS worked_min,
+            SUM(r.nb_jours)                                                         AS nb_records,
+            MAX(r.last_update)                                                      AS date_ajout,
+            SUM(IF(kpi_code IN ('net_booking_rental_amt_eur', 'chiffre_affaire'), valeur_sum, 0)) AS chiffre_affaire,
+            SAFE_DIVIDE(SUM(IF(kpi_code IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0)), NULLIF(SUM(IF(kpi_code IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0)), 0)) * 100 AS taux_conversion_calc,
+            AVG(IF(kpi_code IN ('tx_mea'), valeur_avg, 0))                          AS tx_mea,
+            SAFE_DIVIDE(SUM(IF(kpi_code IN ('csat_nbr', 'csat'), valeur_sum, 0)), NULLIF(SUM(IF(kpi_code IN ('total_csat_num', 'nb_csat'), valeur_sum, 0)), 0)) AS csat_moyen
         FROM {table_ref} r
         {where_str}
-        GROUP BY r.matricule, r.agent_nom
+        GROUP BY r.matricule
         ORDER BY in_call_nbr DESC
         LIMIT @limit OFFSET @offset
     """

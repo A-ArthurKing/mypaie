@@ -218,7 +218,7 @@ export default function TableauDeBordOnglet({ regle }) {
       .catch(err => console.error('[TableauDeBord] Erreur calcul unifié:', err))
       .finally(() => setLoadingUnified(false));
 
-  }, [agents, selectedMonthRange, regle?.id]);
+  }, [agents, selectedMonthRange, regle?.id, JSON.stringify(regle?.grille_objectifs)]);
 
   // ─── Calcul Assiduité & Malus ──────────────────────────────────────────────
 
@@ -231,11 +231,15 @@ export default function TableauDeBordOnglet({ regle }) {
     // Si la clé existe directement dans les KPIs calculés par le backend
     if (metricKey && kpis[metricKey] !== undefined) return kpis[metricKey];
 
-    // Mappings de compatibilité pour les anciens codes UI
+    // Mappings de compatibilité pour les anciens codes UI et les codes base de données BQ
     switch (metricKey) {
       case 'dmt':                  return kpis.dmt ?? null;
       case 'taux_conversion_calc': return kpis.cvr ?? null;
       case 'chiffre_affaire':      return kpis.avg_ca ?? null;
+      case 'REVENUE_AMT_EUR':      return kpis.chiffre_affaire ?? kpis.CHIFFRE_AFFAIRE ?? null;
+      case 'NET_BOOKING_RENTAL_AMT_EUR': return kpis.chiffre_affaire ?? kpis.CHIFFRE_AFFAIRE ?? null;
+      case 'revenue_amt_eur':      return kpis.chiffre_affaire ?? kpis.CHIFFRE_AFFAIRE ?? null;
+      case 'note_qualite_globale': return kpis.NOTE_QUALITE ?? null;
       case 'note_globale':         return kpis.NOTE_QUALITE ?? null;
       case 'heure_total':          return kpis.HEURE_TOTAL ?? null;
       default:                     return null;
@@ -312,9 +316,12 @@ export default function TableauDeBordOnglet({ regle }) {
     const score_pct = kpiResults.total_points / 100;
     const global_mult = kpiResults.globalMultiplier || 1;
     
-    const prime = kpiResults.montant > 0 
+    const prime_points = kpiResults.montant > 0 
       ? Math.round(kpiResults.montant * score_pct * (1 + assiduite.malus_pct) * global_mult)
       : 0;
+      
+    // Le montant de prime total inclut aussi les KPIs en mode montant direct
+    let prime = prime_points + Math.round((kpiResults.total_montant_direct || 0) * (1 + assiduite.malus_pct) * global_mult);
       
     const super_bonus = kpiResults.montant_sb > 0
       ? Math.round(kpiResults.montant_sb * score_pct * (1 + assiduite.malus_pct) * global_mult)
@@ -448,70 +455,94 @@ export default function TableauDeBordOnglet({ regle }) {
 
       let taux_atteinte = null;
       let points_gagnes = 0;
+      let montant_gagne = 0;
       let impact_desc = '';
+      
+      const mode_prime = ind.mode_prime || 'score_global';
 
-      if (objectif != null && reel != null && objectif > 0 && reel >= 0) {
-        let tauxBrut = (direction === 'lower_better') ? (reel === 0 ? 1.5 : objectif / reel) : (reel / objectif);
-        taux_atteinte = Math.min(tauxBrut, 1.5);
-        const atteintPct = taux_atteinte * 100;
-
-        // --- Logique par Type de Pondération ---
-        
-        if (type_ponderation === 'eliminatoire') {
-          if (atteintPct < 100) {
-            isEliminated = true;
-            impact_desc = 'ÉLIMINATOIRE';
-          }
-        } 
-        else if (type_ponderation === 'coefficient') {
-          // Si pas atteint 100%, on applique le "poids" comme une réduction en %
-          // Ex: Poids 10 -> Si raté, on garde 90% de la prime (coef 0.9)
-          if (atteintPct < 100) {
-            const reduction = weight / 100;
-            globalMultiplier *= (1 - reduction);
-            impact_desc = `-${weight}% Global`;
-          }
-        }
-        else {
-          // BONUS ou MALUS (Système de points avec paliers)
-          let applyPct = 0;
-          if (paliers.length > 0) {
-            const sortedPaliers = [...paliers].sort((a, b) => (a.seuil_atteinte ?? 999) - (b.seuil_atteinte ?? 999));
-            for (let i = 0; i < sortedPaliers.length; i++) {
-              const p = sortedPaliers[i];
-              if (p.seuil_atteinte !== null && atteintPct < p.seuil_atteinte) {
-                applyPct = p.pourcentage_paiement;
-                break;
-              } else if (p.seuil_atteinte === null) {
-                applyPct = p.pourcentage_paiement;
-              }
+      if (mode_prime === 'montant_direct') {
+        if (reel != null && reel >= 0 && ind.paliers_valeur && ind.paliers_valeur.length > 0) {
+          const sortedPV = [...ind.paliers_valeur].sort((a, b) => (a.seuil_min ?? 0) - (b.seuil_min ?? 0));
+          const palier = sortedPV.find(p => reel >= (p.seuil_min ?? 0) && (p.seuil_max === null || p.seuil_max === '' || reel <= p.seuil_max));
+          if (palier) {
+            if (palier.type_montant === 'pourcentage_kpi') {
+               montant_gagne = reel * (parseFloat(palier.montant) / 100);
+            } else {
+               montant_gagne = parseFloat(palier.montant) || 0;
             }
+            impact_desc = `${Math.round(montant_gagne).toLocaleString('fr-FR')} DH`;
           } else {
-            applyPct = Math.min(taux_atteinte, 1) * 100;
+            impact_desc = '0 DH';
           }
+        } else {
+           impact_desc = '—';
+        }
+      } else if (mode_prime === 'pourcentage_valeur') {
+        if (reel != null && reel >= 0) {
+          montant_gagne = reel * (weight / 100);
+          impact_desc = `${Math.round(montant_gagne).toLocaleString('fr-FR')} DH`;
+        }
+      } else {
+        // Mode classique : score global
+        if (objectif != null && reel != null && objectif > 0 && reel >= 0) {
+          let tauxBrut = (direction === 'lower_better') ? (reel === 0 ? 1.5 : objectif / reel) : (reel / objectif);
+          taux_atteinte = Math.min(tauxBrut, 1.5);
+          const atteintPct = taux_atteinte * 100;
 
-          if (type_ponderation === 'malus') {
-            // Malus : on perd des points si on est en dessous de 100%
-            const malus_factor = Math.max(0, 1 - (applyPct / 100));
-            points_gagnes = -Math.round(malus_factor * weight);
-          } else {
-            // Bonus : on gagne des points selon l'atteinte
-            points_gagnes = Math.round((applyPct / 100) * weight);
+          // --- Logique par Type de Pondération ---
+          if (type_ponderation === 'eliminatoire') {
+            if (atteintPct < 100) {
+              isEliminated = true;
+              impact_desc = 'ÉLIMINATOIRE';
+            }
+          } 
+          else if (type_ponderation === 'coefficient') {
+            if (atteintPct < 100) {
+              const reduction = weight / 100;
+              globalMultiplier *= (1 - reduction);
+              impact_desc = `-${weight}% Global`;
+            }
+          }
+          else {
+            let applyPct = 0;
+            if (paliers.length > 0) {
+              const sortedPaliers = [...paliers].sort((a, b) => (a.seuil_atteinte ?? 999) - (b.seuil_atteinte ?? 999));
+              for (let i = 0; i < sortedPaliers.length; i++) {
+                const p = sortedPaliers[i];
+                if (p.seuil_atteinte !== null && atteintPct < p.seuil_atteinte) {
+                  applyPct = p.pourcentage_paiement;
+                  break;
+                } else if (p.seuil_atteinte === null) {
+                  applyPct = p.pourcentage_paiement;
+                }
+              }
+            } else {
+              applyPct = Math.min(taux_atteinte, 1) * 100;
+            }
+
+            if (type_ponderation === 'malus') {
+              const malus_factor = Math.max(0, 1 - (applyPct / 100));
+              points_gagnes = -Math.round(malus_factor * weight);
+            } else {
+              points_gagnes = Math.round((applyPct / 100) * weight);
+            }
           }
         }
       }
 
       return {
         id: ind.id,
-        nom: ind.nom,
+        nom: ind.nom || kpiRefsFlat[metricKey]?.libelle || ind.metric_key || 'KPI',
         categorie: ind.categorie,
         type_ponderation,
+        mode_prime,
         metricKey,
         objectif,
         reel,
         taux_atteinte,
         points_max: (type_ponderation === 'bonus' || type_ponderation === 'malus') ? weight : 0,
         points_gagnes,
+        montant_gagne,
         impact_desc,
         is_formula: kpiRefsFlat[metricKey]?.is_formula || false,
         formula:    kpiRefsFlat[metricKey]?.formula    || null,
@@ -521,6 +552,7 @@ export default function TableauDeBordOnglet({ regle }) {
     });
 
     const total_points = kpis.reduce((acc, k) => acc + (k.points_gagnes ?? 0), 0);
+    const total_montant_direct = kpis.reduce((acc, k) => acc + (k.montant_gagne ?? 0), 0);
 
     return { 
       montant, 
@@ -528,6 +560,7 @@ export default function TableauDeBordOnglet({ regle }) {
       hasSanction: false, 
       kpis, 
       total_points: Math.max(0, total_points), 
+      total_montant_direct,
       isEliminated,
       globalMultiplier 
     };
@@ -570,7 +603,7 @@ export default function TableauDeBordOnglet({ regle }) {
 
     const avgPrime = eligible > 0 ? totalMasse / eligible : 0;
     return { total: agents.length, eligible, nonEligible, totalMasse, avgPrime };
-  }, [agents, localAgentsData, heuresMap, qualiteMap, dmtMap]);
+  }, [agents, localAgentsData, unifiedMap]);
 
   const filtered = agents.filter(a => {
     const fullName = `${a.prenom} ${a.nom} ${a.matricule}`.toLowerCase();
@@ -750,7 +783,7 @@ export default function TableauDeBordOnglet({ regle }) {
               const totalPrime   = (montantFinal || 0) + (calcSB || 0) + totalExtra;
               
               const ptsFinal     = (kpiResults.total_points * (1 + assiduite.malus_pct)).toFixed(1);
-              const anyLoading   = loadingHeures || loadingQualite || loadingDmt;
+              const anyLoading   = loadingUnified;
 
               return (
                 <AgentCard
@@ -767,7 +800,7 @@ export default function TableauDeBordOnglet({ regle }) {
                   ptsFinal={ptsFinal}
                   anyLoading={anyLoading}
                   dmtUnit={dmtUnit}
-                  heuresMap={heuresMap}
+                  unifiedKpis={unifiedMap[String(a.matricule)] || {}}
                   handleUpdateLocalData={handleUpdateLocalData}
                   handleShowFormula={handleShowFormula}
                 />

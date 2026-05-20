@@ -17,7 +17,7 @@ export default function AgentsTable({ agents, onEdit, onDelete }) {
     return (
       <div className="agta-empty">
         <i className="fa-solid fa-magnifying-glass"></i>
-        <p>Aucun agent trouvé</p>
+        <p>Aucun collaborateur trouvé</p>
       </div>
     );
   }

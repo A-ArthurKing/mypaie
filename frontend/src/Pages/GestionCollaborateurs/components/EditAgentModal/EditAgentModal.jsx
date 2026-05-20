@@ -164,7 +164,7 @@ export default function EditAgentModal({ isOpen, onClose, onAgentUpdated, agent,
               <i className="fa-solid fa-pen"></i>
             </span>
             <div>
-              <h2 className="eam-modal__title">Modifier l'agent</h2>
+              <h2 className="eam-modal__title">Modifier le collaborateur</h2>
               <span className="eam-modal__matricule">{agent.matricule}</span>
             </div>
           </div>

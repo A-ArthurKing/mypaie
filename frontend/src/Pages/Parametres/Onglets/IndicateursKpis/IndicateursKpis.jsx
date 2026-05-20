@@ -5,6 +5,7 @@ import HeaderSection from './sections/Header/KpiHeader';
 import StatsSection from './sections/Stats/KpiStats';
 import GridSection from './sections/Grid/KpiGrid';
 import KpiModal from './components/Modal/KpiModal';
+import ConfirmationModal from '../../../../Components/ConfirmationModal/ConfirmationModal';
 import './IndicateursKpis.css';
 
 const API_BASE = '/api'
@@ -13,21 +14,33 @@ const UNIVERS_LABELS = { PERF: 'Performance', QUALITE: 'Qualité', HEURES: 'Heur
 const customSelectStyles = {
   control: (base, state) => ({
     ...base,
-    borderRadius: '12px', borderWidth: '2px',
-    borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-border-subtle)',
-    boxShadow: state.isFocused ? '0 0 0 4px var(--color-accent-soft)' : 'none',
+    borderRadius: '8px', borderWidth: '1px',
+    borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-border)',
+    boxShadow: state.isFocused ? '0 0 0 2px var(--color-accent-soft)' : 'none',
     '&:hover': { borderColor: state.isFocused ? 'var(--color-accent)' : 'var(--color-accent-border)' },
-    fontSize: '0.95rem', minHeight: '48px'
+    fontSize: '0.85rem', minHeight: '36px', height: '36px'
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    padding: '0 8px'
+  }),
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: '34px'
   }),
   option: (base, state) => ({
     ...base,
     backgroundColor: state.isSelected ? 'var(--color-accent)' : state.isFocused ? 'var(--color-accent-soft)' : 'transparent',
     color: state.isSelected ? 'white' : 'var(--color-text-primary)',
-    fontSize: '0.9rem', cursor: 'pointer',
+    fontSize: '0.85rem', cursor: 'pointer', padding: '6px 10px',
     '&:active': { backgroundColor: 'var(--color-accent)' }
   }),
   singleValue: (base) => ({ ...base, color: 'var(--color-text-primary)', fontWeight: '600' }),
-  placeholder: (base) => ({ ...base, color: 'var(--color-text-disabled)' })
+  placeholder: (base) => ({ ...base, color: 'var(--color-text-muted)' }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 9999
+  })
 }
 
 export default function IndicateursKpis() {
@@ -51,6 +64,14 @@ export default function IndicateursKpis() {
   const [modalUniversFilter, setModalUniversFilter] = useState('ALL')
   const [isAiSuggesting, setIsAiSuggesting] = useState(false)
   const [aiLastSuggestion, setAiLastSuggestion] = useState(null)
+
+  // États pour les modales de confirmation
+  const [deleteKpiTarget, setDeleteKpiTarget] = useState(null)
+  const [deleteAliasTarget, setDeleteAliasTarget] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const [aliases, setAliases] = useState([])
+  const [aliasFormData, setAliasFormData] = useState({ projet: 'INCONNU', code_brut_source: '', code_kpi_officiel: '' })
 
   const fetchKpis = async () => {
     setLoading(true)
@@ -76,10 +97,27 @@ export default function IndicateursKpis() {
     }
   }
 
+  const fetchAliases = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/parametres/kpi-aliases`)
+      const data = await res.json()
+      setAliases(data.data || [])
+    } catch (e) {
+      console.error("Erreur aliases", e)
+    }
+  }
+
   useEffect(() => { 
     fetchKpis()
     fetchRawCodes()
+    fetchAliases()
   }, [])
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('kpi_alias_updated', fetchAliases);
+    return () => socket.off('kpi_alias_updated', fetchAliases);
+  }, [socket]);
 
   const handleSyncGold = async () => {
     setSyncing(true)
@@ -153,17 +191,81 @@ export default function IndicateursKpis() {
     }
   }
 
-  const handleDelete = async (code) => {
-    if (!window.confirm(`Supprimer le KPI ${code} ?`)) return
+  const handleDeleteKpiConfirm = async () => {
+    if (!deleteKpiTarget) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/parametres/kpis-registry/${code}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/parametres/kpis-registry/${deleteKpiTarget}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Erreur suppression')
-      addToast('KPI supprimé', 'success')
+      addToast('KPI supprimé avec succès', 'success')
+      setDeleteKpiTarget(null)
       fetchKpis()
     } catch (e) {
       addToast(e.message, 'error')
+    } finally {
+      setIsDeleting(false)
     }
   }
+
+  const handleDeleteKpiRequest = (code) => {
+    setDeleteKpiTarget(code);
+  }
+
+  const handleAliasSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      const res = await fetch(`${API_BASE}/parametres/kpi-aliases`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(aliasFormData)
+      })
+      if (!res.ok) throw new Error('Erreur rattachement')
+      addToast('Alias créé avec succès', 'success')
+      setAliasFormData({ projet: 'INCONNU', code_brut_source: '', code_kpi_officiel: '' })
+      fetchAliases()
+    } catch (e) {
+      addToast(e.message, 'error')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDeleteAliasConfirm = async () => {
+    if (!deleteAliasTarget) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`${API_BASE}/parametres/kpi-aliases/${deleteAliasTarget}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Erreur suppression')
+      addToast('Rattachement supprimé avec succès', 'success')
+      setDeleteAliasTarget(null)
+      fetchAliases()
+    } catch (e) {
+      addToast(e.message, 'error')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteAliasRequest = (id) => {
+    setDeleteAliasTarget(id);
+  }
+
+  const unmappedCodes = useMemo(() => {
+    if (!rawBqCodes || !kpis) return [];
+    const officialCodes = new Set(kpis.map(k => k.code.toLowerCase()));
+    const aliasedCodes = new Set(aliases.map(a => a.code_brut_source.toLowerCase()));
+    const orphans = [];
+    for (const raw of rawBqCodes) {
+      const code = typeof raw === 'object' ? raw.kpi_code : raw;
+      const projet = typeof raw === 'object' ? raw.projet || 'INCONNU' : 'INCONNU';
+      const lowerCode = code.toLowerCase();
+      if (!officialCodes.has(lowerCode) && !aliasedCodes.has(lowerCode)) {
+        if (!orphans.some(o => o.code.toLowerCase() === lowerCode)) {
+          orphans.push({ code, projet });
+        }
+      }
+    }
+    return orphans;
+  }, [rawBqCodes, kpis, aliases]);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -244,7 +346,7 @@ export default function IndicateursKpis() {
           togglingCode={togglingCode}
           handleToggle={handleToggle}
           handleOpenEdit={handleOpenEdit}
-          handleDelete={handleDelete}
+          handleDelete={handleDeleteKpiRequest}
           UNIVERS_LABELS={UNIVERS_LABELS}
         />
       )}
@@ -270,6 +372,30 @@ export default function IndicateursKpis() {
         kpis={kpis}
         UNIVERS_LABELS={UNIVERS_LABELS}
         customSelectStyles={customSelectStyles}
+        aliases={aliases}
+        aliasFormData={aliasFormData}
+        setAliasFormData={setAliasFormData}
+        handleAliasSubmit={handleAliasSubmit}
+        handleAliasDelete={handleDeleteAliasRequest}
+        unmappedCodes={unmappedCodes}
+      />
+
+      <ConfirmationModal
+        isOpen={!!deleteKpiTarget}
+        onClose={() => setDeleteKpiTarget(null)}
+        onConfirm={handleDeleteKpiConfirm}
+        title="Supprimer le KPI Virtuel"
+        message={`Êtes-vous sûr de vouloir supprimer définitivement l'indicateur virtuel "${deleteKpiTarget}" ? Cette action est irréversible et pourrait impacter les grilles de primes qui l'utilisent.`}
+        confirmText={isDeleting ? 'Suppression...' : 'Supprimer'}
+      />
+
+      <ConfirmationModal
+        isOpen={!!deleteAliasTarget}
+        onClose={() => setDeleteAliasTarget(null)}
+        onConfirm={handleDeleteAliasConfirm}
+        title="Supprimer le rattachement"
+        message="Êtes-vous sûr de vouloir supprimer ce rattachement (alias) ? Les données brutes BigQuery cesseront d'être converties vers cet indicateur lors du prochain calcul."
+        confirmText={isDeleting ? 'Suppression...' : 'Supprimer'}
       />
     </div>
   )

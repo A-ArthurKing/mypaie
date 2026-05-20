@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { id: 'heures',      label: 'Heures agents',  icon: 'fa-solid fa-clock',        path: '/heures', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
   { id: 'qualite',     label: 'Notes qualité',  icon: 'fa-solid fa-star',         path: '/qualite', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
   { id: 'performance', label: 'Performance',    icon: 'fa-solid fa-chart-line',   path: '/performance', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager', 'Collaborateur'] },
-  { id: 'agents',      label: 'Gestion agents', icon: 'fa-solid fa-users-gear',   path: '/agents', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
+  { id: 'collaborateurs', label: 'Collaborateurs', icon: 'fa-solid fa-users-gear',   path: '/collaborateurs', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
   { id: 'regles',    label: 'Règles Primes',  icon: 'fa-solid fa-calculator',   path: '/regles-primes', roles: ['Super Administrateur', 'Gestionnaire Paie'] },
 ]
 

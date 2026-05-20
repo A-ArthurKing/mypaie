@@ -6,7 +6,7 @@ Module  : mypaie / backend / api / agents
 
 import logging
 from flask import Blueprint, jsonify, request
-from services.agents.sirh_provider import get_agents_sirh
+from services.agents.sirh_agents_provider import get_agents_sirh
 from services.agents.agents_provider import (
     get_agents_manual_data,
     save_agent_manual_data,

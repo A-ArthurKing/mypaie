@@ -42,18 +42,20 @@ export default function ReglesPrimes() {
 
     const handleUpdate = () => {
       console.log('[RealTime] Mise à jour des règles détectée');
-      clearCacheKey(CACHE_KEY);
+      // Rafraîchissement silencieux
       revalidate();
     };
 
     socket.on('regle_created', handleUpdate);
     socket.on('regle_updated', handleUpdate);
     socket.on('regle_deleted', handleUpdate);
+    socket.on('regle_configs_updated', handleUpdate); // Aussi écouter les configs car l'état actif change
 
     return () => {
       socket.off('regle_created', handleUpdate);
       socket.off('regle_updated', handleUpdate);
       socket.off('regle_deleted', handleUpdate);
+      socket.off('regle_configs_updated', handleUpdate);
     };
   }, [socket, revalidate]);
 

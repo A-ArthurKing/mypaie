@@ -1,13 +1,13 @@
 /*
- * Fichier : GestionAgents.jsx
- * Rôle    : Page de gestion des agents — liste, recherche, filtres, CRUD
+ * Fichier : GestionCollaborateurs.jsx
+ * Rôle    : Page de gestion des collaborateurs — liste, recherche, filtres, CRUD
  *           avec assignation des niveaux et de la structure projet.
  * Dépend  : AgentsHeader, AgentsToolbar, AgentsTable, AddAgentModal, EditAgentModal,
  *           ConfirmationModal, SocketContext, ToastContext
- * Module  : mypaie / Pages / GestionAgents
+ * Module  : mypaie / Pages / GestionCollaborateurs
  */
 import React, { useState, useEffect } from 'react';
-import './GestionAgents.css';
+import './GestionCollaborateurs.css';
 import AgentsHeader      from './sections/AgentsHeader/AgentsHeader';
 import AgentsToolbar     from './sections/AgentsToolbar/AgentsToolbar';
 import AgentsTable       from './sections/AgentsTable/AgentsTable';
@@ -21,7 +21,7 @@ import { TTL } from '../../Shared/Utils/cacheStorage';
 
 const REFS_FALLBACK = { projets: [], operations: [], sous_projets: [], activites: [], statuts: [], structure: [] };
 
-export default function Agents() {
+export default function Collaborateurs() {
   const {
     data: agents = [],
     loading,
@@ -61,7 +61,7 @@ export default function Agents() {
     if (!socket) return;
 
     const handleUpdate = () => {
-      console.log('[RealTime] Mise à jour agents détectée');
+      console.log('[RealTime] Mise à jour collaborateurs détectée');
       revalidateAgents();
     };
 
@@ -94,7 +94,7 @@ export default function Agents() {
         if (data.error) throw new Error(data.error);
         mutateAgents(prev => (prev || []).filter(a => a.matricule !== deleteTarget.matricule));
         setDeleteTarget(null);
-        addToast('Agent supprimé avec succès', 'success');
+        addToast('Collaborateur supprimé avec succès', 'success');
       })
       .catch(err => {
         console.error('Erreur suppression:', err);
@@ -189,7 +189,7 @@ export default function Agents() {
       {loading ? (
         <div className="agents-page__loading">
           <i className="fa-solid fa-circle-notch fa-spin"></i>
-          Chargement des agents...
+          Chargement des collaborateurs...
         </div>
       ) : (
         <>
@@ -241,10 +241,10 @@ export default function Agents() {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title="Supprimer l'agent"
+        title="Supprimer le collaborateur"
         message={
           deleteTarget
-            ? `Vous allez supprimer définitivement l'agent ${deleteTarget.nom} ${deleteTarget.prenom} (${deleteTarget.matricule}). Cette action est irréversible.`
+            ? `Vous allez supprimer définitivement le collaborateur ${deleteTarget.nom} ${deleteTarget.prenom} (${deleteTarget.matricule}). Cette action est irréversible.`
             : ''
         }
         confirmText={deleting ? 'Suppression...' : 'Supprimer'}
