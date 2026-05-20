@@ -160,26 +160,37 @@ def delete_mysql_kpi_mapping(mapping_id: int):
 
 # --- GESTION DU RÉFÉRENTIEL STANDARDS ---
 
-def add_kpi_registry_item(code: str, libelle: str, univers: str, kpi_type: str = 'VIRTUAL', formule: str = None, description: str = None) -> dict:
+def add_kpi_registry_item(code: str, libelle: str, univers: str, kpi_type: str = 'VIRTUAL',
+                           formule: str = None, description: str = None,
+                           bq_kpi_codes=None, bq_aggregation: str = 'SUM') -> dict:
     """Ajoute un nouveau KPI (Natif ou Virtuel) au dictionnaire applicatif."""
     from config.db_mysql_connector import get_mysql_connection
+    import json as _json
     connection = get_mysql_connection()
     try:
+        bq_codes_json = _json.dumps(bq_kpi_codes) if isinstance(bq_kpi_codes, list) else bq_kpi_codes
         with connection.cursor() as cursor:
             sql = """
-                INSERT INTO config_kpis (code_kpi, libelle, description, univers, type, formule, is_active)
-                VALUES (%s, %s, %s, %s, %s, %s, 1)
+                INSERT INTO config_kpis
+                    (code_kpi, libelle, description, univers, type, formule, bq_kpi_codes, bq_aggregation, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1)
             """
-            cursor.execute(sql, (code.upper().strip(), libelle, description, univers, kpi_type, formule))
+            cursor.execute(sql, (
+                code.upper().strip(), libelle, description, univers, kpi_type,
+                formule, bq_codes_json, bq_aggregation or 'SUM'
+            ))
             connection.commit()
             return {"status": "success", "code": code.upper().strip()}
     finally:
         connection.close()
 
 
-def update_kpi_registry_item(code: str, libelle: str = None, description: str = None, formule: str = None, univers: str = None) -> dict:
+def update_kpi_registry_item(code: str, libelle: str = None, description: str = None,
+                              formule: str = None, univers: str = None,
+                              bq_kpi_codes=None, bq_aggregation: str = None) -> dict:
     """Met à jour les informations d'un KPI existant."""
     from config.db_mysql_connector import get_mysql_connection
+    import json as _json
     connection = get_mysql_connection()
     try:
         with connection.cursor() as cursor:
@@ -197,13 +208,19 @@ def update_kpi_registry_item(code: str, libelle: str = None, description: str = 
             if univers is not None:
                 fields.append("univers = %s")
                 params.append(univers)
-            
+            if bq_kpi_codes is not None:
+                fields.append("bq_kpi_codes = %s")
+                params.append(_json.dumps(bq_kpi_codes) if isinstance(bq_kpi_codes, list) else bq_kpi_codes)
+            if bq_aggregation is not None:
+                fields.append("bq_aggregation = %s")
+                params.append(bq_aggregation)
+
             if not fields:
                 return {"status": "no_change"}
-                
+
             sql = f"UPDATE config_kpis SET {', '.join(fields)} WHERE code_kpi = %s"
             params.append(code)
-            
+
             cursor.execute(sql, tuple(params))
             if cursor.rowcount == 0:
                 raise ValueError(f"KPI '{code}' introuvable.")
@@ -230,6 +247,7 @@ def get_all_kpis_with_status() -> list:
     """Retourne la liste des KPIs configurés (config_kpis) incluant le type et la formule."""
     from config.db_mysql_connector import get_mysql_connection
     import pymysql
+    import json as _json
 
     connection = get_mysql_connection()
     try:
@@ -242,12 +260,25 @@ def get_all_kpis_with_status() -> list:
                     univers, 
                     type,
                     formule,
+                    bq_kpi_codes,
+                    bq_aggregation,
                     is_active as actif, 
                     0 as nb_mappings 
                 FROM config_kpis 
                 ORDER BY univers, libelle
             """)
-            return cur.fetchall()
+            rows = cur.fetchall()
+        # Désérialiser bq_kpi_codes (JSON string → list)
+        for r in rows:
+            raw = r.get('bq_kpi_codes')
+            if raw and isinstance(raw, str):
+                try:
+                    r['bq_kpi_codes'] = _json.loads(raw)
+                except Exception:
+                    r['bq_kpi_codes'] = []
+            elif raw is None:
+                r['bq_kpi_codes'] = []
+        return rows
     finally:
         connection.close()
 

@@ -302,6 +302,11 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.ai-sidebar__input:disabled {
+  opacity: 1; /* Remove browser default dimming for disabled inputs */
+  background-color: transparent;
+  cursor: default;
+}
 
 .ai-sidebar__send {
   background-color: var(--color-accent);
@@ -568,5 +573,150 @@
 .ai-btn-apply-grille:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ── Simulation section in proposal card ── */
+.ai-grille-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.ai-grille-actions .ai-btn-apply-grille {
+  flex: 1;
+}
+
+.ai-btn-simulate {
+  flex: 0 0 auto;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  padding: 0.6rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ai-btn-simulate:hover {
+  background: #e5e7eb;
+}
+
+.ai-simulation-section {
+  margin-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.ai-simulation-loading,
+.ai-simulation-error {
+  font-size: 0.78rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.ai-simulation-error {
+  color: #dc2626;
+}
+
+.ai-simulation-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-simulation-header i {
+  color: var(--color-primary);
+}
+
+.ai-simulation-agent {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.ai-simulation-agent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ai-simulation-agent-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.ai-simulation-agent-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #6b7280;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.ai-simulation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  margin-bottom: 8px;
+}
+
+.ai-simulation-table th {
+  text-align: left;
+  color: #9ca3af;
+  font-weight: 700;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  padding: 3px 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ai-simulation-table td {
+  padding: 4px;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ai-simulation-table td.sim-ok { color: #16a34a; font-weight: 600; }
+.ai-simulation-table td.sim-nok { color: #dc2626; }
+.ai-simulation-table td.sim-pts { color: #d97706; font-weight: 700; }
+
+.ai-simulation-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #6b7280;
+  padding-top: 6px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.ai-simulation-prime {
+  color: #111827;
+}
+
+.ai-simulation-total strong {
+  color: #111827;
 }
 

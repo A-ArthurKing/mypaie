@@ -9,6 +9,7 @@ Module  : mypaie / backend / services / performance
 
 import logging
 import json
+import re
 import datetime
 from typing import Optional
 from google.cloud import bigquery
@@ -213,6 +214,67 @@ from tools.kpi_engine import evaluate_formula, get_kpi_registry
 # #endregion
 
 
+# #region KPI NATIVE DYNAMIQUES — chargement depuis config_kpis
+
+def _load_native_bq_kpi_definitions() -> list:
+    """
+    Charge depuis MySQL config_kpis les KPIs NATIVE PERF ayant des codes BigQuery définis.
+    Retourne une liste de dicts { code_kpi, bq_kpi_codes: [list], bq_aggregation: SUM|AVG }.
+    En cas d'erreur (MySQL indisponible), retourne une liste vide — non bloquant.
+    """
+    try:
+        import pymysql
+        from config.db_mysql_connector import get_mysql_connection
+        conn = get_mysql_connection()
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("""
+                SELECT code_kpi, bq_kpi_codes, bq_aggregation
+                FROM config_kpis
+                WHERE univers = 'PERF'
+                  AND type = 'NATIVE'
+                  AND bq_kpi_codes IS NOT NULL
+                  AND is_active = 1
+            """)
+            rows = cur.fetchall()
+        conn.close()
+
+        result = []
+        for r in rows:
+            codes_raw = r.get('bq_kpi_codes')
+            if isinstance(codes_raw, str):
+                try:
+                    codes = json.loads(codes_raw)
+                except Exception:
+                    continue
+            elif isinstance(codes_raw, list):
+                codes = codes_raw
+            else:
+                continue
+
+            # Validation de sécurité : seuls les codes alphanumériques + underscore sont acceptés
+            safe_codes = [c.lower() for c in codes if re.match(r'^[a-zA-Z0-9_]+$', str(c))]
+            if not safe_codes:
+                continue
+
+            # Le code_kpi doit aussi être alphanumérique + underscore (pour l'alias SQL)
+            code_kpi = str(r['code_kpi'])
+            if not re.match(r'^[a-zA-Z0-9_]+$', code_kpi):
+                logger.warning("code_kpi ignoré (caractères invalides) : %s", code_kpi)
+                continue
+
+            result.append({
+                'code_kpi': code_kpi,
+                'bq_codes': safe_codes,
+                'aggregation': r.get('bq_aggregation') or 'SUM',
+            })
+        return result
+    except Exception as e:
+        logger.warning("_load_native_bq_kpi_definitions: impossible de charger depuis MySQL : %s", e)
+        return []
+
+# #endregion
+
+
 def get_perf_totaux_par_matricule(
     date_debut: Optional[str],
     date_fin: Optional[str],
@@ -243,10 +305,9 @@ def get_perf_totaux_par_matricule(
         query_params.append(bigquery.ScalarQueryParameter("date_fin", "STRING", date_fin[:7]))
 
     where_str = "WHERE " + " AND ".join(where_clauses)
-    sql = f"""
-        SELECT
-            matricule,
-            -- Extraction pivotée depuis le modèle EAV (paie_performance_mensuelle)
+
+    # --- Colonnes fixes (backward compat) ---
+    fixed_columns = """
             SUM(IF(LOWER(kpi_code) IN ('net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur'), valeur_sum, 0)) AS sum_chiffre_affaire,
             SUM(IF(LOWER(kpi_code) IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0)) AS nb_ventes_total,
             SUM(IF(LOWER(kpi_code) IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0)) AS nb_appels_total,
@@ -255,7 +316,47 @@ def get_perf_totaux_par_matricule(
             SUM(IF(LOWER(kpi_code) IN ('csat_nbr', 'csat'), valeur_sum, 0)) AS sum_csat,
             SUM(IF(LOWER(kpi_code) IN ('total_csat_num', 'nb_csat'), valeur_sum, 0)) AS nb_csat_total,
             AVG(IF(LOWER(kpi_code) IN ('tx_mea'), valeur_avg, 0)) AS tx_mea_avg,
-            AVG(IF(LOWER(kpi_code) IN ('taux_conversion', 'is_converted', 'taux_conversion_calc'), valeur_avg, 0)) AS avg_taux_conversion
+            AVG(IF(LOWER(kpi_code) IN ('taux_conversion', 'is_converted', 'taux_conversion_calc'), valeur_avg, 0)) AS avg_taux_conversion"""
+
+    # --- Colonnes dynamiques depuis config_kpis (nouveaux KPIs NATIVE) ---
+    # Codes BQ déjà couverts par les colonnes fixes ci-dessus — ne pas dupliquer
+    _fixed_bq_codes = {
+        'net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur',
+        'booking_nbr', 'nb_ventes', 'in_call_nbr', 'nb_appels',
+        'in_call_min_nbr', 'temps_appel', 'agent_logged_time_min_nbr',
+        'call_worked_time_min_nbr', 'temps_production', 'csat_nbr', 'csat',
+        'total_csat_num', 'nb_csat', 'tx_mea', 'taux_conversion',
+        'is_converted', 'taux_conversion_calc',
+    }
+
+    native_kpi_defs = _load_native_bq_kpi_definitions()
+    dyn_col_parts = []
+    dyn_kpi_map = []  # list of (code_kpi, col_alias)
+
+    for kpi_def in native_kpi_defs:
+        # Filtrer les codes déjà gérés par le bloc fixe
+        new_codes = [c for c in kpi_def['bq_codes'] if c not in _fixed_bq_codes]
+        if not new_codes:
+            continue
+        codes_str = ", ".join(f"'{c}'" for c in new_codes)
+        col_alias = f"dyn_{kpi_def['code_kpi'].lower()}"
+        agg = kpi_def['aggregation']
+        if agg == 'AVG':
+            dyn_col_parts.append(
+                f"AVG(IF(LOWER(kpi_code) IN ({codes_str}), valeur_avg, NULL)) AS {col_alias}"
+            )
+        else:
+            dyn_col_parts.append(
+                f"SUM(IF(LOWER(kpi_code) IN ({codes_str}), valeur_sum, 0)) AS {col_alias}"
+            )
+        dyn_kpi_map.append((kpi_def['code_kpi'], col_alias))
+
+    dyn_sql_part = (",\n            " + ",\n            ".join(dyn_col_parts)) if dyn_col_parts else ""
+
+    sql = f"""
+        SELECT
+            matricule,
+            {fixed_columns}{dyn_sql_part}
         FROM {table_ref}
         {where_str}
         GROUP BY matricule
@@ -312,6 +413,13 @@ def get_perf_totaux_par_matricule(
             }
             # Ajouter aussi les clés minuscules par sécurité
             formula_ctx.update({k.lower(): v for k, v in formula_ctx.items()})
+
+            # --- Injection des KPIs NATIVE dynamiques dans formula_ctx + entry ---
+            # code_kpi est utilisé tel quel comme clé → getRealValue le trouve via lookup direct
+            for code_kpi, col_alias in dyn_kpi_map:
+                val = r.get(col_alias)
+                formula_ctx[code_kpi] = val
+                formula_ctx[code_kpi.lower()] = val
 
             # Fusionner les métriques brutes dans l'entrée pour les rendre disponibles au frontend
             entry.update(formula_ctx)

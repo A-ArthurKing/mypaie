@@ -27,7 +27,7 @@
 .agtb-toolbar__search-wrapper {
     position: relative;
     flex: 1;
-    min-width: 0;
+    min-width: 0;    
 }
 
 .agtb-toolbar__search-icon {
@@ -40,6 +40,10 @@
     pointer-events: none;
 }
 
+input.agtb-toolbar__search {
+    padding-left: 1rem !important;
+}
+
 .agtb-toolbar__search {
     width: 100%;
     padding: 8px 36px 8px 36px;
@@ -50,6 +54,7 @@
     outline: none;
     transition: all 0.2s;
     box-sizing: border-box;
+    padding-left: 2rem;
 }
 
 .agtb-toolbar__search:focus {

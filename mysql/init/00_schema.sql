@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS ref_employes (
     id_activite  INT UNSIGNED NULL,
     id_structure INT UNSIGNED NULL,
     actif        TINYINT(1) NOT NULL DEFAULT 1,
+    statut       VARCHAR(50) DEFAULT 'Débutant',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_emp_operation FOREIGN KEY (id_operation) REFERENCES ref_operations(id)    ON DELETE SET NULL,

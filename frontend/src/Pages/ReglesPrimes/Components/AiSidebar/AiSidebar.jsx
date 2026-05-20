@@ -3,6 +3,7 @@ import "./AiSidebar.css";
 import useApiSWR from "../../../../Shared/Hooks/useApiSWR";
 import { useToast } from "../../../../Shared/Contexts/ToastContext";
 import ConfirmationModal from "../../../../Components/ConfirmationModal/ConfirmationModal";
+import { calculateKpiResults, calculateAssiduite, calculateMontantFinal } from '../../SubPages/RegleDetail/Onglets/TableauDeBordOnglet/Helpers/KpiCalculatorHelper';
 
 // Compteur global pour garantir des IDs de message uniques (évite les doublons Date.now())
 let _msgIdCounter = 0;
@@ -34,7 +35,17 @@ function parseInline(text, baseKey = 0) {
   return parts;
 }
 
-function MarkdownMessage({ text, onActionClick }) {
+function getPreviousMonthRange() {
+  const now = new Date();
+  const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const month = now.getMonth() === 0 ? 12 : now.getMonth();
+  const lastDay = new Date(year, month, 0).getDate();
+  const monthStr = String(month).padStart(2, '0');
+  const label = new Date(year, month - 1, 1).toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+  return { debut: `${year}-${monthStr}-01`, fin: `${year}-${monthStr}-${lastDay}`, label };
+}
+
+function MarkdownMessage({ text, onActionClick, simulation }) {
   if (!text) return null;
   const lines = text.split('\n');
   const elements = [];
@@ -63,23 +74,88 @@ function MarkdownMessage({ text, onActionClick }) {
       if (inCodeBlock) {
         // End of code block
         const fullCode = codeBlockContent.join('\n');
-        if (codeBlockType.trim() === 'json_grille_proposal') {
+        if (codeBlockType.trim() === 'json_grille_proposal' || codeBlockType.trim() === 'json_grille_applied') {
+          const isApplied = codeBlockType.trim() === 'json_grille_applied';
           try {
             const proposal = JSON.parse(fullCode);
             elements.push(
-              <div key={keyIdx++} className="ai-grille-proposal">
+              <div key={keyIdx++} className={`ai-grille-proposal ${isApplied ? 'applied' : ''}`}>
                 <div className="ai-grille-proposal-title">
-                  <i className="fa-solid fa-file-invoice"></i> Proposition de Grille
+                  <i className={`fa-solid ${isApplied ? 'fa-check-circle' : 'fa-file-invoice'}`}></i> {isApplied ? 'Grille Appliquée' : 'Proposition de Grille'}
                 </div>
                 <div className="ai-grille-proposal-body">
                   <strong>{proposal.grille_nom || proposal.nom || "Nouvelle Grille"}</strong>
-                  <p>Cliquez ci-dessous pour valider et appliquer cette configuration.</p>
-                  <button 
-                    className="ai-btn-apply-grille"
-                    onClick={() => onActionClick('create_grille', proposal)}
-                  >
-                    Valider et Créer la règle
-                  </button>
+                  {isApplied ? (
+                    <p className="ai-grille-proposal-status"><i className="fa-solid fa-check"></i> Cette configuration a été validée et appliquée.</p>
+                  ) : (
+                    <>
+                      <p>Cliquez ci-dessous pour valider et appliquer cette configuration.</p>
+                      <div className="ai-grille-actions">
+                        <button 
+                          className="ai-btn-apply-grille"
+                          onClick={() => onActionClick('create_grille', proposal)}
+                        >
+                          Valider et Créer la règle
+                        </button>
+                        {!simulation && (
+                          <button
+                            className="ai-btn-simulate"
+                            onClick={() => onActionClick('request_simulation', proposal)}
+                            type="button"
+                          >
+                            <i className="fa-solid fa-flask-vial"></i> Simuler
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {simulation && (
+                    <div className="ai-simulation-section">
+                      {simulation.loading ? (
+                        <div className="ai-simulation-loading">
+                          <i className="fa-solid fa-spinner fa-spin"></i> Simulation en cours sur le mois précédent...
+                        </div>
+                      ) : simulation.error ? (
+                        <div className="ai-simulation-error">
+                          <i className="fa-solid fa-triangle-exclamation"></i> {simulation.error}
+                        </div>
+                      ) : simulation.agents && simulation.agents.length > 0 ? (
+                        <>
+                          <div className="ai-simulation-header">
+                            <i className="fa-solid fa-flask-vial"></i> Simulation — <em>{simulation.mois}</em>
+                          </div>
+                          {simulation.agents.map(agent => (
+                            <div key={agent.matricule} className="ai-simulation-agent">
+                              <div className="ai-simulation-agent-header">
+                                <span className="ai-simulation-agent-name">{agent.nom}</span>
+                                <span className="ai-simulation-agent-badge">{agent.statut}</span>
+                              </div>
+                              <table className="ai-simulation-table">
+                                <thead>
+                                  <tr><th>KPI</th><th>Réel</th><th>Obj.</th><th>Att.</th><th>Pts</th></tr>
+                                </thead>
+                                <tbody>
+                                  {(agent.kpiResults.kpis || []).map((k, i) => (
+                                    <tr key={i}>
+                                      <td title={k.nom}>{k.nom?.length > 18 ? k.nom.substring(0, 18) + '…' : k.nom}</td>
+                                      <td>{k.reel != null ? (typeof k.reel === 'number' ? (k.reel % 1 === 0 ? k.reel : k.reel.toFixed(1)) : k.reel) : '—'}</td>
+                                      <td>{k.objectif != null ? k.objectif : '—'}</td>
+                                      <td className={k.taux_atteinte != null ? (k.taux_atteinte >= 1 ? 'sim-ok' : 'sim-nok') : ''}>{k.taux_atteinte != null ? Math.round(k.taux_atteinte * 100) + '%' : '—'}</td>
+                                      <td className={k.points_gagnes > 0 ? 'sim-pts' : ''}>{k.points_gagnes ?? 0}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                              <div className="ai-simulation-total">
+                                <span>Score : <strong>{agent.kpiResults.total_points} pts</strong></span>
+                                <span className="ai-simulation-prime">Prime : <strong>{agent.totalPrime.toLocaleString('fr-FR')} DH</strong></span>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -156,6 +232,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState(null);
+  const [proposalSimulations, setProposalSimulations] = useState({});
 
   // Charger la liste des conversations (Historique)
   const { data: conversations = [], revalidate: refreshHistory } = useApiSWR(
@@ -247,6 +324,50 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
         }]);
       } finally {
         setIsLoading(false);
+      }
+    } else if (actionType === 'request_simulation') {
+      const grilleConfig = payload;
+      setProposalSimulations(prev => ({ ...prev, [msgId]: { loading: true, agents: null, error: null } }));
+      try {
+        const agentsRes = await authFetch(`/api/regles/${regleId}/agents`);
+        const agentsData = await agentsRes.json();
+        const sampleAgents = (agentsData.data || []).slice(0, 2);
+        if (sampleAgents.length === 0) {
+          setProposalSimulations(prev => ({ ...prev, [msgId]: { loading: false, agents: [], error: "Aucun agent rattaché à cette règle.", mois: '' } }));
+          return;
+        }
+        const prevMonth = getPreviousMonthRange();
+        const matricules = sampleAgents.map(a => a.matricule).filter(Boolean).join(',');
+        const kpiRes = await authFetch(`/api/regles/${regleId}/calcul?date_debut=${prevMonth.debut}&date_fin=${prevMonth.fin}&matricules=${matricules}`);
+        const kpiData = await kpiRes.json();
+        const unifiedMap = kpiData.data || {};
+        const fakeRegle = { grille_objectifs: grilleConfig };
+        const fakeLocalData = {};
+        sampleAgents.forEach(a => {
+          fakeLocalData[a.matricule] = {
+            statut: a.statut || grilleConfig.statuts?.[0]?.nom || 'Confirmé',
+            sanction: 'Non',
+            abs_injust: 0, retards: 0, abs_just: 0, cp_css: 0
+          };
+        });
+        const agentResults = sampleAgents.map(agent => {
+          const d = fakeLocalData[agent.matricule];
+          const kpiResults = calculateKpiResults(agent.matricule, d.statut, 'Non', fakeRegle, unifiedMap, {});
+          const assiduite = calculateAssiduite(agent.matricule, fakeLocalData, fakeRegle);
+          const montant = calculateMontantFinal(agent.matricule, d.statut, 'Non', kpiResults, assiduite, fakeLocalData, fakeRegle, unifiedMap);
+          return {
+            matricule: agent.matricule,
+            nom: `${agent.prenom || ''} ${agent.nom || ''}`.trim() || agent.matricule,
+            statut: d.statut,
+            kpiResults,
+            assiduite,
+            montant,
+            totalPrime: (montant.prime || 0) + (montant.super_bonus || 0)
+          };
+        });
+        setProposalSimulations(prev => ({ ...prev, [msgId]: { loading: false, agents: agentResults, error: null, mois: prevMonth.label } }));
+      } catch (err) {
+        setProposalSimulations(prev => ({ ...prev, [msgId]: { loading: false, agents: null, error: `Erreur : ${err.message}` } }));
       }
     }
   };
@@ -499,7 +620,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
                       <i className="fa-solid fa-ellipsis fa-fade"></i>
                     </div>
                   ) : msg.sender === 'bot' ? (
-                    <MarkdownMessage text={msg.text} msgId={msg.id} onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} />
+                    <MarkdownMessage text={msg.text} msgId={msg.id} onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} simulation={proposalSimulations[msg.id]} />
                   ) : (
                     msg.text
                   )}

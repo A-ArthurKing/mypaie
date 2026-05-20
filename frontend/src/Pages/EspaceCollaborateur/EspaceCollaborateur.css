@@ -1,0 +1,82 @@
+/* ════════════════════════════════════════════════════════
+   EspaceCollaborateur.css
+   Layout principal de l'espace collaborateur
+   ════════════════════════════════════════════════════════ */
+
+/* ── Container principal ── */
+.ec-page {
+  min-height: 100vh;
+  background-color: var(--color-bg-app);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Zone de contenu ── */
+.ec-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1300px; /* Plus large pour la grille Bento */
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── États de la page ── */
+.ec-error {
+  background-color: rgba(220, 53, 69, 0.05);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: var(--color-danger);
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.ec-error i {
+  margin-top: 0.15rem;
+  font-size: 1.1rem;
+}
+
+.ec-empty-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.ec-empty-state i {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 1.1rem;
+}
+
+.ec-empty-state p {
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .ec-main {
+    padding: 1.5rem 1rem;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ec-main {
+    padding: 1rem 0.75rem;
+    gap: 1rem;
+  }
+}

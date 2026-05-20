@@ -2,7 +2,9 @@
 Fichier : universal_performance_etl.py
 Rôle : Moteur ETL Performance (Silver & Gold) piloté par métadonnées.
 """
-import os, json, logging
+import os, sys, json, logging
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from datetime import datetime
 from google.cloud import bigquery
 from dotenv import load_dotenv
@@ -48,16 +50,6 @@ def setup():
     client.query(DDL_SILVER).result()
     udf = f"CREATE OR REPLACE FUNCTION `{PROJECT_ID}.{DATASET_PAIE}.deplier_json`(json_str STRING) RETURNS ARRAY<STRUCT<kpi_nom STRING, kpi_valeur FLOAT64>> LANGUAGE js AS 'try {{ if (!json_str) return []; const obj = JSON.parse(json_str); return Object.keys(obj).map(key => ({{ kpi_nom: key, kpi_valeur: parseFloat(obj[key]) }})); }} catch (e) {{ return []; }}';"
     client.query(udf).result()
-
-def seed():
-    # Insert PERFORMANCE seeds if they don't exist
-    if list(client.query(f"SELECT COUNT(*) as c FROM {TABLE_CONFIG} WHERE univers = 'PERFORMANCE'").result())[0]["c"] == 0:
-        client.query(f"""
-        INSERT INTO {TABLE_CONFIG} (id, univers, projet_nom, table_source, type_structure, colonne_cle_json, colonne_matricule, colonne_date)
-        VALUES 
-            (1, 'PERFORMANCE', 'PVCP_PERFORMANCE', 'dataset_pvcp.pvcp_data_outils_client_performance', 'JSON', 'METRICS', 'MATRICULE', 'date_importation'),
-            (2, 'PERFORMANCE', 'VENUM_PERFORMANCE', 'dataset_venum.venum_data_outils_client_performance', 'JSON', 'METRICS', 'MATRICULE', 'IMPORT_DATETIME')
-        """).result()
 
 def get_kpi_aliases_sql():
     try:
@@ -108,7 +100,16 @@ def run():
             else:
                 kpi_code_sql = "u.kpi_nom"
 
-            sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, u.kpi_valeur as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_matricule} IS NOT NULL"
+            base_sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, u.kpi_valeur as kpi_value FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_matricule} IS NOT NULL"
+            
+            # Agréger par jour au cas où il y aurait plusieurs évaluations le même jour 
+            # pour éviter l'erreur "MERGE must match at most one source row for each target row"
+            sql = f"""
+                SELECT matricule, date_ref, projet, kpi_code, SUM(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at
+                FROM ({base_sql})
+                WHERE kpi_code IS NOT NULL
+                GROUP BY matricule, date_ref, projet, kpi_code
+            """
         else:
             continue
         client.query(f"MERGE {TABLE_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
@@ -120,6 +121,5 @@ def gold():
 
 if __name__ == "__main__":
     setup()
-    seed()
     run()
     gold()

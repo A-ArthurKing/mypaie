@@ -20,6 +20,7 @@ from modules.parametres.routes import parametres_bp
 from modules.agents.routes import agents_bp
 from modules.auth.routes import auth_bp
 from modules.users.routes import users_bp
+from modules.collaborateur.routes import collaborateur_bp
 # #endregion
 
 # #region CONFIGURATION
@@ -50,6 +51,7 @@ app.register_blueprint(parametres_bp)
 app.register_blueprint(agents_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
+app.register_blueprint(collaborateur_bp)
 # #endregion
 
 

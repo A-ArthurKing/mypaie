@@ -1,0 +1,148 @@
+/* ── EcHeaderBar.css ── */
+
+.ec-header-bar {
+  background-color: var(--color-bg-sidebar);
+  height: 60px;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ── Brand ── */
+.ec-header-bar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.ec-header-bar__logo {
+  font-size: 1.35rem;
+  font-weight: var(--weight-bold);
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.ec-header-bar__logo-accent {
+  color: var(--color-accent);
+}
+
+.ec-header-bar__label {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  padding-left: 0.75rem;
+  white-space: nowrap;
+}
+
+/* ── Actions ── */
+.ec-header-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ec-header-bar__user {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: 0.35rem 0.6rem;
+}
+
+.ec-header-bar__user i {
+  color: var(--color-accent);
+  font-size: 1rem;
+}
+
+/* ── Buttons ── */
+.ec-header-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ec-header-bar__btn--refresh {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.ec-header-bar__btn--refresh:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.ec-header-bar__btn--refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ec-header-bar__btn--refresh.spinning i {
+  animation: ec-spin 0.7s linear infinite;
+}
+
+@keyframes ec-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ec-header-bar__btn--logout {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ec-header-bar__btn--logout:hover {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.5);
+  color: #ff6b7a;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .ec-header-bar {
+    height: auto;
+    padding: 0.6rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ec-header-bar__label {
+    display: none;
+  }
+
+  .ec-header-bar__user .ec-header-bar__username {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ec-header-bar__btn-label {
+    display: none;
+  }
+
+  .ec-header-bar__btn {
+    padding: 0.4rem 0.6rem;
+  }
+}

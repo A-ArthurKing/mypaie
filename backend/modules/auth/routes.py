@@ -60,6 +60,62 @@ def login():
     finally:
         conn.close()
 
+@auth_bp.route('/api/auth/login-collaborateur', methods=['POST'])
+def login_collaborateur():
+    data = request.json
+    if not data or 'nom' not in data or 'prenom' not in data:
+        return jsonify({"error": "Nom et prénom requis"}), 400
+
+    nom = (data['nom'] or '').strip()
+    prenom = (data['prenom'] or '').strip()
+
+    if not nom or not prenom:
+        return jsonify({"error": "Nom et prénom requis"}), 400
+
+    conn = get_mysql_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT id, matricule, nom, prenom, id_structure, id_statut
+                   FROM ref_employes
+                   WHERE LOWER(nom) = LOWER(%s) AND LOWER(prenom) = LOWER(%s) AND actif = 1
+                   LIMIT 1""",
+                (nom, prenom)
+            )
+            employe = cur.fetchone()
+
+            if not employe:
+                return jsonify({"error": "Collaborateur non trouvé"}), 401
+
+            payload = {
+                'user_id': f"c_{employe['id']}",
+                'matricule': employe['matricule'],
+                'nom': employe['nom'],
+                'prenom': employe['prenom'],
+                'role': 'Collaborateur',
+                'id_structure': employe['id_structure'],
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
+            }
+
+            token = jwt.encode(payload, JWT_SECRET, algorithm='HS256')
+
+            return jsonify({
+                "token": token,
+                "user": {
+                    "user_id": payload['user_id'],
+                    "matricule": employe['matricule'],
+                    "nom": employe['nom'],
+                    "prenom": employe['prenom'],
+                    "role": "Collaborateur",
+                    "id_structure": employe['id_structure']
+                }
+            })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
 @auth_bp.route('/api/auth/me', methods=['GET'])
 def get_me():
     auth_header = request.headers.get('Authorization')

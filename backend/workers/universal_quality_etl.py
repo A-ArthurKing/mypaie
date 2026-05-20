@@ -104,18 +104,6 @@ def setup():
     client.query(DDL_CONFIG).result()
     client.query(DDL_SILVER).result()
 
-def seed():
-    if list(client.query(f"SELECT COUNT(*) as c FROM {TABLE_CONFIG} WHERE univers = 'QUALITE'").result())[0]["c"] == 0:
-        client.query(f"""
-        INSERT INTO {TABLE_CONFIG} (id, univers, projet_nom, table_source, type_structure, colonne_cle_json, colonne_kpi_code, colonne_kpi_value, colonne_matricule, colonne_agent_fallback, colonne_date)
-        VALUES 
-            (3, 'QUALITE', 'PVCP_GE', 'dataset_pvcp.pvcp_data_outils_client_qualite_ge', 'JSON', 'METRICS', NULL, NULL, 'MATRICULE', 'Nom_de_l_agent', 'Date_Evaluation'),
-            (4, 'QUALITE', 'PVCP_FR', 'dataset_pvcp.pvcp_data_outils_client_qualite_fr', 'JSON', 'METRICS', NULL, NULL, 'MATRICULE', 'Nom_de_l_agent', 'Date_Evaluation'),
-            (5, 'QUALITE', 'PVCP_BE', 'dataset_pvcp.pvcp_data_outils_client_qualite_be', 'JSON', 'METRICS', NULL, NULL, 'MATRICULE', 'Nom_de_l_agent', 'Date_Evaluation'),
-            (6, 'QUALITE', 'VENUM', 'dataset_venum.venum_data_outil_evalPlus_qualite', 'TALL', NULL, 'Sous_Item', 'Note_Sous_Item', NULL, 'Agent', 'Date_Evaluation'),
-            (7, 'QUALITE', 'BATISANTE', 'dataset_batisante.batisante_data_outil_evalPlus_qualite', 'TALL', NULL, 'Sous_Item', 'Note_Sous_Item', NULL, 'Agent', 'Date_Evaluation')
-        """).result()
-
 def run():
     sources = list(client.query(f"SELECT * FROM {TABLE_CONFIG} WHERE is_active = TRUE AND univers = 'QUALITE'").result())
     for src in sources:
@@ -125,24 +113,32 @@ def run():
         if src.type_structure == "JSON":
             kpi_code_sql  = _kpi_code_expr("u.kpi_nom", projet)
             kpi_value_sql = _kpi_value_expr("u.kpi_valeur", projet)
-            sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
+            base_sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
                    f" '{projet}' as projet,"
                    f" ({kpi_code_sql}) as kpi_code,"
-                   f" ({kpi_value_sql}) as kpi_value,"
-                   f" CURRENT_TIMESTAMP() as processed_at"
+                   f" ({kpi_value_sql}) as kpi_value"
                    f" FROM `{PROJECT_ID}.{src.table_source}`,"
                    f" UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u"
                    f" WHERE {src.colonne_agent_fallback} IS NOT NULL")
         else:
             kpi_code_sql  = _kpi_code_expr(src.colonne_kpi_code, projet)
             kpi_value_sql = _kpi_value_expr(src.colonne_kpi_value, projet)
-            sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
+            base_sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
                    f" '{projet}' as projet,"
                    f" ({kpi_code_sql}) as kpi_code,"
-                   f" ({kpi_value_sql}) as kpi_value,"
-                   f" CURRENT_TIMESTAMP() as processed_at"
+                   f" ({kpi_value_sql}) as kpi_value"
                    f" FROM `{PROJECT_ID}.{src.table_source}`"
                    f" WHERE {src.colonne_agent_fallback} IS NOT NULL")
+                   
+        # Agréger par jour au cas où il y aurait plusieurs évaluations le même jour 
+        # pour éviter l'erreur "MERGE must match at most one source row for each target row"
+        sql = f"""
+            SELECT matricule, date_ref, projet, kpi_code, AVG(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at
+            FROM ({base_sql})
+            WHERE kpi_code IS NOT NULL
+            GROUP BY matricule, date_ref, projet, kpi_code
+        """
+        
         client.query(f"MERGE {TABLE_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
 
 def gold():
@@ -152,6 +148,5 @@ def gold():
 
 if __name__ == "__main__":
     setup()
-    seed()
     run()
     gold()

@@ -28,7 +28,8 @@ export default function KpiModal({
   setAliasFormData,
   handleAliasSubmit,
   handleAliasDelete,
-  unmappedCodes = []
+  unmappedCodes = [],
+  editInitialBuilderState = null
 }) {
   const [virtualMode, setVirtualMode] = useState('ASSISTED');
   const [builderProject, setBuilderProject] = useState('');
@@ -38,6 +39,44 @@ export default function KpiModal({
   const [builderUnivers, setBuilderUnivers] = useState('');
   const [builderSearch, setBuilderSearch] = useState('');
   const [builderOperation, setBuilderOperation] = useState('SUM');
+  const [helpSearch, setHelpSearch] = useState('');
+
+  // Initialize builder state when opening modal
+  useEffect(() => {
+    if (showModal) {
+      if (editInitialBuilderState) {
+        setVirtualMode(editInitialBuilderState.virtualMode || 'ASSISTED');
+        setBuilderSelected(editInitialBuilderState.builderSelected || []);
+        setBuilderMaxScore(editInitialBuilderState.builderMaxScore || '');
+        setBuilderOperation(editInitialBuilderState.builderOperation || 'SUM');
+        
+        // Try to guess the universe/project based on the first KPI
+        if (editInitialBuilderState.builderSelected && editInitialBuilderState.builderSelected.length > 0) {
+           const firstKpi = editInitialBuilderState.builderSelected[0];
+           const matchInfo = rawBqCodes?.find(r => r.kpi_code === firstKpi);
+           if (matchInfo) {
+              setBuilderUnivers(matchInfo.univers);
+              setBuilderProject(`proj:${matchInfo.projet}|${matchInfo.univers}`);
+           } else {
+              setBuilderUnivers('');
+              setBuilderProject('');
+           }
+        } else {
+           setBuilderUnivers('');
+           setBuilderProject('');
+        }
+      } else {
+        setVirtualMode('ASSISTED');
+        setBuilderUnivers('');
+        setBuilderProject('');
+        setBuilderSelected([]);
+        setBuilderMaxScore('');
+        setBuilderOperation('SUM');
+        setBuilderSearch('');
+        setHelpSearch('');
+      }
+    }
+  }, [showModal, editInitialBuilderState, rawBqCodes]);
 
   const uniqueProjectsByUnivers = useMemo(() => {
     if (!rawBqCodes) return {};
@@ -193,6 +232,52 @@ export default function KpiModal({
                     isDisabled={!!editingKpi}
                     noOptionsMessage={() => "Aucun code trouvé dans cet univers"}
                   />
+                </div>
+
+                <div className="kr-form-group">
+                  <label>
+                    Codes BigQuery acceptés
+                    <span className="kr-form-badge">Pipeline de données</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(formData.bq_kpi_codes) ? formData.bq_kpi_codes.join(', ') : (formData.bq_kpi_codes || '')}
+                    onChange={e => {
+                      const raw = e.target.value
+                      const arr = raw.split(',').map(s => s.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')).filter(Boolean)
+                      setFormData({ ...formData, bq_kpi_codes: arr })
+                    }}
+                    placeholder="ex: booking_nbr, nb_ventes, reservation_nbr"
+                  />
+                  <small className="kr-form-help">
+                    <i className="fa-solid fa-circle-info" /> Codes <code>kpi_code</code> tels qu'ils existent dans BigQuery, séparés par des virgules. Ce KPI sera automatiquement inclus dans le pivot SQL.
+                  </small>
+                </div>
+
+                <div className="kr-form-group">
+                  <label>Agrégation BigQuery</label>
+                  <div className="kr-radio-group">
+                    <label className="kr-radio-option">
+                      <input
+                        type="radio"
+                        name="bq_aggregation"
+                        value="SUM"
+                        checked={(formData.bq_aggregation || 'SUM') === 'SUM'}
+                        onChange={() => setFormData({ ...formData, bq_aggregation: 'SUM' })}
+                      />
+                      <span><strong>SUM</strong> — Somme des valeurs sur la période</span>
+                    </label>
+                    <label className="kr-radio-option">
+                      <input
+                        type="radio"
+                        name="bq_aggregation"
+                        value="AVG"
+                        checked={formData.bq_aggregation === 'AVG'}
+                        onChange={() => setFormData({ ...formData, bq_aggregation: 'AVG' })}
+                      />
+                      <span><strong>AVG</strong> — Moyenne sur la période</span>
+                    </label>
+                  </div>
                 </div>
               </>
             )}
@@ -471,9 +556,42 @@ export default function KpiModal({
                 <i className="fa-solid fa-layer-group" />
                 <span>{activeTab === 'VIRTUAL' ? 'Briques Disponibles' : 'Indicateurs existants'}</span>
               </div>
+              <div className="kr-help-search-wrapper">
+                <i className="fa-solid fa-magnifying-glass"></i>
+                <input 
+                  type="text" 
+                  className="kr-input kr-help-search"
+                  placeholder="Rechercher..."
+                  value={helpSearch}
+                  onChange={e => setHelpSearch(e.target.value)}
+                />
+                {helpSearch && (
+                  <button className="kr-help-search-clear" type="button" onClick={() => setHelpSearch('')}>
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                )}
+              </div>
               <div className="kr-help-list">
                 {Object.entries(UNIVERS_LABELS).map(([univ, label]) => {
-                  const items = kpis.filter(k => k.univers === univ && k.code !== formData.code);
+                  // Mêler KPIs normalisés et codes bruts BQ de cet univers
+                  const officialItems = kpis.filter(k => k.univers === univ && k.code !== formData.code);
+                  
+                  // Extraire les codes BQ uniques de cet univers qui ne sont pas déjà dans la liste des KPIs officiels
+                  const officialCodeSet = new Set(officialItems.map(k => k.code.toLowerCase()));
+                  const rawItems = (rawBqCodes || [])
+                    .filter(r => r.univers === univ)
+                    .map(r => r.kpi_code)
+                    .filter(code => !officialCodeSet.has(code.toLowerCase()))
+                    .filter((value, index, self) => self.indexOf(value) === index) // deduplicate
+                    .map(code => ({ code, libelle: `Source BQ brute (${univ})`, type: 'RAW' }));
+                  
+                  const items = [...officialItems, ...rawItems]
+                    .sort((a, b) => a.code.localeCompare(b.code))
+                    .filter(item => 
+                       item.code.toLowerCase().includes(helpSearch.toLowerCase()) || 
+                       item.libelle.toLowerCase().includes(helpSearch.toLowerCase())
+                    );
+
                   if (items.length === 0) return null;
                   return (
                     <React.Fragment key={univ}>
@@ -488,7 +606,7 @@ export default function KpiModal({
                           type="button"
                         >
                           <span className="kr-help-item__code">{k.code}</span>
-                          <span className="kr-help-item__type">{k.type === 'VIRTUAL' ? 'V' : 'N'}</span>
+                          <span className="kr-help-item__type">{k.type === 'VIRTUAL' ? 'V' : k.type === 'RAW' ? 'BQ' : 'N'}</span>
                         </button>
                       ))}
                     </React.Fragment>
@@ -506,8 +624,17 @@ export default function KpiModal({
                     ))}
                     <button 
                       type="button" 
-                      onClick={() => setFormData(p => ({...p, formule: (p.formule || '').slice(0, -1)}))}
-                      title="Effacer le dernier caractère"
+                      onClick={() => setFormData(p => {
+                        const f = p.formule || '';
+                        if (f.endsWith(']')) {
+                           const lastOpenIndex = f.lastIndexOf('[');
+                           if (lastOpenIndex !== -1) {
+                              return {...p, formule: f.slice(0, lastOpenIndex)};
+                           }
+                        }
+                        return {...p, formule: f.slice(0, -1)};
+                      })}
+                      title="Effacer le dernier élément"
                       className="kr-op-backspace"
                     >
                       <i className="fa-solid fa-delete-left"></i>

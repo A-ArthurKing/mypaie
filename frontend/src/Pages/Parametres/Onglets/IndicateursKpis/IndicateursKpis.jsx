@@ -59,7 +59,7 @@ export default function IndicateursKpis() {
   const [showModal, setShowModal] = useState(false)
   const [activeTab, setActiveTab] = useState('NORMALIZATION')
   const [editingKpi, setEditingKpi] = useState(null)
-  const [formData, setFormData] = useState({ code: '', libelle: '', description: '', univers: 'PERF', type: 'NATIVE', formule: '' })
+  const [formData, setFormData] = useState({ code: '', libelle: '', description: '', univers: 'PERF', type: 'NATIVE', formule: '', bq_kpi_codes: [], bq_aggregation: 'SUM' })
   const [submitting, setSubmitting] = useState(false)
   const [modalUniversFilter, setModalUniversFilter] = useState('ALL')
   const [isAiSuggesting, setIsAiSuggesting] = useState(false)
@@ -156,21 +156,90 @@ export default function IndicateursKpis() {
     }
   }
 
-  const handleOpenAdd = (type = 'NATIVE') => {
-    setEditingKpi(null)
-    setActiveTab(type === 'VIRTUAL' ? 'VIRTUAL' : 'NORMALIZATION')
-    setModalUniversFilter('ALL')
-    setAiLastSuggestion(null)
-    setFormData({ code: '', libelle: '', description: '', univers: 'PERF', type: type, formule: '' })
-    setShowModal(true)
-  }
+  const [editInitialBuilderState, setEditInitialBuilderState] = useState(null)
 
   const handleOpenEdit = (k) => {
     setEditingKpi(k)
     setActiveTab(k.type === 'VIRTUAL' ? 'VIRTUAL' : 'NORMALIZATION')
     setModalUniversFilter(k.univers)
     setAiLastSuggestion(null)
-    setFormData({ code: k.code, libelle: k.libelle, description: k.description || '', univers: k.univers, type: k.type, formule: k.formule || '' })
+    setFormData({ code: k.code, libelle: k.libelle, description: k.description || '', univers: k.univers, type: k.type, formule: k.formule || '', bq_kpi_codes: k.bq_kpi_codes || [], bq_aggregation: k.bq_aggregation || 'SUM' })
+    
+    // Parse formula for ASSISTED mode if possible
+    if (k.type === 'VIRTUAL' && k.formule) {
+      let isAssisted = true;
+      let f = k.formule.trim();
+      let maxScore = '';
+      let operation = 'SUM';
+      
+      if (f.startsWith('((') && f.endsWith(') * 100')) {
+        const parts = f.split(') / ');
+        if (parts.length >= 2) {
+          const lastPart = parts[parts.length - 1];
+          const maxMatch = lastPart.match(/^([\d.]+)\)\s*\*\s*100$/);
+          if (maxMatch) {
+            maxScore = maxMatch[1];
+            f = f.substring(2, f.lastIndexOf(') / '));
+          } else {
+             isAssisted = false;
+          }
+        } else {
+          isAssisted = false;
+        }
+      }
+
+      if (isAssisted && f.startsWith('(') && f.includes(') / ')) {
+         const parts = f.split(') / ');
+         const nbMatch = parts[parts.length -1].match(/^(\d+)$/);
+         if (nbMatch) {
+            operation = 'AVG';
+            f = f.substring(1, f.lastIndexOf(') / '));
+         } else {
+            if (f.startsWith('(') && f.endsWith(')')) f = f.substring(1, f.length - 1);
+         }
+      } else if (isAssisted) {
+         if (f.startsWith('(') && f.endsWith(')')) f = f.substring(1, f.length - 1);
+      }
+
+      let selectedKpis = [];
+      if (isAssisted && f.length > 0) {
+        const tokens = f.split('+').map(t => t.trim());
+        const allBrackets = tokens.every(t => t.startsWith('[') && t.endsWith(']'));
+        if (allBrackets) {
+           selectedKpis = tokens.map(t => t.slice(1, -1));
+        } else {
+           isAssisted = false;
+        }
+      } else {
+         isAssisted = false;
+      }
+
+      if (isAssisted && selectedKpis.length > 0) {
+        setEditInitialBuilderState({
+          virtualMode: 'ASSISTED',
+          builderSelected: selectedKpis,
+          builderMaxScore: maxScore,
+          builderOperation: operation,
+          builderUnivers: '',
+          builderProject: ''
+        });
+      } else {
+        setEditInitialBuilderState({ virtualMode: 'MANUAL' });
+      }
+    } else {
+      setEditInitialBuilderState(null);
+    }
+
+    setShowModal(true)
+  }
+
+  const handleOpenAdd = (type = 'NATIVE') => {
+    setEditingKpi(null)
+    setActiveTab(type === 'VIRTUAL' ? 'VIRTUAL' : 'NORMALIZATION')
+    setModalUniversFilter('ALL')
+    setAiLastSuggestion(null)
+    setFormData({ code: '', libelle: '', description: '', univers: 'PERF', type: type, formule: '', bq_kpi_codes: [], bq_aggregation: 'SUM' })
+    setEditInitialBuilderState(null);
     setShowModal(true)
   }
 
@@ -378,6 +447,7 @@ export default function IndicateursKpis() {
         handleAliasSubmit={handleAliasSubmit}
         handleAliasDelete={handleDeleteAliasRequest}
         unmappedCodes={unmappedCodes}
+        editInitialBuilderState={editInitialBuilderState}
       />
 
       <ConfirmationModal

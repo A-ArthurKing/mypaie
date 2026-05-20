@@ -187,6 +187,66 @@
     line-height: 1.4;
 }
 
+.kr-form-help code {
+    font-family: var(--font-mono);
+    background: var(--color-bg-subtle, #f1f5f9);
+    padding: 0 3px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+}
+
+.kr-form-badge {
+    margin-left: 6px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--color-success, #16a34a);
+    background: #dcfce7;
+    padding: 1px 5px;
+    border-radius: var(--radius-xs);
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+
+/* ── Radio group BQ aggregation ───────────────────────────────────── */
+.kr-radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.kr-radio-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xs);
+    font-size: var(--text-sm);
+    background: var(--color-surface);
+    transition: all 0.15s;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: var(--color-text-primary);
+}
+
+.kr-radio-option:has(input:checked) {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+}
+
+.kr-radio-option input[type="radio"] {
+    accent-color: var(--color-accent);
+    width: 14px;
+    height: 14px;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    flex-shrink: 0;
+}
+
 .kr-ai-tag {
     margin-left: 6px;
     font-size: 0.6rem;
@@ -435,6 +495,43 @@
     text-transform: uppercase;
     color: var(--color-text-secondary);
     letter-spacing: 0.04em;
+    padding: 12px 12px 8px;
+}
+
+.kr-help-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 12px 10px;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.kr-help-search-wrapper i.fa-magnifying-glass {
+    position: absolute;
+    left: 20px;
+    color: var(--color-text-disabled);
+    font-size: 0.8rem;
+}
+
+.kr-help-search {
+    padding-left: 28px !important;
+    width: 100%;
+    background: white !important;
+}
+
+.kr-help-search-clear {
+    position: absolute;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px;
+}
+
+.kr-help-search-clear:hover {
+    color: var(--color-error);
 }
 
 .kr-help-header i { color: var(--color-accent); }
@@ -445,7 +542,7 @@
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding-right: 4px;
+    padding: 8px 4px 12px 12px;
 }
 
 .kr-help-section-title {

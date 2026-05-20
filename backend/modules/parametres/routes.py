@@ -189,7 +189,9 @@ def endpoint_add_kpi_registry():
             code, libelle, univers,
             kpi_type=data.get("type", "VIRTUAL"),
             formule=data.get("formule"),
-            description=data.get("description")
+            description=data.get("description"),
+            bq_kpi_codes=data.get("bq_kpi_codes"),
+            bq_aggregation=data.get("bq_aggregation", "SUM")
         )
         invalidate_references_cache()
         emit_update("kpi_registry_updated")
@@ -224,7 +226,9 @@ def endpoint_update_kpi_registry(code):
             libelle=data.get("libelle"),
             description=data.get("description"),
             formule=data.get("formule"),
-            univers=data.get("univers")
+            univers=data.get("univers"),
+            bq_kpi_codes=data.get("bq_kpi_codes"),
+            bq_aggregation=data.get("bq_aggregation")
         )
         invalidate_references_cache()
         emit_update("kpi_registry_updated")

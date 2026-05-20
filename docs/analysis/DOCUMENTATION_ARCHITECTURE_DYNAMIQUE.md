@@ -1,124 +1,99 @@
-# Documentation Architecture Data : Vers un Modèle Dynamique et Élastique
+# Documentation Architecturale : Moteur de Primes Dynamique et Data-Driven
 
-## 1. Schéma Global de l'Architecture
+## Introduction : Objectifs et Philosophie de l'Architecture
 
-```text
-+------------------------+      +-------------------------+      +------------------------+
-|   Tables Sources BQ    | ---> |     ETL Générique       | ---> | Table Cible Unique BQ  |
-| (JSON/Vues standards)  |      |  (Aucun code en dur)    |      | (Format Clé-Valeur/JSON|
-+------------------------+      +-------------------------+      +------------------------+
-            |                               ^                            |
-            v                               |                            v
-+------------------------+      +-------------------------+      +------------------------+
-| Interface Managers UI  | <--- |   Application Backend   | <--- |   Lecture Dynamique    |
-| (Grilles de Primes)    |      | (Calcul des Ratios/Form)|      |  (Zéro modif de schéma)|
-+------------------------+      +-------------------------+      +------------------------+
-```
+### 1. Objectif de la Plateforme
+La plateforme a pour objectif d'automatiser le calcul des rémunérations variables (primes et commissions) des collaborateurs. Elle doit permettre aux managers de configurer des grilles d'objectifs sur-mesure basées sur la performance, la qualité et l'assiduité, puis de croiser ces règles avec les données de production pour générer les fiches de paie.
 
-### Le concept Clé-Valeur appliqué aux KPIs
-Au lieu de démultiplier les colonnes, les indicateurs sont mémorisés sous la forme d'un dictionnaire dynamique (JSON ou structures imbriquées). Les informations spécifiques à un agent pour une période donnée sont stockées de manière verticale ou encapsulées dans un objet sérialisé. Un nouvel indicateur n'est plus une nouvelle colonne, mais une nouvelle ligne ou une nouvelle entrée dans l'objet JSON.
+### 2. Contraintes Initiales
+Le système précédent souffrait d'un "couplage fort" et de limitations structurelles :
+* **Hétérogénéité des sources :** Données en format plat (colonnes) vs format imbriqué (JSON).
+* **Dérive des données (*Data Drift*) :** Incohérences de nommage des KPIs entre projets (ex: `booking_nbr` vs `sales_count`, fautes de frappe, problèmes d'encodage).
+* **Incompatibilité des échelles :** Des projets évalués sur 100 et d'autres sur 9.
+* **Maintenance technique lourde :** L'ajout d'un seul indicateur nécessitait des modifications du schéma de base de données (BigQuery), du code ETL, et du backend applicatif.
 
----
-
-## 2. Plan d'Implémentation Étape par Étape
-
-### Étape 1 : Standardisation des Sources (Couche d'Abstraction)
-Afin d'éviter que le moteur ETL ne doive s'adapter à des formats hétérogènes à chaque projet, il convient de mettre en place une couche de vues intermédiaires standards (*Views*) directement dans BigQuery au-dessus des tables brutes.
-
-Chaque projet doit exposer ses données de performance à travers une structure unifiée, en utilisant des préfixes sémantiques clairs (ex: `val_ca`, `val_appels`, `val_ventes`).
-
-Pour les données de type d'évaluation qualité où les données arrivent déjà sous forme d'un objet de métriques semi-structuré (colonne `METRICS` au format JSON STRING), la vue intermédiaire doit simplement isoler et nettoyer ce champ ainsi que les dimensions associées (`MATRICULE`, `PROJET`, `Date_Evaluation`).
-
-### Étape 2 : Automatisation du Processus ETL (Moteur d'Ingestion Aveugle)
-Le pipeline ETL ne doit plus contenir de règles de transformation écrites en dur colonne par colonne. Son rôle est d'analyser dynamiquement la structure source et de la transposer.
-
-Dans le cas des structures contenant des chaînes JSON (comme la table `PVCP_QUALITY_FR`), l'ETL s'appuie sur des fonctions JavaScript temporaires (*UDF - User Defined Functions*) et sur l'opérateur `UNNEST` de BigQuery pour éclater dynamiquement le JSON en lignes SQL.
-
-#### Requête ETL Dynamique Type (Modèle d'Ingestion) :
-```sql
--- 1. Déclaration de la fonction JS permettant de parser et déplier le JSON de manière dynamique
-CREATE TEMP FUNCTION deplier_json(json_str STRING)
-RETURNS ARRAY<STRUCT<kpi_nom STRING, kpi_valeur FLOAT64>>
-LANGUAGE js AS """
-  try {
-    const obj = JSON.parse(json_str);
-    return Object.keys(obj).map(key => ({
-      kpi_nom: key,
-      kpi_valeur: parseFloat(obj[key])
-    }));
-  } catch (e) {
-    return [];
-  }
-""";
-
--- 2. Insertion et normalisation au format Clé-Valeur
-SELECT 
-  unique_key,
-  MATRICULE,
-  NOMSIRH,
-  PROJET,
-  Date_Evaluation,
-  unfolded_kpi.kpi_nom AS kpi_code,
-  unfolded_kpi.kpi_valeur AS kpi_value
-FROM 
-  `projet_data.dataset_pvcp.PVCP_QUALITY_FR`,
-  UNNEST(deplier_json(METRICS)) AS unfolded_kpi;
-```
-
-### Étape 3 : Structure de Stockage Cible (BigQuery)
-La table consolidée finale (ex: `paie_performance_tv`) adopte l'un des deux formats cibles selon les préférences de requêtage de la plateforme applicative :
-
-#### Option A : Format Table Longue (Clé-Valeur Vertical)
-| MATRICULE | Date_Evaluation | kpi_code       | kpi_value |
-|-----------|-----------------|----------------|-----------|
-| 11904     | 2026-04-13      | PHASE_DACCUEIL | 100.0     |
-| 11904     | 2026-04-13      | FORCE_DCOUTE   | 0.0       |
-| 12640     | 2026-04-05      | SAVOIR_DIRE    | 100.0     |
-
-#### Option B : Format Semi-Structuré (JSON Natif BQ)
-| MATRICULE | Date_Evaluation | kpis_json (Type: JSON)                         |
-|-----------|-----------------|------------------------------------------------|
-| 11904     | 2026-04-13      | {"PHASE_DACCUEIL": 100.0, "FORCE_DCOUTE": 0.0} |
-| 12640     | 2026-04-05      | {"PHASE_DACCUEIL": 100.0, "SAVOIR_DIRE": 100.0}|
-
-### Étape 4 : Couche Applicative et Calcul Dynamique
-L'application prend désormais en charge la logique métier et s'affranchit des contraintes de schémas de base de données.
-
-*   **Extraction de la donnée** : Lors de l'appel d'un manager, le backend interroge BigQuery et récupère l'ensemble des KPIs sous forme de dictionnaire ou de liste Clé-Valeur pour la période demandée.
-*   **Calcul des formules à la volée** : Les ratios et indicateurs complexes (comme le taux de conversion ou le score CSAT pondéré) ne sont plus stockés sous forme de requêtes textuelles complexes en base de données. Ils sont calculés directement par le code de l'application (NodeJS, Python, etc.) lors de l'exécution :
-    $$\text{Taux de Conversion} = \frac{\sum \text{KPI\_VENTES}}{\sum \text{KPI\_APPELS}}$$
-*   **Configuration UI** : L'interface utilisateur permet aux managers de définir les formules via un constructeur visuel d'indicateurs (ex: sélectionner "Ventes" puis l'opérateur "/" puis "Appels").
+### 3. Le Choix Architectural : Le "Metadata-Driven" et l'Approche Hybride
+Pour répondre à ces contraintes, l'architecture a été refondue autour de deux principes :
+1. **L'abandon du format "Wide" (Colonnes) au profit du format "Long" (Clé-Valeur) :** Le schéma de base de données devient immuable.
+2. **Le découplage total Data / Application :** L'ETL est générique et piloté par la métadonnée. L'application (MySQL) gère la sémantique et les calculs, sans intervenir sur l'ingestion brute.
 
 ---
 
-## 3. Gestion du Cycle de Vie des Indicateurs (KPIs)
+## PARTIE I : Traitement et Standardisation de la Donnée (ETL)
 
-La suppression de la table de mapping technique MySQL complexe simplifie radicalement les opérations de maintenance de l'administration système.
+L'objectif de cette phase est d'aspirer les données brutes (Couche Bronze) et de les transformer en un format vertical standardisé, sans qu'aucune règle de colonne ne soit codée en dur.
 
-### Scénario A : Ajout d'un nouvel indicateur
-1. L'indicateur apparaît à la source dans le JSON ou la table brute du projet.
-2. L'ETL générique détecte automatiquement cette nouvelle clé lors de son exécution et l'intègre dans BigQuery.
-3. Le backend de l'application détecte la nouvelle clé et la rend immédiatement disponible pour les managers dans l'interface de configuration des primes.
-*Impact technique ou intervention BDD : Zéro.*
+### 1. Le Cerveau de l'ETL : La table de configuration
+Le script ETL est universel. Il est piloté par une table de configuration `config_etl_sources` (située dans BigQuery ) qui agit comme un carnet de route.
 
-### Scénario B : Retrait ou désactivation d'un indicateur
-Si un KPI devient obsolète ou non pertinent, il n'est pas nécessaire de purger l'historique ou de modifier la structure de la base de données. La gestion s'effectue exclusivement dans la table de configuration légère de l'application MySQL :
+Cette table indique à l'ETL le chemin de la table source et sa structure :
+* `FLAT` : L'ETL utilise un opérateur `UNPIVOT` dynamique pour transformer les colonnes numériques en lignes (Clé-Valeur).
+* `JSON` : L'ETL utilise une fonction UDF JavaScript et `UNNEST` pour extraire dynamiquement les clés et valeurs du dictionnaire source.
 
-```sql
-CREATE TABLE `config_kpis` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `code_kpi` VARCHAR(50) UNIQUE NOT NULL,
-  `libelle` VARCHAR(100) NOT NULL,
-  `univers` ENUM('PERF', 'QUALITE', 'HEURES') NOT NULL,
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1
-);
-```
-Pour désactiver un indicateur, il suffit de passer son état `is_active` à 0. L'interface de l'application ignorera ce KPI pour les futures grilles de primes, tout en préservant l'intégrité des calculs et des données historiques.
+### 2. Normalisation et Nettoyage à la Volée
+Pour pallier la dérive des données et rendre les KPIs exploitables par le moteur de calcul, l'ETL applique un pipeline de nettoyage strict avant l'insertion :
+
+* **Standardisation syntaxique :** Suppression des accents, conversion en majuscules, remplacement des caractères spéciaux par des underscores, et suppression des underscores multiples (SNAKE_CASE strict).
+* **Dictionnaire d'Alias (`KPI_ALIASES`) :** Résolution des doublons sémantiques par projet (ex: fusionner `QUALIT_DU_CONSEIL` et `QUALIT_DE_CONSEIL` en une seule clé officielle).
+* **Normalisation des Échelles (`SCALE_MAX_PAR_PROJET`) :** Conversion automatique des scores (ex: PVCP_GE noté sur 9) en pourcentage (Base 100) pour garantir une comparabilité absolue dans le moteur de paie.
+
+### 3. Déduplication
+En cas de multiples évaluations pour un même agent/jour/critère, le système applique un `MERGE` avec agrégation `AVG()` pour garantir l'unicité de la donnée dans la couche de destination.
 
 ---
 
-## 4. Avantages et Robustesse de la Nouvelle Architecture
+## PARTIE II : Structuration et Stockage (Architecture Médaillon)
 
-*   **Scalabilité infinie** : Le système peut supporter l'intégration immédiate de nouveaux projets, de nouvelles équipes ou de nouvelles typologies de campagnes de télévente sans modification structurelle.
-*   **Résilience du code** : L'ETL n'est plus sujet aux pannes consécutives à des modifications légères des outils clients (changement de grilles d'évaluation qualité, introduction d'une nouvelle question).
-*   **Autonomie des équipes métiers** : Les managers peuvent modifier, ajouter ou désactiver des règles d'indicateurs et des critères de rémunération variable directement depuis leur interface, sans solliciter l'intervention d'un ingénieur de données.
+Les données standardisées sont stockées dans Google BigQuery selon une approche "Médaillon", optimisant à la fois le stockage massif et la rapidité de requêtage pour l'application.
+
+### 1. La Couche Silver (Source de Vérité Granulaire)
+* **Format :** Table longue (`matricule`, `date`, `projet`, `kpi_code`, `kpi_value`).
+* **Rôle :** Historiser l'intégralité des performances et évaluations à la granularité la plus fine (par jour / par appel).
+* **Avantage :** Schéma immuable. L'apparition d'un nouveau KPI en production génère simplement de nouvelles lignes.
+
+### 2. La Couche Gold (Les Data Marts Applicatifs)
+L'application ne requête jamais la couche Silver directement pour des raisons de performance et de coûts.
+* L'ETL génère des tables de synthèse (ex: `paie_performance_mensuelle`).
+* Ces tables pré-calculent les sommes et moyennes par agent et par mois.
+* **Variable Magique :** Pour les scores de qualité, la couche Gold calcule automatiquement une `MOYENNE_GLOBALE_QUALITE` par agent, en plus de conserver le détail par sous-critère, offrant ainsi une flexibilité maximale pour la création des règles de primes.
+
+---
+
+## PARTIE III : Intégration Plateforme et Logique Métier
+
+Une fois la donnée consolidée dans la couche Gold, l'application (Backend + MySQL) prend le relais pour appliquer la logique métier. MySQL ne stocke plus de mapping technique, mais agit comme un référentiel sémantique.
+
+### 1. Le Dictionnaire Métier (`config_kpis`)
+Il permet de séparer le nom technique du nom d'affichage.
+* Un administrateur associe le `kpi_code` brut (ex: `IN_CALL_MIN_NBR`) à un libellé métier lisible ("Temps d'attente"). C'est ce libellé qui est affiché aux managers dans l'interface.
+
+### 2. Les KPIs Virtuels (Calculs Dérivés)
+Les formules croisées ne sont pas stockées dans l'ETL ni dans BigQuery.
+* Si un projet nécessite un indicateur "DMT" (Durée Moyenne de Traitement), un administrateur crée un **KPI Virtuel** dans l'application.
+* La formule (ex: `TEMPS_APPEL / NB_APPELS`) est évaluée en mémoire (RAM) par le backend lors du calcul de la paie, en utilisant les briques de base de la couche Gold.
+
+### 3. Le Mapping Organisationnel des Projets
+L'interface de mapping ne lie plus des tables et des colonnes. Elle relie un flux de données brut à la hiérarchie RH.
+* L'application interroge la couche Gold pour lister les codes projets existants (`SELECT DISTINCT projet`).
+* L'interface permet de rattacher ce code à un "Nœud" de la structure (Projet > Business Unit > File > Activité).
+* Les managers attachent ensuite leurs grilles de primes à ces nœuds structurels.
+
+---
+
+## PARTIE IV : Intégration de l'Intelligence Artificielle (LLM)
+
+L'architecture Gold et le référentiel sémantique sont conçus pour être "AI-Ready", permettant la génération de grilles de primes via un assistant conversationnel (Text-to-Config).
+
+### 1. Le Rôle de l'Agent IA
+L'IA n'a aucun accès en écriture à la base de données. Son rôle strict est de traduire une demande en langage naturel (manager) en une structure de configuration JSON (`grille_objectifs`) compréhensible par le moteur de calcul.
+
+### 2. Injection du Contexte (System Prompt)
+Lors d'une requête, le backend injecte dynamiquement le contexte dans le prompt système de l'IA :
+* La liste stricte des `code_kpi` autorisés pour le projet sélectionné (obtenue via un `DISTINCT` sur la couche Gold).
+* Le schéma JSON exact attendu (Paliers de performance, Malus, Conditions de déclenchement).
+
+### 3. Résolution des Ambiguïtés (Tool Calling)
+Si le manager évoque un indicateur absent du référentiel (ex: "Panier moyen ADD-ON"), l'IA utilise un outil applicatif pour le notifier, évitant ainsi les hallucinations de KPIs inexistants. 
+
+### 4. Validation et Calcul
+Le JSON généré par l'IA est soumis au backend. Après validation de l'intégrité des clés, il est sauvegardé dans la table `matrice_primes_configs`. Lors de la clôture mensuelle, le moteur de calcul interprète ce JSON et croise les paliers avec les performances réelles de la couche Gold pour générer les variables de paie.

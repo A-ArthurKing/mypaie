@@ -62,6 +62,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginCollaborateur = async (nom, prenom) => {
+    try {
+      const res = await fetch('/api/auth/login-collaborateur', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom, prenom })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur de connexion");
+      }
+
+      localStorage.setItem('mypaie_auth_token', data.token);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      return data.user;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('mypaie_auth_token');
     setIsAuthenticated(false);
@@ -73,7 +96,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, loginCollaborateur, logout }}>
       {children}
     </AuthContext.Provider>
   );
