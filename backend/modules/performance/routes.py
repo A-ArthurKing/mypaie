@@ -11,7 +11,7 @@ from flask import Blueprint, jsonify, request
 from modules.performance.services.dw_api_performance_provider import get_performance_pvcp, get_perf_totaux_par_matricule
 
 # On importe le nouvel ETL
-from workers.universal_performance_etl import run as run_etl_silver, gold as run_etl_gold
+from workers.universal_etl import run as run_etl_silver, gold as run_etl_gold
 
 logger = logging.getLogger(__name__)
 
