@@ -149,6 +149,19 @@
     /* Espace pour ne pas être caché par la barre */
 }
 
+.mobile-drawer__group {
+    margin-bottom: 16px;
+}
+
+.mobile-drawer__group-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #6b7280);
+    margin: 8px 0 12px 12px;
+    font-weight: 700;
+}
+
 .mobile-drawer__item {
     display: flex;
     align-items: center;

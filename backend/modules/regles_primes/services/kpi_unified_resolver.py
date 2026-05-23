@@ -31,7 +31,13 @@ def get_unified_agent_data(
     # 1. Récupération des données brutes en parallèle (logique)
     perf_data   = get_perf_totaux_par_matricule(date_debut, date_fin, matricules)
     qualite_map = get_qualite_totaux_par_matricule(date_debut, date_fin, matricules, nom_matricule_map)
-    heures_map  = get_heures_totaux(date_debut, date_fin, matricules)
+
+    # Heures : source externe (GestionPaie) — optionnelle, non-fatale
+    try:
+        heures_map = get_heures_totaux(date_debut, date_fin, matricules)
+    except Exception as heures_err:
+        logger.warning("Données heures indisponibles (source externe inaccessible) : %s. Calcul KPIs continue sans heures.", heures_err)
+        heures_map = {}
 
     # 2. Chargement du dictionnaire des KPIs pour les formules
     kpi_registry = get_kpi_registry()
@@ -49,6 +55,8 @@ def get_unified_agent_data(
         score_qualite = qualite_map.get(mat_str)
         ctx["NOTE_QUALITE"] = score_qualite
         ctx["note_qualite"] = score_qualite # Fallback lowercase
+        # Alias code_kpi canonique — TOUJOURS depuis la source qualite (écrase tout précalcul à 0)
+        ctx["QUALITE"] = score_qualite
         
         # Ajout des Heures (en heures décimales pour les calculs)
         h_data = heures_map.get(mat_str, {})

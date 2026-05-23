@@ -35,6 +35,9 @@ export default function AgentsTable({ agents, onEdit, onDelete }) {
             <th className="agta-th">File</th>
             <th className="agta-th">Activité</th>
             <th className="agta-th">Prime Langue</th>
+            <th className="agta-th">Salaire Net</th>
+            <th className="agta-th">Taux Horaire</th>
+            <th className="agta-th">Poste</th>
             <th className="agta-th">Niveau actuel</th>
             <th className="agta-th agta-th--actions">Actions</th>
           </tr>
@@ -63,6 +66,15 @@ export default function AgentsTable({ agents, onEdit, onDelete }) {
               </td>
               <td className="agta-td">
                 <span className="agta-badge agta-badge--prime">{agent.prime_langue || 0} DH</span>
+              </td>
+              <td className="agta-td">
+                {agent.salaire_net ? `${agent.salaire_net} DH` : <span className="agta-nil">—</span>}
+              </td>
+              <td className="agta-td">
+                {agent.taux_horaire ? `${agent.taux_horaire} DH` : <span className="agta-nil">—</span>}
+              </td>
+              <td className="agta-td">
+                {agent.poste || <span className="agta-nil">—</span>}
               </td>
               <td className="agta-td">
                 <span className={`agta-statut agta-statut--${normalizeStr(agent.statut).replace(/\s/g, '')}`}>

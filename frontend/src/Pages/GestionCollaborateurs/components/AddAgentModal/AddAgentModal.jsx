@@ -18,6 +18,9 @@ const EMPTY_FORM = {
   id_activite: '',
   id_statut: '',
   prime_langue: 0,
+  poste: 'AGENT',
+  salaire_net: '',
+  taux_horaire: 22.91,
 };
 
 export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
@@ -126,6 +129,9 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
         id_structure,
         id_statut:    form.id_statut || null,
         prime_langue: parseFloat(form.prime_langue) || 0,
+        poste:        form.poste.trim() || 'AGENT',
+        salaire_net:  form.salaire_net ? parseFloat(form.salaire_net) : null,
+        taux_horaire: parseFloat(form.taux_horaire) || 22.91,
       }),
     })
       .then(res => res.json())
@@ -255,6 +261,37 @@ export default function AddAgentModal({ isOpen, onClose, onAgentAdded, refs }) {
                 <option value="">Aucune / N/A</option>
                 {filteredActivites.map(a => <option key={a.id} value={a.id}>{a.libelle}</option>)}
               </select>
+            </div>
+          </div>
+
+          <div className="aam-modal__row aam-modal__row--3">
+            <div className="aam-modal__field">
+              <label>Poste</label>
+              <input
+                type="text"
+                value={form.poste}
+                onChange={e => handleChange('poste', e.target.value)}
+                placeholder="AGENT"
+              />
+            </div>
+            <div className="aam-modal__field">
+              <label>Salaire Net (DH)</label>
+              <input
+                type="number"
+                value={form.salaire_net}
+                onChange={e => handleChange('salaire_net', e.target.value)}
+                placeholder="Ex: 4500"
+              />
+            </div>
+            <div className="aam-modal__field">
+              <label>Taux Horaire (DH)</label>
+              <input
+                type="number"
+                value={form.taux_horaire}
+                onChange={e => handleChange('taux_horaire', e.target.value)}
+                placeholder="22.91"
+                step="0.01"
+              />
             </div>
           </div>
 

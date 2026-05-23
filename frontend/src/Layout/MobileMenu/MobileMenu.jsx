@@ -5,23 +5,53 @@
  */
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../Shared/Contexts/AuthContext';
 import './MobileMenu.css';
 
-const NAV_ITEMS = [
-  { id: 'heures',      label: 'Heures',      icon: 'fa-solid fa-clock',        path: '/heures'      },
-  { id: 'qualite',     label: 'Qualité',     icon: 'fa-solid fa-star',         path: '/qualite'     },
-  { id: 'performance', label: 'Performance', icon: 'fa-solid fa-chart-line',   path: '/performance' },
-  { id: 'collaborateurs', label: 'Collaborateurs', icon: 'fa-solid fa-users-gear',   path: '/collaborateurs' },
-  { id: 'structure',   label: 'Structure',   icon: 'fa-solid fa-building-user', path: '/structure'  },
-  { id: 'regles',      label: 'Règles',      icon: 'fa-solid fa-calculator',   path: '/regles-primes' },
-  { id: 'params',      label: 'Paramètres',  icon: 'fa-solid fa-gear',         path: '/parametres'    },
+// Groupement par catégories
+const NAV_GROUPS = [
+  {
+    title: 'Mon Espace',
+    items: [
+      { id: 'performance', label: 'Performance', icon: 'fa-solid fa-chart-line', path: '/performance', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager', 'Collaborateur'] },
+    ]
+  },
+  {
+    title: 'Management',
+    items: [
+      { id: 'heures',      label: 'Heures',      icon: 'fa-solid fa-clock',      path: '/heures', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
+      { id: 'qualite',     label: 'Qualité',     icon: 'fa-solid fa-star',       path: '/qualite', roles: ['Super Administrateur', 'Gestionnaire Paie', 'Manager'] },
+    ]
+  },
+  {
+    title: 'Administration RH',
+    items: [
+      { id: 'collaborateurs', label: 'Collaborateurs', icon: 'fa-solid fa-users-gear', path: '/collaborateurs', roles: ['Super Administrateur', 'Gestionnaire Paie'] },
+      { id: 'assiduite',   label: 'Assiduité',   icon: 'fa-solid fa-calendar-check', path: '/assiduite', roles: ['Super Administrateur', 'Gestionnaire Paie'] },
+      { id: 'regles',      label: 'Règles',      icon: 'fa-solid fa-calculator', path: '/regles-primes', roles: ['Super Administrateur', 'Gestionnaire Paie'] },
+      { id: 'params',      label: 'Paramètres',  icon: 'fa-solid fa-gear',       path: '/parametres', roles: ['Super Administrateur'] }
+    ]
+  }
 ];
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { user } = useAuth();
+  
+  const userRole = user?.role || 'Collaborateur';
+  
+  // Flatten allowed items for the quick bar
+  const allowedItems = NAV_GROUPS.flatMap(g => g.items).filter(item => item.roles.includes(userRole));
+  
   // Articles affichés directement dans la barre (2 à gauche, 2 à droite)
-  const barItems = [NAV_ITEMS[0], NAV_ITEMS[1], NAV_ITEMS[3], NAV_ITEMS[4]];
+  // On prend les 4 premiers disponibles
+  const barItems = allowedItems.slice(0, 4);
+
+  // Groupes filtrés pour le menu burger
+  const filteredGroups = NAV_GROUPS.map(group => ({
+    ...group,
+    items: group.items.filter(item => item.roles.includes(userRole))
+  })).filter(group => group.items.length > 0);
 
   return (
     <>
@@ -64,17 +94,22 @@ export default function MobileMenu() {
           <h3>Menu Principal</h3>
         </div>
         <div className="mobile-drawer__content">
-          {NAV_ITEMS.map(item => (
-            <NavLink 
-              key={item.id} 
-              to={item.path} 
-              className="mobile-drawer__item"
-              onClick={() => setIsOpen(false)}
-            >
-              <i className={`${item.icon} mobile-drawer__icon`} />
-              <span className="mobile-drawer__label">{item.label}</span>
-              <i className="fa-solid fa-chevron-right mobile-drawer__arrow" />
-            </NavLink>
+          {filteredGroups.map((group, gIdx) => (
+            <div key={gIdx} className="mobile-drawer__group">
+              <h4 className="mobile-drawer__group-title">{group.title}</h4>
+              {group.items.map(item => (
+                <NavLink 
+                  key={item.id} 
+                  to={item.path} 
+                  className="mobile-drawer__item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <i className={`${item.icon} mobile-drawer__icon`} />
+                  <span className="mobile-drawer__label">{item.label}</span>
+                  <i className="fa-solid fa-chevron-right mobile-drawer__arrow" />
+                </NavLink>
+              ))}
+            </div>
           ))}
         </div>
       </div>

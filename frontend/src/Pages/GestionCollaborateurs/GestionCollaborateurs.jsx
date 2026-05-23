@@ -30,7 +30,7 @@ export default function Collaborateurs() {
   } = useApiSWR(
     'agents:gestion',
     () => fetch('/api/agents/gestion').then(r => r.json()).then(d => d.data || []),
-    { ttl: TTL.STATS, fallbackData: [] }
+    { ttl: TTL.STATS, fallbackData: [], refreshInterval: 3000 }
   );
 
   const { data: refs = REFS_FALLBACK } = useApiSWR(

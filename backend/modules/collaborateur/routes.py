@@ -1,9 +1,14 @@
 import os
 import json
+import logging
+import calendar
+from datetime import datetime, date
 from decimal import Decimal
 import jwt
 from flask import Blueprint, request, jsonify
 from config.db_mysql_connector import get_mysql_connection
+
+logger = logging.getLogger(__name__)
 
 collaborateur_bp = Blueprint('collaborateur', __name__)
 
@@ -116,6 +121,113 @@ def ma_grille():
 
             agent_serializable = _to_serializable(agent_info or {})
 
+            # ── 4. Calcul des KPIs réels du mois courant ──────────────────────────
+            kpis_reels = {}
+            prime_brute_estimee = 0.0
+            periode_calcul = None
+
+            if config_content and matricule:
+                now = datetime.now()
+                y, m = now.year, now.month
+                date_debut = date(y, m, 1).isoformat()
+                date_fin = date(y, m, calendar.monthrange(y, m)[1]).isoformat()
+                MOIS_FR = ['janvier','février','mars','avril','mai','juin',
+                           'juillet','août','septembre','octobre','novembre','décembre']
+                periode_calcul = {
+                    "date_debut": date_debut,
+                    "date_fin": date_fin,
+                    "mois_label": f"{MOIS_FR[m-1]} {y}"
+                }
+
+                try:
+                    # Fetch bq_kpi_codes aliases for better metric_key resolution
+                    kpi_aliases = {}  # code_kpi.upper() → [bq_code, ...]
+                    cur.execute("SELECT code_kpi, bq_kpi_codes FROM config_kpis WHERE is_active=1")
+                    for row in cur.fetchall():
+                        code = row['code_kpi'].upper()
+                        codes_raw = row['bq_kpi_codes']
+                        if codes_raw:
+                            aliases = json.loads(codes_raw) if isinstance(codes_raw, str) else codes_raw
+                            kpi_aliases[code] = aliases
+
+                    from modules.regles_primes.services.kpi_unified_resolver import get_unified_agent_data
+                    unified = get_unified_agent_data(date_debut, date_fin, [str(matricule)])
+                    agent_kpi_data = unified.get(str(matricule), {})
+                    # Normalize keys for case-insensitive lookup
+                    agent_kpi_upper = {k.upper(): v for k, v in agent_kpi_data.items()}
+
+                    def _resolve_val(metric_key):
+                        """Look up a KPI value by metric_key, falling back to bq_kpi_codes aliases."""
+                        val = agent_kpi_upper.get(metric_key.upper())
+                        if val is not None:
+                            return val
+                        for alias in kpi_aliases.get(metric_key.upper(), []):
+                            val = agent_kpi_upper.get(alias.upper())
+                            if val is not None:
+                                return val
+                        return None
+
+                    has_missing_data = False
+                    for ind in config_content.get('indicateurs', []):
+                        ind_id = ind.get('id')
+                        metric_key = ind.get('metric_key', '')
+                        val_reelle = _resolve_val(metric_key)
+
+                        if val_reelle is None:
+                            has_missing_data = True
+
+                        kpi_result = {
+                            'metric_key': metric_key,
+                            'valeur_reelle': float(val_reelle) if val_reelle is not None else None,
+                            'prime_kpi': None,
+                            'malus_pct': None,
+                        }
+
+                        if val_reelle is not None:
+                            mode_prime = ind.get('mode_prime')
+                            type_ponderation = ind.get('type_ponderation')
+                            paliers_valeur = ind.get('paliers_valeur', [])
+                            malus_conditions = ind.get('malus_conditions', [])
+
+                            if mode_prime == 'montant_direct' and paliers_valeur:
+                                for palier in paliers_valeur:
+                                    seuil_min = float(palier.get('seuil_min') or 0)
+                                    seuil_max = palier.get('seuil_max')
+                                    v = float(val_reelle)
+                                    if v >= seuil_min and (seuil_max is None or v <= float(seuil_max)):
+                                        montant = float(palier.get('montant') or 0)
+                                        if palier.get('type_montant') == 'fixe':
+                                            kpi_result['prime_kpi'] = montant
+                                        elif palier.get('type_montant') == 'pourcentage_kpi':
+                                            kpi_result['prime_kpi'] = round(v * montant / 100, 2)
+                                        break
+
+                            elif type_ponderation == 'malus' and malus_conditions:
+                                for cond in malus_conditions:
+                                    seuil_min = float(cond.get('seuil_min') or 0)
+                                    seuil_max = cond.get('seuil_max')
+                                    v = float(val_reelle)
+                                    if v >= seuil_min and (seuil_max is None or v <= float(seuil_max)):
+                                        kpi_result['malus_pct'] = float(cond.get('malus_pct') or 0)
+                                        break
+
+                        if ind_id:
+                            kpis_reels[ind_id] = kpi_result
+
+                    # Sum bonus primes then apply malus
+                    if has_missing_data:
+                        prime_brute_estimee = None
+                    else:
+                        for kpi_res in kpis_reels.values():
+                            if kpi_res.get('prime_kpi') is not None:
+                                prime_brute_estimee += kpi_res['prime_kpi']
+                        for kpi_res in kpis_reels.values():
+                            if kpi_res.get('malus_pct') is not None:
+                                prime_brute_estimee = round(prime_brute_estimee * (1 - kpi_res['malus_pct'] / 100), 2)
+
+                except Exception as kpi_err:
+                    logger.warning("Calcul KPIs réels impossible pour matricule %s: %s", matricule, kpi_err)
+
             return jsonify({
                 "agent": agent_serializable,
                 "regle": {
@@ -134,7 +246,10 @@ def ma_grille():
                         "grille_nom": config_active['grille_nom'] if config_active else None,
                         "content": config_content
                     } if config_active else None
-                }
+                },
+                "kpis": kpis_reels,
+                "prime_brute_estimee": prime_brute_estimee,
+                "periode_calcul": periode_calcul,
             })
 
     except Exception as e:

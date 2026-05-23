@@ -228,20 +228,35 @@ export default function TableauDeBordOnglet({ regle }) {
     const agentData = unifiedMap[m] || {};
     const kpis = agentData.kpis || {};
     
-    // Si la clé existe directement dans les KPIs calculés par le backend
-    if (metricKey && kpis[metricKey] !== undefined) return kpis[metricKey];
+    if (!metricKey) return null;
 
-    // Mappings de compatibilité pour les anciens codes UI et les codes base de données BQ
-    switch (metricKey) {
-      case 'dmt':                  return kpis.dmt ?? null;
-      case 'taux_conversion_calc': return kpis.cvr ?? null;
-      case 'chiffre_affaire':      return kpis.avg_ca ?? null;
-      case 'REVENUE_AMT_EUR':      return kpis.chiffre_affaire ?? kpis.CHIFFRE_AFFAIRE ?? null;
-      case 'NET_BOOKING_RENTAL_AMT_EUR': return kpis.chiffre_affaire ?? kpis.CHIFFRE_AFFAIRE ?? null;
-      case 'revenue_amt_eur':      return kpis.chiffre_affaire ?? kpis.CHIFFRE_AFFAIRE ?? null;
-      case 'note_qualite_globale': return kpis.NOTE_QUALITE ?? null;
-      case 'note_globale':         return kpis.NOTE_QUALITE ?? null;
-      case 'heure_total':          return kpis.HEURE_TOTAL ?? null;
+    // 1. Recherche directe (case-sensitive)
+    if (kpis[metricKey] !== undefined) return kpis[metricKey];
+
+    // 2. Recherche insensible à la casse
+    const lowerKey = metricKey.toLowerCase();
+    const upperKey = metricKey.toUpperCase();
+    if (kpis[lowerKey] !== undefined) return kpis[lowerKey];
+    if (kpis[upperKey] !== undefined) return kpis[upperKey];
+
+    // 3. Mappings historiques et spécifiques
+    switch (lowerKey) {
+      case 'dmt':                  return kpis.dmt ?? kpis.DMT ?? null;
+      case 'taux_conversion_calc': 
+      case 'is_converted':
+      case 'cvr':                  return kpis.cvr ?? kpis.TAUX_CONVERSION ?? null;
+      case 'avg_ca':
+      case 'avg_nbr':              return kpis.avg_nbr ?? kpis.avg_ca ?? null;
+      case 'chiffre_affaire':      
+      case 'revenue_amt_eur':      
+      case 'net_booking_rental_amt_eur': return kpis.CHIFFRE_AFFAIRE ?? kpis.chiffre_affaire ?? null;
+      case 'note_qualite_globale': 
+      case 'note_globale':         
+      case 'qualite':              return kpis.NOTE_QUALITE ?? kpis.note_qualite ?? null;
+      case 'heure_total':          return kpis.HEURE_TOTAL ?? kpis.heure_total ?? null;
+      case 'tx_mea':               return kpis.tx_mea ?? kpis.TX_MEA ?? null;
+      case 'nb_appels':            return kpis.nb_appels ?? kpis.NB_APPELS ?? null;
+      case 'nb_ventes':            return kpis.nb_ventes ?? kpis.NB_VENTES ?? null;
       default:                     return null;
     }
   };
@@ -309,8 +324,8 @@ export default function TableauDeBordOnglet({ regle }) {
     const data = localAgentsData[matricule] || {};
     const grille = regle?.grille_objectifs || {};
     
-    if (hasSanction === 'Oui' || assiduite.facteur === 0 || kpiResults.isEliminated) {
-      return { prime: 0, super_bonus: 0, extra_primes: [], total_extra: 0, isEliminated: kpiResults.isEliminated };
+    if (hasSanction === 'Oui' || assiduite.facteur === 0 || kpiResults.isEliminated || kpiResults.hasMissingData) {
+      return { prime: 0, super_bonus: 0, extra_primes: [], total_extra: 0, isEliminated: kpiResults.isEliminated, hasMissingData: kpiResults.hasMissingData };
     }
     
     const score_pct = kpiResults.total_points / 100;
@@ -428,6 +443,7 @@ export default function TableauDeBordOnglet({ regle }) {
 
     let isEliminated = false;
     let globalMultiplier = 1;
+    let hasMissingData = false;
 
     const kpis = grille.indicateurs.map(ind => {
       const metricKey = resolveMetricKey(ind);
@@ -448,6 +464,10 @@ export default function TableauDeBordOnglet({ regle }) {
       const reel      = metricKey ? getRealValue(metricKey, agentMatricule) : null;
       const direction = ind.direction || METRIC_DIRECTION[metricKey] || 'higher_better';
       const weight    = parseFloat(ind.poids) || 0;
+
+      if (reel === null) {
+        hasMissingData = true;
+      }
 
       if (objectif !== null && (ind.type === 'pourcentage' || ['cvr', 'tx_mea', 'qualite'].includes(metricKey))) {
         if (objectif > 0 && objectif <= 1) objectif = objectif * 100;
@@ -562,7 +582,8 @@ export default function TableauDeBordOnglet({ regle }) {
       total_points: Math.max(0, total_points), 
       total_montant_direct,
       isEliminated,
-      globalMultiplier 
+      globalMultiplier,
+      hasMissingData
     };
   };
 

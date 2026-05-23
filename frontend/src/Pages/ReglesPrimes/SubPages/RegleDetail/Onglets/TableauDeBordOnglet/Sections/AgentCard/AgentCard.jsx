@@ -18,7 +18,8 @@ const KPI_COLORS = {
 
 const formatKpiReel = (kpi, dmtUnit) => {
   if (kpi.reel == null) return null;
-  switch (kpi.metricKey) {
+  const key = (kpi.metricKey || '').toLowerCase();
+  switch (key) {
     case 'dmt':
       return dmtUnit === 'min'
         ? `${Math.floor(kpi.reel / 60)}m\u00a0${String(Math.round(kpi.reel % 60)).padStart(2, '0')}s`
@@ -28,17 +29,19 @@ const formatKpiReel = (kpi, dmtUnit) => {
     case 'qualite':
       return `${kpi.reel.toFixed(1)}%`;
     case 'avg_ca':
-      return `${kpi.reel.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
+    case 'chiffre_affaire':
+      return `${kpi.reel.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}`;
     case 'heures':
       return `${kpi.reel.toFixed(1)}h`;
     default:
-      return String(kpi.reel);
+      return typeof kpi.reel === 'number' ? kpi.reel.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : String(kpi.reel);
   }
 };
 
 const formatKpiObj = (kpi, dmtUnit) => {
   if (kpi.objectif == null) return null;
-  switch (kpi.metricKey) {
+  const key = (kpi.metricKey || '').toLowerCase();
+  switch (key) {
     case 'dmt':
       return dmtUnit === 'min'
         ? `${Math.floor(kpi.objectif / 60)}m\u00a0${String(Math.round(kpi.objectif % 60)).padStart(2, '0')}s`
@@ -48,10 +51,64 @@ const formatKpiObj = (kpi, dmtUnit) => {
     case 'qualite':
       return `${kpi.objectif.toFixed(1)}%`;
     case 'avg_ca':
-      return `${kpi.objectif.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
+    case 'chiffre_affaire':
+      return `${kpi.objectif.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}`;
     default:
-      return String(kpi.objectif);
+      return typeof kpi.objectif === 'number' ? kpi.objectif.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : String(kpi.objectif);
   }
+};
+
+const getImpactModalData = (kpi) => {
+  const nom = kpi.kpi_libelle || kpi.nom || 'Indicateur';
+
+  if (kpi.mode_prime === 'montant_direct') {
+    return {
+      title: `Impact : ${nom}`,
+      formula: 'Montant_Direct = barème.find(Réel ∈ [seuil_min ; seuil_max]).montant',
+      sourceTable: 'Grille JSON (paliers_valeur)',
+      description: `Barème par tranches : la valeur réelle de "${nom}" est positionnée dans un barème de paliers.\nChaque tranche correspond à un montant fixe (ou un % du réel) versé directement, sans passer par un calcul de points.\n\nLa valeur affichée ici est le montant de prime brute alloué pour cet indicateur.`,
+      metrics: 'seuil_min, seuil_max, montant, type_montant'
+    };
+  }
+
+  if (kpi.type_ponderation === 'malus') {
+    return {
+      title: `Impact : ${nom}`,
+      formula: 'Malus_pct = conditions.find(Réel ∈ [seuil_min ; seuil_max]).malus_pct',
+      sourceTable: 'Grille JSON (malus_conditions)',
+      description: `Coefficient de malus : la valeur réelle de "${nom}" détermine un % de réduction appliqué sur le montant total de la prime.\nSi la valeur n'est pas disponible ou si la cible est atteinte, le malus est 0%.`,
+      metrics: 'malus_pct, seuil_min, seuil_max'
+    };
+  }
+
+  if (kpi.type_ponderation === 'eliminatoire') {
+    return {
+      title: `Impact : ${nom}`,
+      formula: 'SI(Réel < Objectif) → Prime totale = 0 DH',
+      sourceTable: 'Grille JSON (indicateurs)',
+      description: `Indicateur éliminatoire : si "${nom}" n'atteint pas 100% de l'objectif, la prime entière est annulée pour ce mois, quel que soit le résultat des autres indicateurs.`,
+      metrics: 'reel, objectif, type_ponderation'
+    };
+  }
+
+  if (kpi.type_ponderation === 'coefficient') {
+    return {
+      title: `Impact : ${nom}`,
+      formula: 'Multiplicateur_Global *= (1 − poids / 100)  si Réel < Objectif',
+      sourceTable: 'Grille JSON (indicateurs)',
+      description: `Coefficient global : si "${nom}" n'atteint pas l'objectif, un facteur de réduction de ${kpi.points_max}% est appliqué sur le score total de l'agent.`,
+      metrics: `poids (${kpi.points_max}%), taux_atteinte`
+    };
+  }
+
+  // Défaut : score_global bonus
+  return {
+    title: `Impact : ${nom}`,
+    formula: 'Points = Palier_Pct(Taux_Atteinte) × Poids',
+    sourceTable: 'Grille JSON (paliers, indicateurs)',
+    description: `Score par paliers : le taux d'atteinte de "${nom}" (Réel ÷ Objectif) détermine le % du poids alloué.\nEx : taux ≥ 100% → 100% des ${kpi.points_max} pts. Les paliers sont configurés dans la grille.`,
+    metrics: `poids (${kpi.points_max} pts), taux_atteinte, paliers`
+  };
 };
 
 const AgentCard = ({
@@ -117,14 +174,35 @@ const AgentCard = ({
 
       {/* ─── 2. Performance KPI ─── */}
       <div className="agent-card__kpis">
-        <div className="agent-card__section-title">KPI Performance</div>
+        <div className="agent-card__section-title" style={{ display: 'flex', alignItems: 'center' }}>
+          KPI Performance
+          {results.hasMissingData && (
+            <span style={{ marginLeft: '12px', color: '#ef4444', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#fef2f2', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fecaca' }}>
+              <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '4px' }}></i>
+              Données incomplètes (Prime 0)
+            </span>
+          )}
+        </div>
         <div className="agent-card__kpi-header">
           <span className="agent-card__kpi-h-dot"></span>
           <span className="agent-card__kpi-h-name">Indicateur</span>
           <span className="agent-card__kpi-h-reel">Réel</span>
           <span className="agent-card__kpi-h-obj">Obj.</span>
           <span className="agent-card__kpi-h-att">Att.</span>
-          <span className="agent-card__kpi-h-pts">Pts</span>
+          <span className="agent-card__kpi-h-pts">
+            Impact
+            <i
+              className="fa-solid fa-circle-info"
+              style={{ fontSize: '0.65rem', marginLeft: '4px', cursor: 'pointer', opacity: 0.6 }}
+              title="Comprendre la colonne Impact"
+              onClick={() => handleShowFormula({
+                title: 'Colonne Impact',
+                formula: 'Impact = Montant DH | Points | Malus % | Éliminatoire',
+                sourceTable: 'Grille JSON (indicateurs)',
+                description: 'La colonne Impact indique le résultat calculé pour chaque indicateur selon son mode de calcul :\n\n• Montant Direct (DH) : barème par tranches de valeur réelle\n• Points : % du poids attribué selon le taux d\'atteinte et les paliers\n• Malus (%) : réduction appliquée sur le total de la prime\n• Éliminatoire : annule la prime entière si la cible n\'est pas atteinte\n\nCliquez sur ⓘ en face de chaque indicateur pour le détail de son calcul.',
+              })}
+            ></i>
+          </span>
         </div>
         <div className="agent-card__kpi-list">
           {data.sanction === 'Oui' ? (
@@ -180,6 +258,14 @@ const AgentCard = ({
                   </span>
                   <span className={`agent-card__kpi-pts ${kpi.type_ponderation !== 'bonus' ? 'is-special' : ''}`}>
                     {kpi.impact_desc || (kpi.points_gagnes ?? 0)}
+                    <button
+                      type="button"
+                      className="agent-card__kpi-impact-info-btn"
+                      title="Comprendre cet impact"
+                      onClick={() => handleShowFormula(getImpactModalData(kpi))}
+                    >
+                      <i className="fa-solid fa-circle-info"></i>
+                    </button>
                   </span>
                 </div>
               );

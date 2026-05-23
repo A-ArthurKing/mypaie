@@ -29,6 +29,32 @@ from modules.agents.services.ai_history_provider import (
     delete_conversation
 )
 from modules.regles_primes.services.dw_api_regles_provider import get_regle_by_id
+from modules.agents.services.assiduite_provider import (
+    get_assiduite_pour_mois,
+    upsert_assiduite,
+    get_historique_assiduite,
+    upload_justificatif,
+    get_justificatif_info,
+    delete_justificatif,
+)
+from core.socket import emit_update
+
+import os
+import jwt as _pyjwt
+JWT_SECRET = os.getenv('JWT_SECRET', 'super_secret_dev_key_mypaie_2026')
+
+
+def _get_current_user_info():
+    """Decode JWT Bearer token pour identifier l'utilisateur courant. Non-bloquant."""
+    try:
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith('Bearer '):
+            return 'Système', None
+        payload = _pyjwt.decode(auth[7:], JWT_SECRET, algorithms=['HS256'])
+        full = f"{payload.get('prenom', '')} {payload.get('nom', '')}".strip() or 'Utilisateur'
+        return full, payload.get('user_id')
+    except Exception:
+        return 'Système', None
 
 agents_bp = Blueprint("agents", __name__)
 
@@ -265,6 +291,9 @@ def endpoint_add_agent():
             id_structure=int(data['id_structure']),
             id_statut=data.get('id_statut') or None,
             prime_langue=data.get('prime_langue', 0),
+            poste=data.get('poste', 'AGENT'),
+            salaire_net=data.get('salaire_net'),
+            taux_horaire=data.get('taux_horaire', 22.91)
         )
         emit_update("agent_created", {"matricule": data['matricule']})
         return jsonify({"success": True, "agent": agent}), 201
@@ -292,6 +321,9 @@ def endpoint_update_agent(matricule):
             id_structure=int(data['id_structure']),
             id_statut=data.get('id_statut') or None,
             prime_langue=data.get('prime_langue', 0),
+            poste=data.get('poste', 'AGENT'),
+            salaire_net=data.get('salaire_net'),
+            taux_horaire=data.get('taux_horaire', 22.91)
         )
         emit_update("agent_updated", {"matricule": matricule})
         return jsonify({"success": True, "agent": agent}), 200
@@ -311,4 +343,135 @@ def endpoint_delete_agent(matricule):
         return jsonify({"success": True}), 200
     except Exception as e:
         logger.error("Erreur endpoint DELETE /api/agents/%s : %s", matricule, e)
+        return jsonify({"error": str(e)}), 500
+
+
+# ─── Assiduité ────────────────────────────────────────────────────────────────
+
+@agents_bp.route("/api/assiduite", methods=["GET"])
+def endpoint_get_assiduite():
+    """
+    Retourne la liste des agents avec leurs données d'assiduité pour un mois.
+    Query param : mois=YYYY-MM  (défaut = mois courant)
+    """
+    try:
+        from datetime import datetime
+        mois = request.args.get("mois") or datetime.now().strftime("%Y-%m")
+        # Validation format
+        from datetime import datetime as _dt
+        _dt.strptime(mois, "%Y-%m")
+        data = get_assiduite_pour_mois(mois)
+        return jsonify({"data": data, "mois": mois}), 200
+    except ValueError:
+        return jsonify({"error": "Format de mois invalide. Attendu : YYYY-MM"}), 400
+    except Exception as e:
+        logger.error("Erreur endpoint GET /api/assiduite : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@agents_bp.route("/api/assiduite/<matricule>", methods=["PUT"])
+def endpoint_upsert_assiduite(matricule):
+    """
+    Crée ou met à jour la ligne d'assiduité pour (matricule, mois).
+    Enregistre aussi une entrée dans assiduite_historique avec l'identité de l'auteur.
+    Body JSON : { mois, abs_injustifie, retard, abs_justifie, cp_css, jours_ouvres, commentaire? }
+    """
+    try:
+        body = request.json or {}
+        mois = body.get("mois")
+        if not mois:
+            return jsonify({"error": "Champ 'mois' obligatoire"}), 400
+        from datetime import datetime as _dt
+        _dt.strptime(mois, "%Y-%m")
+        modifie_par, modifie_par_id = _get_current_user_info()
+        result = upsert_assiduite(matricule, mois, body,
+                                   modifie_par=modifie_par,
+                                   modifie_par_id=modifie_par_id)
+        emit_update("assiduite_updated", {"matricule": matricule, "mois": mois})
+        return jsonify({"success": True, "data": result}), 200
+    except ValueError:
+        return jsonify({"error": "Format de mois invalide. Attendu : YYYY-MM"}), 400
+    except Exception as e:
+        logger.error("Erreur endpoint PUT /api/assiduite/%s : %s", matricule, e)
+        return jsonify({"error": str(e)}), 500
+
+
+@agents_bp.route("/api/assiduite/<matricule>/historique", methods=["GET"])
+def endpoint_get_historique_assiduite(matricule):
+    """
+    Retourne l'historique des modifications d'assiduité pour (matricule, mois).
+    Query param : mois=YYYY-MM  (défaut = mois courant)
+    """
+    try:
+        from datetime import datetime as _dt
+        mois = request.args.get("mois") or _dt.now().strftime("%Y-%m")
+        _dt.strptime(mois, "%Y-%m")
+        data = get_historique_assiduite(matricule, mois)
+        return jsonify({"data": data, "matricule": matricule, "mois": mois}), 200
+    except ValueError:
+        return jsonify({"error": "Format de mois invalide. Attendu : YYYY-MM"}), 400
+    except Exception as e:
+        logger.error("Erreur GET /api/assiduite/%s/historique : %s", matricule, e)
+        return jsonify({"error": str(e)}), 500
+
+
+@agents_bp.route("/api/assiduite/historique/<int:historique_id>/justificatif", methods=["POST"])
+def endpoint_upload_justificatif(historique_id):
+    """
+    Upload d'un fichier justificatif pour une entrée d'historique.
+    Form-data : fichier (file), matricule (str), mois (str YYYY-MM)
+    """
+    try:
+        if 'fichier' not in request.files:
+            return jsonify({"error": "Aucun fichier fourni (champ 'fichier')"}), 400
+        file = request.files['fichier']
+        if not file or not file.filename:
+            return jsonify({"error": "Fichier invalide"}), 400
+        matricule = request.form.get('matricule', '').strip()
+        mois      = request.form.get('mois', '').strip()
+        if not matricule or not mois:
+            return jsonify({"error": "Champs 'matricule' et 'mois' obligatoires"}), 400
+        file_bytes = file.read()
+        mime_type  = file.content_type or 'application/octet-stream'
+        result = upload_justificatif(historique_id, matricule, mois,
+                                     file_bytes, file.filename, mime_type)
+        return jsonify({"success": True, "data": result}), 201
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logger.error("Erreur POST /api/assiduite/historique/%s/justificatif : %s", historique_id, e)
+        return jsonify({"error": str(e)}), 500
+
+
+@agents_bp.route("/api/assiduite/justificatif/<int:justif_id>/download", methods=["GET"])
+def endpoint_download_justificatif(justif_id):
+    """Téléchargement d'un justificatif."""
+    try:
+        from flask import send_file
+        info = get_justificatif_info(justif_id)
+        if not info:
+            return jsonify({"error": "Justificatif introuvable"}), 404
+        if not os.path.exists(info['file_path']):
+            return jsonify({"error": "Fichier non disponible sur le serveur"}), 404
+        return send_file(
+            info['file_path'],
+            mimetype=info['type_mime'],
+            as_attachment=True,
+            download_name=info['nom_original']
+        )
+    except Exception as e:
+        logger.error("Erreur GET /api/assiduite/justificatif/%s/download : %s", justif_id, e)
+        return jsonify({"error": str(e)}), 500
+
+
+@agents_bp.route("/api/assiduite/justificatif/<int:justif_id>", methods=["DELETE"])
+def endpoint_delete_justificatif(justif_id):
+    """Suppression d'un justificatif (fichier + enregistrement)."""
+    try:
+        delete_justificatif(justif_id)
+        return jsonify({"success": True}), 200
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 404
+    except Exception as e:
+        logger.error("Erreur DELETE /api/assiduite/justificatif/%s : %s", justif_id, e)
         return jsonify({"error": str(e)}), 500

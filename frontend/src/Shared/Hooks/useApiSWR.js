@@ -39,6 +39,7 @@ export default function useApiSWR(key, fetcher, options = {}) {
     revalidateOnFocus = true,
     revalidateOnMount = true,
     fallbackData = null,
+    refreshInterval = 0, // Intervalle en ms (0 = désactivé)
   } = options;
 
   // État initial : on lit le cache de façon synchrone pour un rendu instantané
@@ -98,6 +99,17 @@ export default function useApiSWR(key, fetcher, options = {}) {
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [key, revalidateOnFocus, revalidate]);
+
+  // Polling automatique via refreshInterval
+  useEffect(() => {
+    if (!key || refreshInterval <= 0) return;
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        revalidate();
+      }
+    }, refreshInterval);
+    return () => clearInterval(timer);
+  }, [key, refreshInterval, revalidate]);
 
   return { data, error, loading, isValidating, revalidate, mutate: setData };
 }

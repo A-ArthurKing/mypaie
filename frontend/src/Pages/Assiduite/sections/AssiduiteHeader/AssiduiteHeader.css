@@ -1,0 +1,62 @@
+/* ---- Assiduite header ---- */
+.assid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--bg-surface, #fff);
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    border-radius: var(--radius-m, 8px);
+    padding: 1.25rem 1.5rem;
+    flex-wrap: wrap;
+}
+
+.assid-header__left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.assid-header__icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--color-accent, #6366f1) 12%, transparent);
+    flex-shrink: 0;
+}
+
+.assid-header__icon {
+    font-size: 1.15rem;
+    color: var(--color-accent, #6366f1);
+}
+
+.assid-header__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #111827);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.assid-header__subtitle {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #6b7280);
+    margin: 0;
+    margin-top: 2px;
+}
+
+.assid-header__badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    background: var(--color-bg-light, #f9fafb);
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #6b7280);
+}

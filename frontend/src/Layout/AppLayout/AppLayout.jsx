@@ -12,6 +12,7 @@ import HeuresAgents from '../../Pages/HeuresAgents/HeuresAgents'
 import NotesQualite from '../../Pages/NotesQualite/NotesQualite'
 import Performance from '../../Pages/Performance/Performance'
 import Collaborateurs from '../../Pages/GestionCollaborateurs/GestionCollaborateurs'
+import Assiduite from '../../Pages/Assiduite/Assiduite'
 import ReglesPrimes from '../../Pages/ReglesPrimes/ReglesPrimes'
 import Parametres from '../../Pages/Parametres/Parametres'
 import './AppLayout.css'
@@ -54,8 +55,13 @@ function AppLayout() {
             </RoleRoute>
           } />
           <Route path="/collaborateurs/*" element={
-            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie', 'Manager']}>
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie']}>
               <Collaborateurs />
+            </RoleRoute>
+          } />
+          <Route path="/assiduite/*" element={
+            <RoleRoute allowedRoles={['Super Administrateur', 'Gestionnaire Paie']}>
+              <Assiduite />
             </RoleRoute>
           } />
           <Route path="/regles-primes/*" element={

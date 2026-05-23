@@ -153,6 +153,25 @@
     gap: 4px;
 }
 
+.sidebar__group {
+    margin-bottom: 20px;
+}
+
+.sidebar__group-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin: 0 0 8px 12px;
+    font-weight: 600;
+}
+
+.sidebar__group-divider {
+    height: 1px;
+    background: var(--color-border-subtle);
+    margin: 12px 12px 12px 12px;
+}
+
 .sidebar__nav-item {
     position: relative;
     display: flex;

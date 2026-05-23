@@ -386,6 +386,41 @@ def prepare_grille_proposal_tool(regle_id: int, grille_nom: str, grille_json: st
         return f"❌ Erreur interne : {str(e)}"
 
 
+def _normalize_grille_metric_keys(grille: dict) -> dict:
+    """
+    Normalise les metric_key des indicateurs pour qu'ils correspondent exactement
+    aux code_kpi de config_kpis (casse incluse). Garantit la cohérence entre
+    la grille JSON et les clés retournées par le moteur KPI.
+    """
+    try:
+        all_kpis = get_all_kpis_with_status()
+        # Index : code_kpi.upper() → code_kpi (casse canonique)
+        code_index = {k['code'].upper(): k['code'] for k in all_kpis}
+        # Index secondaire : bq_kpi_codes → code_kpi
+        bq_to_code = {}
+        for k in all_kpis:
+            for bq_code in (k.get('bq_kpi_codes') or []):
+                bq_to_code[bq_code.upper()] = k['code']
+
+        for ind in grille.get('indicateurs', []):
+            mk = ind.get('metric_key', '')
+            if not mk:
+                continue
+            mk_upper = mk.upper()
+            # 1. Match exact (insensible à la casse)
+            if mk_upper in code_index:
+                ind['metric_key'] = code_index[mk_upper]
+            # 2. Match via bq_kpi_codes
+            elif mk_upper in bq_to_code:
+                ind['metric_key'] = bq_to_code[mk_upper]
+            # 3. Sinon : on garde tel quel (log d'avertissement)
+            else:
+                logger.warning("[normalize_metric_keys] metric_key '%s' non reconnu dans config_kpis", mk)
+    except Exception as e:
+        logger.warning("[normalize_metric_keys] Impossible de normaliser les metric_key : %s", e)
+    return grille
+
+
 def save_grille_config_tool(regle_id: int, grille_nom: str, grille_json: str) -> str:
     """
     Crée RÉELLEMENT et ACTIVE immédiatement une nouvelle version de grille d'objectifs en base de données.
@@ -401,6 +436,9 @@ def save_grille_config_tool(regle_id: int, grille_nom: str, grille_json: str) ->
     logger.info(f"[IA Tool] save_grille_config_tool → regle_id={regle_id}, nom='{grille_nom}'")
     try:
         grille = json.loads(grille_json) if isinstance(grille_json, str) else grille_json
+
+        # Normalisation des metric_key vers les code_kpi canoniques de config_kpis
+        grille = _normalize_grille_metric_keys(grille)
         
         # Création en base
         res = create_regle_config(

@@ -1,0 +1,64 @@
+/* ---- Assiduite page — layout ---- */
+.assid-page {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.assid-page__loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    background: var(--bg-surface, #fff);
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    border-radius: var(--radius-m, 8px);
+}
+
+/* ---- Pagination ---- */
+.assid-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 1rem 0;
+}
+
+.assid-page-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    border-radius: 8px;
+    background: var(--bg-surface, #fff);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #374151);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.assid-page-btn:hover:not(:disabled) {
+    background: var(--color-bg-light, #f9fafb);
+    border-color: var(--color-accent, #6366f1);
+    color: var(--color-accent, #6366f1);
+}
+
+.assid-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.assid-page-info {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #6b7280);
+}
+
+.assid-page-info__sub {
+    font-weight: 400;
+    color: var(--color-text-secondary, #9ca3af);
+    font-size: 0.75rem;
+}

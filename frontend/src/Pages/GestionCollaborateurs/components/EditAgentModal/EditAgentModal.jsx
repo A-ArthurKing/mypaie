@@ -41,6 +41,9 @@ export default function EditAgentModal({ isOpen, onClose, onAgentUpdated, agent,
       id_activite:  String(actId),
       id_statut:    String(agent.id_statut || ''),
       prime_langue: agent.prime_langue || 0,
+      poste:        agent.poste || 'AGENT',
+      salaire_net:  agent.salaire_net || '',
+      taux_horaire: agent.taux_horaire || 22.91,
     });
     setError('');
   }, [agent, structure.length]);
@@ -136,6 +139,9 @@ export default function EditAgentModal({ isOpen, onClose, onAgentUpdated, agent,
         id_structure,
         id_statut:   form.id_statut || null,
         prime_langue: parseFloat(form.prime_langue) || 0,
+        poste:       form.poste.trim() || 'AGENT',
+        salaire_net: form.salaire_net ? parseFloat(form.salaire_net) : null,
+        taux_horaire: parseFloat(form.taux_horaire) || 22.91,
       }),
     })
       .then(res => res.json())
@@ -242,6 +248,21 @@ export default function EditAgentModal({ isOpen, onClose, onAgentUpdated, agent,
                 <option value="">Aucune / N/A</option>
                 {filteredActivites.map(a => <option key={a.id} value={a.id}>{a.libelle}</option>)}
               </select>
+            </div>
+          </div>
+
+          <div className="eam-modal__row eam-modal__row--3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div className="eam-modal__field">
+              <label>Poste</label>
+              <input type="text" value={form.poste || ''} onChange={e => handleChange('poste', e.target.value)} />
+            </div>
+            <div className="eam-modal__field">
+              <label>Salaire Net (DH)</label>
+              <input type="number" value={form.salaire_net || ''} onChange={e => handleChange('salaire_net', e.target.value)} />
+            </div>
+            <div className="eam-modal__field">
+              <label>Taux Horaire (DH)</label>
+              <input type="number" step="0.01" value={form.taux_horaire || ''} onChange={e => handleChange('taux_horaire', e.target.value)} />
             </div>
           </div>
 

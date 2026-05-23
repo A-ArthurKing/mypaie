@@ -308,7 +308,12 @@ def get_perf_totaux_par_matricule(
 
     # --- Colonnes fixes (backward compat) ---
     fixed_columns = """
-            SUM(IF(LOWER(kpi_code) IN ('net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur'), valeur_sum, 0)) AS sum_chiffre_affaire,
+            COALESCE(
+              MAX(CASE WHEN LOWER(kpi_code) = 'net_booking_rental_amt_eur' THEN valeur_sum ELSE NULL END),
+              MAX(CASE WHEN LOWER(kpi_code) = 'chiffre_affaire'            THEN valeur_sum ELSE NULL END),
+              MAX(CASE WHEN LOWER(kpi_code) = 'revenue_amt_eur'            THEN valeur_sum ELSE NULL END),
+              0
+            ) AS sum_chiffre_affaire,
             SUM(IF(LOWER(kpi_code) IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0)) AS nb_ventes_total,
             SUM(IF(LOWER(kpi_code) IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0)) AS nb_appels_total,
             SUM(IF(LOWER(kpi_code) IN ('in_call_min_nbr', 'temps_appel'), valeur_sum, 0)) AS sum_temps_appel,
@@ -386,16 +391,26 @@ def get_perf_totaux_par_matricule(
             avg_nbr = ca / nb_ventes if nb_ventes > 0 else None
 
             # Métriques hardcodées (Compatibilité ascendante)
+            _cvr   = round(cvr_pct, 2)   if cvr_pct   is not None else None
+            _dmt   = round(dmt_sec, 1)   if dmt_sec   is not None else None
+            _txmea = round(r["tx_mea_avg"], 2) if r["tx_mea_avg"] is not None else None
+            _avgnbr= round(avg_nbr, 2)   if avg_nbr   is not None else None
             entry = {
-                "dmt":       round(dmt_sec, 1)       if dmt_sec    is not None else None,
-                "cvr":       round(cvr_pct, 2)       if cvr_pct    is not None else None,
-                "tx_mea":    round(r["tx_mea_avg"], 2)    if r["tx_mea_avg"] is not None else None,
+                # Clés lowercase (compat ascendante)
+                "dmt":       _dmt,
+                "cvr":       _cvr,
+                "tx_mea":    _txmea,
                 "avg_ca":    round(avg_ca, 2)        if avg_ca     is not None else None,
                 "csat_moyen":round(csat_moyen, 2)    if csat_moyen is not None else None,
-                "avg_nbr":   round(avg_nbr, 2)       if avg_nbr    is not None else None,
+                "avg_nbr":   _avgnbr,
                 "nb_ventes": int(nb_ventes)          if nb_ventes is not None else None,
                 "nb_appels": int(nb_appels)          if nb_appels is not None else None,
                 "nb_csat":   int(nb_csat)            if nb_csat   is not None else None,
+                # Alias code_kpi canoniques (garantit que metric_key = code_kpi matchent directement)
+                "IS_CONVERTED": _cvr,   # code_kpi IS_CONVERTED = cvr (taux conversion %)
+                "DMT":          _dmt,   # code_kpi DMT = dmt (durée moyenne appel en secondes)
+                "TX_MEA":       _txmea, # code_kpi TX_MEA = tx_mea (taux mise en attente %)
+                "AVG_NBR":      _avgnbr,# code_kpi AVG_NBR = avg_nbr (avg CA/réservations)
             }
 
             # Contexte de données brutes pour le moteur (noms normalisés)

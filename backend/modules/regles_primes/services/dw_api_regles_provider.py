@@ -12,6 +12,49 @@ from config.db_mysql_connector import get_mysql_connection
 logger = logging.getLogger(__name__)
 
 
+def _normalize_metric_keys(grille: dict) -> dict:
+    """
+    Normalise les metric_key des indicateurs vers les code_kpi canoniques de config_kpis.
+    Garantit la cohérence entre la grille JSON et les clés retournées par le moteur KPI.
+    Non-fatal : en cas d'erreur, retourne la grille inchangée.
+    """
+    if not grille or 'indicateurs' not in grille:
+        return grille
+    try:
+        import json as _json
+        import pymysql
+        conn = get_mysql_connection()
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("SELECT code_kpi, bq_kpi_codes FROM config_kpis WHERE is_active = 1")
+            rows = cur.fetchall()
+        conn.close()
+
+        # Index casse-insensible : code_kpi.upper() → code_kpi canonique
+        code_index = {r['code_kpi'].upper(): r['code_kpi'] for r in rows}
+        # Index secondaire : bq_kpi_code.upper() → code_kpi canonique
+        bq_index = {}
+        for r in rows:
+            raw = r.get('bq_kpi_codes')
+            codes = _json.loads(raw) if isinstance(raw, str) else (raw or [])
+            for bq_code in codes:
+                bq_index[bq_code.upper()] = r['code_kpi']
+
+        for ind in grille.get('indicateurs', []):
+            mk = ind.get('metric_key', '')
+            if not mk:
+                continue
+            mk_upper = mk.upper()
+            if mk_upper in code_index:
+                ind['metric_key'] = code_index[mk_upper]
+            elif mk_upper in bq_index:
+                ind['metric_key'] = bq_index[mk_upper]
+            else:
+                logger.warning("[normalize_metric_keys] metric_key '%s' non reconnu dans config_kpis — conservé tel quel", mk)
+    except Exception as e:
+        logger.warning("[normalize_metric_keys] Normalisation ignorée (non-fatale) : %s", e)
+    return grille
+
+
 def get_regle_by_id(regle_id: int) -> dict | None:
     """
     Récupère une règle par son ID depuis la table matrice_primes.
@@ -85,6 +128,8 @@ def update_regle_grille(regle_id: int, grille_objectifs: dict):
     Met à jour uniquement le champ JSON grille_objectifs d'une règle.
     """
     import json
+    # Normaliser les metric_key vers les code_kpi canoniques avant sauvegarde
+    grille_objectifs = _normalize_metric_keys(grille_objectifs)
     connection = None
     try:
         connection = get_mysql_connection()
@@ -127,6 +172,8 @@ def get_regle_configs(regle_id: int) -> list:
 def create_regle_config(regle_id: int, libelle: str, content: dict, activate: bool = False, grille_uuid: str = None, grille_nom: str = None):
     """Crée une nouvelle version de grille d'objectifs."""
     import json
+    # Normaliser les metric_key vers les code_kpi canoniques avant sauvegarde
+    content = _normalize_metric_keys(content)
     connection = None
     try:
         connection = get_mysql_connection()

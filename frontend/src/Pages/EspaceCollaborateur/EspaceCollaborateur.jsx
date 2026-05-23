@@ -91,7 +91,13 @@ const EspaceCollaborateur = () => {
 
         {/* ── Contenu grille ── */}
         {!isLoading && !error && data && data.regle && (
-          <EcGrilleContent regle={data.regle} agent={data.agent} />
+          <EcGrilleContent
+            regle={data.regle}
+            agent={data.agent}
+            kpis={data.kpis}
+            prime_brute_estimee={data.prime_brute_estimee}
+            periode_calcul={data.periode_calcul}
+          />
         )}
       </main>
     </div>

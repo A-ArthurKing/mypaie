@@ -82,7 +82,10 @@ def get_all_agents_gestion() -> list:
                     f.libelle AS sous_projet,
                     a.libelle as activite,
                     e.id_statut,
-                    s.libelle as statut,
+                    COALESCE(e.statut, s.libelle, 'Non défini') as statut,
+                    e.poste,
+                    e.salaire_net,
+                    e.taux_horaire,
                     e.prime_langue
                 FROM ref_employes e
                 LEFT JOIN ref_structure_map m ON e.id_structure = m.id
@@ -124,7 +127,7 @@ def update_agent_global_statut(matricule: str, id_statut: int):
             connection.close()
 
 
-def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statut=None, prime_langue=0) -> dict:
+def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statut=None, prime_langue=0, poste='AGENT', salaire_net=None, taux_horaire=22.91) -> dict:
     """
     Ajoute un nouvel agent dans ref_employes et retourne l'enregistrement enrichi.
     """
@@ -133,10 +136,10 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
         connection = get_mysql_connection()
         with connection.cursor() as cursor:
             sql_insert = """
-                INSERT INTO ref_employes (matricule, nom, prenom, id_structure, id_statut, prime_langue)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO ref_employes (matricule, nom, prenom, id_structure, id_statut, prime_langue, poste, salaire_net, taux_horaire)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql_insert, (matricule, nom, prenom, id_structure, id_statut or None, prime_langue))
+            cursor.execute(sql_insert, (matricule, nom, prenom, id_structure, id_statut or None, prime_langue, poste, salaire_net, taux_horaire))
             connection.commit()
 
             sql_get = """
@@ -161,6 +164,14 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
             cursor.execute(sql_get, (matricule,))
             result = cursor.fetchone()
         invalidate(_CACHE_KEY_AGENTS)
+
+        # Crée automatiquement la ligne assiduité du mois courant pour ce nouvel agent
+        try:
+            from modules.agents.services.assiduite_provider import auto_create_assiduite_for_agent
+            auto_create_assiduite_for_agent(matricule)
+        except Exception as ae:
+            logger.warning("auto_create_assiduite non critique : %s", ae)
+
         return result
     except Exception as e:
         logger.error(f"Erreur add_agent : {e}")
@@ -170,7 +181,7 @@ def add_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statu
             connection.close()
 
 
-def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statut=None, prime_langue=0) -> dict:
+def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_statut=None, prime_langue=0, poste='AGENT', salaire_net=None, taux_horaire=22.91) -> dict:
     """
     Met à jour les informations d'un agent existant et retourne l'enregistrement enrichi.
     """
@@ -180,10 +191,10 @@ def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_st
         with connection.cursor() as cursor:
             sql_update = """
                 UPDATE ref_employes
-                SET nom = %s, prenom = %s, id_structure = %s, id_statut = %s, prime_langue = %s
+                SET nom = %s, prenom = %s, id_structure = %s, id_statut = %s, prime_langue = %s, poste = %s, salaire_net = %s, taux_horaire = %s
                 WHERE matricule = %s
             """
-            cursor.execute(sql_update, (nom, prenom, id_structure, id_statut or None, prime_langue, matricule))
+            cursor.execute(sql_update, (nom, prenom, id_structure, id_statut or None, prime_langue, poste, salaire_net, taux_horaire, matricule))
             connection.commit()
 
             sql_get = """
@@ -194,8 +205,11 @@ def update_agent(matricule: str, nom: str, prenom: str, id_structure: int, id_st
                     f.libelle AS sous_projet,
                     a.libelle AS activite,
                     e.id_statut,
-                    s.libelle AS statut,
-                    e.prime_langue
+                    COALESCE(e.statut, s.libelle, 'Non défini') AS statut,
+                    e.prime_langue,
+                    e.poste,
+                    e.salaire_net,
+                    e.taux_horaire
                 FROM ref_employes e
                 LEFT JOIN ref_structure_map m ON e.id_structure = m.id
                 LEFT JOIN ref_projets     p ON m.id_projet    = p.id
