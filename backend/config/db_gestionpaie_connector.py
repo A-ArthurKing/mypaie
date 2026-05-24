@@ -22,5 +22,5 @@ def get_gestionpaie_connection():
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=True,
-        connect_timeout=10,
+        connect_timeout=3,
     )

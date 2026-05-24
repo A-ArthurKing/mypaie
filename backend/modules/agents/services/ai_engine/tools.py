@@ -214,13 +214,31 @@ def get_real_performance_tool(regle_id: int, mois: str) -> str:
                 where_parts = []
                 p = []
                 for k, v in struct.items():
-                    if v:
+                    if v and k != 'id_projet':  # ref_employes has no id_projet
                         where_parts.append(f"{k} = %s")
                         p.append(v)
                 
-                sql_agents = f"SELECT matricule FROM ref_employes WHERE {' AND '.join(where_parts)}"
+                # If structure only has id_projet, fallback to all active agents (or map via id_structure)
+                if not where_parts:
+                    sql_agents = "SELECT matricule, nom, prenom FROM ref_employes WHERE id_structure = %s"
+                    p = [id_structure]
+                else:
+                    sql_agents = f"SELECT matricule, nom, prenom FROM ref_employes WHERE {' AND '.join(where_parts)}"
                 cur.execute(sql_agents, p)
-                matricules = [r['matricule'] for r in cur.fetchall() if r['matricule']]
+                agents_rows = cur.fetchall()
+                matricules = [r['matricule'] for r in agents_rows if r['matricule']]
+                # BigQuery stores agents by full name in uppercase (e.g. "EL BENAYE RAJAE")
+                # Build mapping: bq_full_name → numeric matricule
+                bq_names = []
+                bq_name_to_mat = {}
+                for r in agents_rows:
+                    nom = (r.get('nom') or '').strip().upper()
+                    prenom = (r.get('prenom') or '').strip().upper()
+                    full_name = f"{nom} {prenom}".strip()
+                    if full_name:
+                        bq_names.append(full_name)
+                        if r.get('matricule'):
+                            bq_name_to_mat[full_name] = str(r['matricule'])
         finally:
             conn.close()
 
@@ -229,6 +247,9 @@ def get_real_performance_tool(regle_id: int, mois: str) -> str:
 
         nb_agents = len(matricules)
 
+        # Use BigQuery full names for lookups (numeric codes don't exist in BQ)
+        bq_lookup_keys = bq_names if bq_names else [str(m) for m in matricules]
+
         # Appels BigQuery individuellement — chaque erreur est capturée proprement
         perf_map = {}
         qualite_map = {}
@@ -236,13 +257,17 @@ def get_real_performance_tool(regle_id: int, mois: str) -> str:
         data_errors = []
 
         try:
-            perf_map = get_perf_totaux_par_matricule(date_debut, date_fin, matricules)
+            perf_by_name = get_perf_totaux_par_matricule(date_debut, date_fin, bq_lookup_keys)
+            # Remap: BQ name → numeric matricule key for consistent downstream access
+            perf_map = {bq_name_to_mat.get(name, name): v for name, v in perf_by_name.items()}
         except Exception as e_perf:
             logger.error(f"[IA Tool] Erreur récupération performance BigQuery: {e_perf}", exc_info=True)
             data_errors.append("Performance")
 
         try:
-            qualite_map = get_qualite_totaux_par_matricule(date_debut, date_fin, matricules)
+            qualite_by_name = get_qualite_totaux_par_matricule(date_debut, date_fin, bq_lookup_keys)
+            # Remap: BQ name → numeric matricule key
+            qualite_map = {bq_name_to_mat.get(name, name): v for name, v in qualite_by_name.items()}
         except Exception as e_qual:
             logger.error(f"[IA Tool] Erreur récupération qualité BigQuery: {e_qual}", exc_info=True)
             data_errors.append("Qualité")
@@ -274,16 +299,44 @@ def get_real_performance_tool(regle_id: int, mois: str) -> str:
         if data_errors and len(data_errors) == 3:
             return "{\"status\": \"error\", \"message\": \"Impossible d'accéder aux données de performance pour le moment. Les services de données sont temporairement indisponibles.\"}"
 
+        # Reverse lookup: numeric mat → bq_name for display
+        mat_to_bq_name = {v: k for k, v in bq_name_to_mat.items()}
+
+        # Échantillon de 2 agents
+        import random
+        sample_matricules = random.sample([str(m) for m in matricules], min(2, len(matricules)))
+        sample_data = ""
+        for m in sample_matricules:
+            display_name = mat_to_bq_name.get(str(m), f"Agent {m}")
+            sample_data += f"- **{display_name.title()}** (mat. {m}):\n"
+            if str(m) in perf_map:
+                ca = perf_map[str(m)].get('chiffre_affaire', 0) or perf_map[str(m)].get('CHIFFRE_AFFAIRE', 'N/A')
+                ventes = perf_map[str(m)].get('nb_ventes', 'N/A')
+                sample_data += f"  - CA: {ca} | Ventes: {ventes}\n"
+            if str(m) in qualite_map:
+                q = qualite_map[str(m)]
+                sample_data += f"  - Qualité: {q}%\n"
+
         out = f"## Données réelles de l'équipe — {mois}\n\n"
         out += f"**Règle ID {regle_id}** | **{nb_agents} agent(s) ciblé(s)** | Période : {date_debut} → {date_fin}\n\n"
+        
+        if sample_data:
+            out += "### 🧑‍💼 Échantillon d'agents (pour simuler la prime)\n"
+            out += sample_data + "\n"
+
         if data_errors:
             out += f"⚠️ Données partiellement indisponibles ({', '.join(data_errors)}) — les autres sections sont affichées.\n\n"
 
-        # (Simplified for briefness, following the logic from gemini_agent_provider)
-        # KPI mapping
+        # KPI mapping étendu
         kpi_perf = {
             "revenue_amt_eur": ([v.get("chiffre_affaire") for v in perf_map.values()], True, "€", "Chiffre d'Affaires"),
             "booking_nbr":     ([v.get("nb_ventes") for v in perf_map.values()], True, "ventes", "Nombre de Ventes"),
+            "DMT":             ([v.get("dmt") for v in perf_map.values()], False, "sec", "DMT"),
+            "IS_CONVERTED":    ([v.get("taux_conversion") for v in perf_map.values()], True, "%", "Taux de Conversion"),
+        }
+        
+        kpi_qualite = {
+            "QUALITE":         ([v for v in qualite_map.values()], True, "%", "Note Qualité Globale")
         }
         
         def _section(title, kpi_dict):
@@ -298,40 +351,93 @@ def get_real_performance_tool(regle_id: int, mois: str) -> str:
                 s += f"- **{label}** (`{key}`) [{unite}] — {direction}\n"
                 s += f"  - Min={st['min']} | Moy={st['moy']} | Médiane={st['median']} | Max={st['max']}\n"
                 if suggest: s += f"  - 💡 **Objectif suggéré : {suggest} {unite}**\n"
+            if not has_data: return ""
             return s + "\n"
 
         out += _section("Performance (BigQuery)", kpi_perf)
+        out += _section("Qualité (BigQuery)", kpi_qualite)
         return out
     except Exception as e:
         logger.error(f"[IA Tool] Erreur get_real_performance_tool: {e}", exc_info=True)
         return '{"status": "error", "message": "Impossible d\'accéder aux données de performance pour le moment. Veuillez réessayer plus tard."}'
 
 
-def list_available_kpis_tool() -> str:
+def list_available_kpis_tool(regle_id: int) -> str:
     """
-    Retourne la liste de TOUS les KPIs standards disponibles dans la base de données.
-    Présente les libellés métier pour communication à l'utilisateur, et les tech_keys pour usage interne.
+    Retourne la liste de TOUS les KPIs disponibles pour une règle donnée (en filtrant par projet).
+    1. Les KPIs normalisés (recommandés) configurés dans la base.
+    2. Les métriques brutes non normalisées actuellement présentes dans le Data Warehouse (BigQuery) POUR LE PROJET associé à cette règle.
+    Utilise ces informations pour demander des clarifications à l'utilisateur si besoin.
     """
-    logger.info("[IA Tool] list_available_kpis_tool")
+    logger.info(f"[IA Tool] list_available_kpis_tool pour regle_id={regle_id}")
     try:
-        kpis = get_all_kpis_with_status()
-        if not kpis:
-            return "⚠️ AUCUN KPI n'est configuré dans la base."
-
-        lines = ["--- KPIs DISPONIBLES (utilise le libellé métier pour parler à l'utilisateur, le tech_key en interne) ---\n"]
+        from modules.parametres.services.mapping_provider import get_all_kpis_with_status
+        from modules.regles_primes.services.dw_api_regles_provider import get_regle_by_id
+        
+        # Trouver le projet associé à la règle
+        regle_data = get_regle_by_id(regle_id)
+        projet = regle_data.get('projet') if regle_data else None
+        
+        kpis_norm = get_all_kpis_with_status()
+        
+        lines = ["--- KPIs NORMALISÉS DISPONIBLES (À PRIVILÉGIER POUR LA GRILLE) ---\n"]
         current_univers = None
-        for k in kpis:
+        for k in kpis_norm:
             if k['univers'] != current_univers:
                 current_univers = k['univers']
                 lines.append(f"\n[Catégorie : {current_univers}]")
             if not k['actif']:
-                continue  # Ne pas montrer les KPIs inactifs à l'utilisateur
+                continue  
             tech_key = k.get('tech_key') or k['code']
             libelle = k.get('libelle') or k['code']
             description = k.get('description') or ''
             desc_str = f" — {description}" if description else ''
-            lines.append(f"  • Libellé (à montrer) : \"{libelle}\"{desc_str}")
-            lines.append(f"    [tech_key interne : '{tech_key}']")
+            lines.append(f"  • Libellé : \"{libelle}\"{desc_str}")
+            lines.append(f"    [tech_key interne (metric_key) : '{tech_key}']")
+            
+        # Add BigQuery RAW KPIs
+        lines.append(f"\n\n--- MÉTRIQUES BRUTES DISPONIBLES SUR LE PROJET '{projet or 'TOUS'}' (NON NORMALISÉES) ---")
+        lines.append("Si l'utilisateur demande un KPI qui n'est pas dans la liste normalisée, tu peux utiliser un de ces codes bruts comme 'metric_key'.")
+        
+        from core.db.bigquery import get_bigquery_client
+        import os
+        client = get_bigquery_client()
+        PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'data-project-438313')
+        DATASET_PAIE = os.getenv('BQ_DATASET_PAIE', 'gcp_my_paie')
+        
+        # Filtre sur le projet si la règle en a un
+        where_perf = f"WHERE projet = '{projet}'" if projet else ""
+        where_qual = f"WHERE projet = '{projet}'" if projet else ""
+        
+        sql = f"""
+        SELECT DISTINCT kpi_code, 'PERFORMANCE' as univers FROM `{PROJECT_ID}.{DATASET_PAIE}.paie_performance_mensuelle` {where_perf}
+        UNION ALL
+        SELECT DISTINCT kpi_code, 'QUALITE' as univers FROM `{PROJECT_ID}.{DATASET_PAIE}.paie_qualite_mensuelle` {where_qual}
+        """
+        try:
+            bq_rows = client.query(sql).result()
+            perf_raw = []
+            qual_raw = []
+            for r in bq_rows:
+                if r.univers == 'PERFORMANCE': perf_raw.append(r.kpi_code)
+                else: qual_raw.append(r.kpi_code)
+                
+            lines.append("\n[Catégorie : PERFORMANCE (Brut)]")
+            if perf_raw:
+                # Grouper les codes bruts sur une seule ligne pour ne pas saturer le contexte IA
+                lines.append(f"  • Codes disponibles : {', '.join(sorted(perf_raw))}")
+            else:
+                lines.append("  (Aucune métrique de performance trouvée pour ce projet)")
+                
+            lines.append("\n[Catégorie : QUALITE (Brut)]")
+            if qual_raw:
+                lines.append(f"  • Codes disponibles : {', '.join(sorted(qual_raw))}")
+            else:
+                lines.append("  (Aucune métrique de qualité trouvée pour ce projet)")
+        except Exception as e:
+            logger.warning(f"Impossible de lire BQ pour list_available_kpis_tool: {e}")
+            lines.append("  (Indisponible actuellement)")
+            
         return "\n".join(lines)
     except Exception as e:
         logger.error(f"[IA Tool] Erreur list_available_kpis_tool: {e}")

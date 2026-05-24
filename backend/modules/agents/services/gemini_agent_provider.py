@@ -6,6 +6,7 @@ Module  : mypaie / backend / services / agents
 """
 
 import os
+import re
 import json
 import logging
 from google import genai
@@ -61,29 +62,78 @@ def _load_context_notes_for_prompt(regle_id: int) -> str:
         return ""
 
 
+def _extract_last_grille_json(history: list) -> str | None:
+    """
+    Scans history in reverse for the last bot message containing a json_grille_proposal block.
+    Extracts and returns the raw JSON string, or None if not found / invalid.
+    """
+    if not history:
+        return None
+    for h in reversed(history):
+        if h.get('sender') == 'bot':
+            text = h.get('text') or ''
+            match = re.search(r'```json_grille_proposal\s*([\s\S]*?)\s*```', text)
+            if match:
+                candidate = match.group(1).strip()
+                try:
+                    json.loads(candidate)   # validate it's real JSON
+                    return candidate
+                except Exception:
+                    logger.warning("[IA] json_grille_proposal trouvé mais JSON invalide — ignoré")
+    return None
+
+
+def _build_context_msg(message: str, regle_id: int, history: list) -> str:
+    """Builds the hidden-context prefix injected before every user message sent to Gemini."""
+    memory_block = _load_context_notes_for_prompt(regle_id)
+
+    last_grille_json = _extract_last_grille_json(history)
+
+    if last_grille_json:
+        creation_block = (
+            f"\n"
+            f"🔴 CRÉATION MULTI-TOURS EN COURS — JSON DE LA GRILLE ACTUELLE (extrait automatiquement) :\n"
+            f"```json\n{last_grille_json}\n```\n\n"
+            f"INSTRUCTIONS OBLIGATOIRES POUR CE MESSAGE :\n"
+            f"  1. PRENDS CE JSON comme point de départ. C'est la grille que tu as déjà proposée.\n"
+            f"  2. FUSIONNE les nouvelles instructions de l'utilisateur dans ce JSON.\n"
+            f"     → Ajoute/modifie uniquement ce qui est demandé. Garde TOUT le reste intact.\n"
+            f"  3. APPELLE get_real_performance_tool({regle_id}, '') — OBLIGATOIRE.\n"
+            f"     Simule la prime pour les 2 agents de l'échantillon avec le JSON fusionné.\n"
+            f"     Affiche : nom, CA, qualité, prime calculée palier par palier.\n"
+            f"  4. APPELLE prepare_grille_proposal_tool({regle_id}, nom, json_fusionné_complet)\n"
+            f"     avec le JSON COMPLET (anciens éléments + nouveaux).\n"
+            f"  5. Dans ton message TEXTE : résumé complet de toute la grille + formule de calcul\n"
+            f"     + simulation des 2 agents.\n"
+            f"  ⛔ NE JAMAIS appeler get_active_grille_json_tool.\n"
+            f"  ⛔ NE JAMAIS créer un JSON vide ou ne contenant que les nouveaux éléments.\n"
+        )
+    else:
+        creation_block = ""
+
+    return (
+        f"[CONTEXTE CACHÉ — NE PAS AFFICHER À L'UTILISATEUR]\n"
+        f"L'utilisateur consulte actuellement la règle de prime ID={regle_id}.\n"
+        f"- Utilise get_regle_info_tool({regle_id}) pour répondre aux questions sur le contenu de la règle.\n"
+        f"- Utilise list_available_kpis_tool({regle_id}) pour lister les KPIs disponibles.\n"
+        f"- Pour RENOMMER la version active : utilise rename_grille_version_tool({regle_id}, nouveau_nom) DIRECTEMENT.\n"
+        f"- Pour MODIFIER une grille déjà sauvegardée en base : utilise get_active_grille_json_tool({regle_id}) puis prepare_grille_proposal_tool.\n"
+        f"- Pour CRÉER une grille (1er tour) : appelle get_real_performance_tool({regle_id}, '') pour obtenir les stats de l'équipe, puis prepare_grille_proposal_tool avec le JSON complet.\n"
+        f"- Pour sauvegarder une décision : utilise save_context_note_tool({regle_id}, note).\n"
+        f"{creation_block}"
+        f"{memory_block}\n"
+        f"[FIN DU CONTEXTE CACHÉ]\n\n"
+        f"Message de l'utilisateur : {message}"
+    )
+
+
 def process_chat_message_stream(message: str, regle_id: int = None, history: list = None):
     """
-    Traite un message utilisateur via Gemini 1.5 Flash (Streaming).
+    Traite un message utilisateur via Gemini (Streaming).
     """
     client = get_gemini_client()
 
-    context_msg = message
-    if regle_id:
-        memory_block = _load_context_notes_for_prompt(regle_id)
-        context_msg = (
-            f"[CONTEXTE CACHÉ — NE PAS AFFICHER À L'UTILISATEUR]\n"
-            f"L'utilisateur consulte actuellement la règle de prime ID={regle_id}.\n"
-            f"- Utilise get_regle_info_tool({regle_id}) pour répondre aux questions sur le contenu de la règle.\n"
-            f"- Utilise list_available_kpis_tool() pour lister les KPIs disponibles.\n"
-            f"- Pour RENOMMER la version active : utilise rename_grille_version_tool({regle_id}, nouveau_nom) DIRECTEMENT.\n"
-            f"- Pour MODIFIER une grille existante : utilise D'ABORD get_active_grille_json_tool({regle_id}), applique les modifications, puis prepare_grille_proposal_tool({regle_id}, ...).\n"
-            f"- Pour CRÉER une grille de zéro : utilise prepare_grille_proposal_tool({regle_id}, ...) directement.\n"
-            f"- Pour objectifs REALISTES : appelle get_real_performance_tool({regle_id}, mois) AVANT de créer/modifier une grille.\n"
-            f"- Pour sauvegarder une décision importante : utilise save_context_note_tool({regle_id}, note).\n"
-            f"{memory_block}\n"
-            f"[FIN DU CONTEXTE CACHÉ]\n\n"
-            f"Message de l'utilisateur : {message}"
-        )
+    context_msg = _build_context_msg(message, regle_id, history) if regle_id else message
 
     formatted_history = []
     if history:
@@ -123,27 +173,11 @@ def process_chat_message_stream(message: str, regle_id: int = None, history: lis
 
 def process_chat_message(message: str, regle_id: int = None, history: list = None):
     """
-    Traite un message utilisateur via Gemini 1.5 Flash (Bloquant).
+    Traite un message utilisateur via Gemini (Bloquant).
     """
     client = get_gemini_client()
 
-    context_msg = message
-    if regle_id:
-        memory_block = _load_context_notes_for_prompt(regle_id)
-        context_msg = (
-            f"[CONTEXTE CACHÉ — NE PAS AFFICHER À L'UTILISATEUR]\n"
-            f"L'utilisateur consulte actuellement la règle de prime ID={regle_id}.\n"
-            f"- Utilise get_regle_info_tool({regle_id}) pour répondre aux questions sur le contenu de la règle.\n"
-            f"- Utilise list_available_kpis_tool() pour lister les KPIs disponibles.\n"
-            f"- Pour RENOMMER la version active : utilise rename_grille_version_tool({regle_id}, nouveau_nom) DIRECTEMENT.\n"
-            f"- Pour MODIFIER une grille existante : utilise D'ABORD get_active_grille_json_tool({regle_id}), applique les modifications, puis prepare_grille_proposal_tool({regle_id}, ...).\n"
-            f"- Pour CRÉER une grille de zéro : utilise prepare_grille_proposal_tool({regle_id}, ...) directement.\n"
-            f"- Pour objectifs REALISTES : appelle get_real_performance_tool({regle_id}, mois) AVANT de créer/modifier une grille.\n"
-            f"- Pour sauvegarder une décision importante : utilise save_context_note_tool({regle_id}, note).\n"
-            f"{memory_block}\n"
-            f"[FIN DU CONTEXTE CACHÉ]\n\n"
-            f"Message de l'utilisateur : {message}"
-        )
+    context_msg = _build_context_msg(message, regle_id, history) if regle_id else message
 
     formatted_history = []
     if history:

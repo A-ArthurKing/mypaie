@@ -293,8 +293,8 @@ def get_perf_totaux_par_matricule(
     # Utilisation de la table mensuelle Gold (plus fiable et performante pour les totaux)
     table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.paie_performance_mensuelle`"
 
-    mat_literals = ", ".join(f"'{m}'" for m in matricules)
-    where_clauses = [f"matricule IN ({mat_literals})"]
+    mat_literals = ", ".join(f"'{str(m).upper()}'" for m in matricules)
+    where_clauses = [f"UPPER(matricule) IN ({mat_literals})"]
     query_params = []
 
     if date_debut:
@@ -312,13 +312,14 @@ def get_perf_totaux_par_matricule(
               MAX(CASE WHEN LOWER(kpi_code) = 'net_booking_rental_amt_eur' THEN valeur_sum ELSE NULL END),
               MAX(CASE WHEN LOWER(kpi_code) = 'chiffre_affaire'            THEN valeur_sum ELSE NULL END),
               MAX(CASE WHEN LOWER(kpi_code) = 'revenue_amt_eur'            THEN valeur_sum ELSE NULL END),
+              MAX(CASE WHEN LOWER(kpi_code) = 'revenue'                    THEN valeur_sum ELSE NULL END),
               0
             ) AS sum_chiffre_affaire,
-            SUM(IF(LOWER(kpi_code) IN ('booking_nbr', 'nb_ventes'), valeur_sum, 0)) AS nb_ventes_total,
-            SUM(IF(LOWER(kpi_code) IN ('in_call_nbr', 'nb_appels'), valeur_sum, 0)) AS nb_appels_total,
+            SUM(IF(LOWER(kpi_code) IN ('booking_nbr', 'nb_ventes', 'bkg'), valeur_sum, 0)) AS nb_ventes_total,
+            SUM(IF(LOWER(kpi_code) IN ('in_call_nbr', 'nb_appels', 'incoming_call'), valeur_sum, 0)) AS nb_appels_total,
             SUM(IF(LOWER(kpi_code) IN ('in_call_min_nbr', 'temps_appel'), valeur_sum, 0)) AS sum_temps_appel,
             SUM(IF(LOWER(kpi_code) IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS sum_temps_production,
-            SUM(IF(LOWER(kpi_code) IN ('csat_nbr', 'csat'), valeur_sum, 0)) AS sum_csat,
+            SUM(IF(LOWER(kpi_code) IN ('csat_nbr', 'csat', 'avr_csat'), valeur_sum, 0)) AS sum_csat,
             SUM(IF(LOWER(kpi_code) IN ('total_csat_num', 'nb_csat'), valeur_sum, 0)) AS nb_csat_total,
             AVG(IF(LOWER(kpi_code) IN ('tx_mea'), valeur_avg, 0)) AS tx_mea_avg,
             AVG(IF(LOWER(kpi_code) IN ('taux_conversion', 'is_converted', 'taux_conversion_calc'), valeur_avg, 0)) AS avg_taux_conversion"""
@@ -326,10 +327,10 @@ def get_perf_totaux_par_matricule(
     # --- Colonnes dynamiques depuis config_kpis (nouveaux KPIs NATIVE) ---
     # Codes BQ déjà couverts par les colonnes fixes ci-dessus — ne pas dupliquer
     _fixed_bq_codes = {
-        'net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur',
-        'booking_nbr', 'nb_ventes', 'in_call_nbr', 'nb_appels',
+        'net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur', 'revenue',
+        'booking_nbr', 'nb_ventes', 'bkg', 'in_call_nbr', 'nb_appels', 'incoming_call',
         'in_call_min_nbr', 'temps_appel', 'agent_logged_time_min_nbr',
-        'call_worked_time_min_nbr', 'temps_production', 'csat_nbr', 'csat',
+        'call_worked_time_min_nbr', 'temps_production', 'csat_nbr', 'csat', 'avr_csat',
         'total_csat_num', 'nb_csat', 'tx_mea', 'taux_conversion',
         'is_converted', 'taux_conversion_calc',
     }
@@ -375,7 +376,7 @@ def get_perf_totaux_par_matricule(
         rows = list(client.query(sql, job_config=job_config).result())
         result = {}
         for r in rows:
-            mat = str(r["matricule"])
+            mat = str(r["matricule"]).upper()
             
             nb_appels = r["nb_appels_total"] or 0
             temps_appel = r["sum_temps_appel"] or 0

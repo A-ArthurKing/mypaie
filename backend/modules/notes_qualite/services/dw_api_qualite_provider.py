@@ -221,10 +221,10 @@ def get_qualite_totaux_par_matricule(
         return {}
 
     query_params = [
-        bq.ArrayQueryParameter("matricules", "STRING", [str(m) for m in matricules]),
+        bq.ArrayQueryParameter("matricules", "STRING", [str(m).upper() for m in matricules]),
     ]
     where_clauses = [
-        "matricule IN UNNEST(@matricules)",
+        "UPPER(matricule) IN UNNEST(@matricules)",
         "kpi_value IS NOT NULL",
     ]
 
@@ -247,7 +247,7 @@ def get_qualite_totaux_par_matricule(
     try:
         job_config = bq.QueryJobConfig(query_parameters=query_params)
         rows = [dict(r) for r in client.query(sql, job_config=job_config).result()]
-        return {str(r["matricule"]): r["moyenne"] for r in rows if r.get("matricule")}
+        return {str(r["matricule"]).upper(): r["moyenne"] for r in rows if r.get("matricule")}
     except GoogleCloudError as err:
         logger.error("Erreur BigQuery totaux qualité par matricule: %s", err)
         raise

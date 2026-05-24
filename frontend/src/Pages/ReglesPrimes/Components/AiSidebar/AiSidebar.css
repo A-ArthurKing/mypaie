@@ -488,7 +488,7 @@
 /* ---- Grille Proposal Card (bouton Valider et Créer) ---- */
 .ai-grille-proposal {
   margin: 0.75rem 0;
-  border: 2px solid var(--color-primary, #22c55e);
+  border: 2px solid var(--color-accent);
   border-radius: 10px;
   overflow: hidden;
   background: white;
@@ -502,7 +502,7 @@
 }
 
 .ai-grille-proposal-title {
-  background: var(--color-primary, #22c55e);
+  background: var(--color-accent);
   color: white;
   padding: 0.6rem 1rem;
   font-size: 0.85rem;
@@ -540,7 +540,7 @@
 
 .ai-grille-proposal-status {
   font-size: 0.8rem;
-  color: var(--color-success, #22c55e) !important;
+  color: var(--color-accent) !important;
   margin: 0 !important;
   display: flex;
   align-items: center;
@@ -550,8 +550,8 @@
 
 .ai-btn-apply-grille {
   width: 100%;
-  background: var(--color-primary, #22c55e);
-  color: white;
+  background: var(--color-accent);
+  color: var(--color-surface);
   border: none;
   border-radius: 7px;
   padding: 0.6rem 1rem;
@@ -562,7 +562,7 @@
 }
 
 .ai-btn-apply-grille:hover {
-  background: #16a34a;
+  background: var(--color-accent-hover);
   transform: translateY(-1px);
 }
 
@@ -581,6 +581,7 @@
   gap: 8px;
   flex-wrap: wrap;
   align-items: stretch;
+  flex-direction: column;
 }
 
 .ai-grille-actions .ai-btn-apply-grille {
