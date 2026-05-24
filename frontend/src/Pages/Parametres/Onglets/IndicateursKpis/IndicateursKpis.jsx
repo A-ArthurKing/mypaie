@@ -454,8 +454,8 @@ export default function IndicateursKpis() {
         isOpen={!!deleteKpiTarget}
         onClose={() => setDeleteKpiTarget(null)}
         onConfirm={handleDeleteKpiConfirm}
-        title="Supprimer le KPI Virtuel"
-        message={`Êtes-vous sûr de vouloir supprimer définitivement l'indicateur virtuel "${deleteKpiTarget}" ? Cette action est irréversible et pourrait impacter les grilles de primes qui l'utilisent.`}
+        title="Supprimer l'indicateur"
+        message={`Êtes-vous sûr de vouloir supprimer définitivement l'indicateur "${deleteKpiTarget}" ? Cette action est irréversible et pourrait impacter les grilles de primes qui l'utilisent.`}
         confirmText={isDeleting ? 'Suppression...' : 'Supprimer'}
       />
 

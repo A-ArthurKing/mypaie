@@ -19,11 +19,9 @@ export default function KpiCard({ kpi, toggling, onToggle, onEdit, onDelete }) {
           <button className="kr-action-btn" onClick={() => onEdit(kpi)} title="Modifier">
             <i className="fa-solid fa-pen-to-square" />
           </button>
-          {isVirtual && (
-            <button className="kr-action-btn kr-action-btn--danger" onClick={() => onDelete(kpi.code)} title="Supprimer">
-              <i className="fa-solid fa-trash-can" />
-            </button>
-          )}
+          <button className="kr-action-btn kr-action-btn--danger" onClick={() => onDelete(kpi.code)} title="Supprimer">
+            <i className="fa-solid fa-trash-can" />
+          </button>
         </div>
       </div>
 
