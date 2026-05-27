@@ -1,0 +1,288 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   AssiduiteCalendarModal.css
+   Calendrier mensuel compact — modal d'assiduité journalière par agent
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.acm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 1rem;
+}
+
+/* ── Fenêtre ─────────────────────────────────────────────────────────────── */
+.acm-modal {
+    background: var(--bg-surface, #fff);
+    border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 468px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: acm-in 0.18s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@keyframes acm-in {
+    from { opacity: 0; transform: scale(0.94) translateY(-10px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0);     }
+}
+
+/* ── En-tête ─────────────────────────────────────────────────────────────── */
+.acm-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1rem 1.25rem 0.8rem;
+    border-bottom: 1px solid var(--border-subtle, #e5e7eb);
+}
+
+.acm-title {
+    font-size: 0.93rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #111827);
+    margin: 0 0 0.18rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    line-height: 1.3;
+}
+
+.acm-prenom { font-weight: 400; }
+
+.acm-mat {
+    font-size: 0.68rem;
+    color: var(--color-text-secondary, #9ca3af);
+    font-weight: 500;
+    padding: 1px 5px;
+    background: var(--color-bg-light, #f3f4f6);
+    border-radius: 4px;
+}
+
+.acm-subtitle {
+    font-size: 0.76rem;
+    color: var(--color-text-secondary, #6b7280);
+    margin: 0;
+}
+
+.acm-focus-label {
+    color: var(--color-accent, #6366f1);
+    font-weight: 600;
+}
+
+.acm-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary, #9ca3af);
+    font-size: 0.88rem;
+    padding: 0.3rem;
+    line-height: 1;
+    flex-shrink: 0;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.acm-close:hover {
+    color: var(--color-text-primary, #374151);
+    background: var(--color-bg-light, #f3f4f6);
+}
+
+/* ── Stats chips ──────────────────────────────────────────────────────────── */
+.acm-stats {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.65rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle, #e5e7eb);
+    flex-wrap: wrap;
+}
+
+.acm-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--color-bg-light, #f9fafb);
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    border-radius: 8px;
+    padding: 0.3rem 0.6rem;
+    min-width: 50px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.acm-stat__val {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #111827);
+    line-height: 1.2;
+}
+
+.acm-stat__lbl {
+    font-size: 0.57rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary, #9ca3af);
+    margin-top: 1px;
+}
+
+/* ── Calendrier ──────────────────────────────────────────────────────────── */
+.acm-calendar {
+    padding: 0.8rem 1.25rem 0.5rem;
+}
+
+.acm-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 3px;
+}
+
+.acm-grid--days {
+    margin-bottom: 0;
+}
+
+.acm-weekday {
+    text-align: center;
+    font-size: 0.59rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary, #9ca3af);
+    padding: 0.18rem 0;
+}
+
+/* ── Cellule jour ────────────────────────────────────────────────────────── */
+.acm-day {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: transform 0.12s, box-shadow 0.12s;
+    overflow: visible;
+}
+
+.acm-day:hover:not(.acm-day--hors):not(.acm-day--dim) {
+    transform: scale(1.12);
+    z-index: 10;
+}
+
+.acm-day__num {
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+}
+
+/* Badge retard */
+.acm-retard-dot {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    font-size: 0.44rem;
+    font-weight: 900;
+    background: #f97316;
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 2.5px;
+    line-height: 1.3;
+    letter-spacing: 0;
+}
+
+/* ── Statuts ─────────────────────────────────────────────────────────────── */
+.acm-day--travaille  { background: #bbf7d0; color: #065f46; }
+.acm-day--abs-injust { background: #fecaca; color: #991b1b; }
+.acm-day--abs-just   { background: #bfdbfe; color: #1e3a8a; }
+.acm-day--conge      { background: #ddd6fe; color: #5b21b6; }
+.acm-day--do         { background: #f3f4f6; color: #9ca3af; }
+.acm-day--ferie      { background: #fef08a; color: #713f12; }
+.acm-day--hors       { background: transparent; }
+
+/* Jours DO / HORS_PLANNING — numéro plus discret */
+.acm-day--dim .acm-day__num { opacity: 0.45; }
+
+/* Retard sur jour travaillé : fond orange doux */
+.acm-day--is-retard.acm-day--travaille {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+/* Focus highlight */
+.acm-day--focused {
+    box-shadow: 0 0 0 2.5px #6366f1, 0 2px 8px rgba(99, 102, 241, 0.3);
+    transform: scale(1.06);
+    z-index: 5;
+}
+
+/* ── États ───────────────────────────────────────────────────────────────── */
+.acm-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 1.5rem 1rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--color-text-secondary, #6b7280);
+}
+
+.acm-state--error { color: #dc2626; }
+
+/* ── Légende ─────────────────────────────────────────────────────────────── */
+.acm-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.7rem;
+    padding: 0.6rem 1.25rem 0.9rem;
+    border-top: 1px solid var(--border-subtle, #e5e7eb);
+    margin-top: 0.5rem;
+}
+
+.acm-leg {
+    font-size: 0.6rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--color-text-secondary, #6b7280);
+}
+
+.acm-leg::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.acm-leg--travaille::before  { background: #bbf7d0; }
+.acm-leg--abs-injust::before { background: #fecaca; }
+.acm-leg--abs-just::before   { background: #bfdbfe; }
+.acm-leg--conge::before      { background: #ddd6fe; }
+.acm-leg--ferie::before      { background: #fef08a; }
+.acm-leg--do::before         { background: #f3f4f6; border: 1px solid #d1d5db; }
+
+/* Légende retard : indicateur R */
+.acm-leg--retard { gap: 0.4rem; }
+.acm-leg--retard::before  { background: #fed7aa; }
+
+.acm-leg__r {
+    font-size: 0.44rem;
+    font-weight: 900;
+    background: #f97316;
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 3px;
+    line-height: 1.3;
+}

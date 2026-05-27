@@ -19,7 +19,19 @@ function formatDate(dt) {
   } catch { return '—'; }
 }
 
-export default function AssiduiteTable({ agents, onEdit, onHistory }) {
+// Badge indiquant l'origine de la donnée
+function SourceBadge({ agent }) {
+  if (!agent.derniere_maj) return null;
+  if (agent.is_overridden) {
+    return <span className="assit-source-badge assit-source-badge--override" title="Données saisies manuellement — protégées de la synchro auto">MODIFIÉ</span>;
+  }
+  if (agent.synced_at) {
+    return <span className="assit-source-badge assit-source-badge--auto" title="Données synchronisées automatiquement depuis gestionpaie">AUTO</span>;
+  }
+  return null;
+}
+
+export default function AssiduiteTable({ agents, onEdit, onHistory, onCalendar }) {
 
   const filtered = agents;
 
@@ -57,7 +69,10 @@ export default function AssiduiteTable({ agents, onEdit, onHistory }) {
           {filtered.map(agent => {
             // Jours non travaillés = ABS.I + ABS.J + CP/CSS (retards exclus)
             const nt   = (agent.abs_injustifie || 0) + (agent.abs_justifie || 0) + (agent.cp_css || 0);
-            const trav = Math.max(0, (agent.jours_ouvres || 22) - nt);
+            // J.TRAV : utilise la valeur calculée depuis gestionpaie si disponible
+            const trav = agent.jours_travailles > 0
+              ? agent.jours_travailles
+              : Math.max(0, (agent.jours_ouvres || 22) - nt);
             const hasData = !!agent.derniere_maj;
 
             return (
@@ -74,19 +89,31 @@ export default function AssiduiteTable({ agents, onEdit, onHistory }) {
 
                 {/* ABS.I */}
                 <td className="assit-td assit-td--num">
-                  <span className={agent.abs_injustifie > 0 ? 'assit-chip assit-chip--danger' : 'assit-chip assit-chip--zero'}>
+                  <span
+                    className={`${agent.abs_injustifie > 0 ? 'assit-chip assit-chip--danger' : 'assit-chip assit-chip--zero'}${onCalendar ? ' assit-chip--clickable' : ''}`}
+                    onClick={onCalendar ? () => onCalendar(agent, 'abs_injust') : undefined}
+                    title={onCalendar ? 'Voir le détail sur le calendrier' : undefined}
+                  >
                     {agent.abs_injustifie ?? 0}
                   </span>
                 </td>
                 {/* RETARD */}
                 <td className="assit-td assit-td--num">
-                  <span className={agent.retard > 0 ? 'assit-chip assit-chip--warn' : 'assit-chip assit-chip--zero'}>
+                  <span
+                    className={`${agent.retard > 0 ? 'assit-chip assit-chip--warn' : 'assit-chip assit-chip--zero'}${onCalendar ? ' assit-chip--clickable' : ''}`}
+                    onClick={onCalendar ? () => onCalendar(agent, 'retard') : undefined}
+                    title={onCalendar ? 'Voir le détail sur le calendrier' : undefined}
+                  >
                     {agent.retard ?? 0}
                   </span>
                 </td>
                 {/* ABS.J */}
                 <td className="assit-td assit-td--num">
-                  <span className={agent.abs_justifie > 0 ? 'assit-chip assit-chip--info' : 'assit-chip assit-chip--zero'}>
+                  <span
+                    className={`${agent.abs_justifie > 0 ? 'assit-chip assit-chip--info' : 'assit-chip assit-chip--zero'}${onCalendar ? ' assit-chip--clickable' : ''}`}
+                    onClick={onCalendar ? () => onCalendar(agent, 'abs_just') : undefined}
+                    title={onCalendar ? 'Voir le détail sur le calendrier' : undefined}
+                  >
                     {agent.abs_justifie ?? 0}
                   </span>
                 </td>
@@ -105,18 +132,29 @@ export default function AssiduiteTable({ agents, onEdit, onHistory }) {
                 </td>
                 {/* TRAV. — dérivé */}
                 <td className="assit-td assit-td--num assit-td--derived">
-                  <span className="assit-chip assit-chip--trav">{trav}</span>
+                  <span
+                    className={`assit-chip assit-chip--trav${onCalendar ? ' assit-chip--clickable' : ''}`}
+                    onClick={onCalendar ? () => onCalendar(agent, 'travaille') : undefined}
+                    title={onCalendar ? 'Voir le détail sur le calendrier' : undefined}
+                  >
+                    {trav}
+                  </span>
                 </td>
                 {/* OUV. */}
                 <td className="assit-td assit-td--num">
                   <span className="assit-chip assit-chip--ouv">{agent.jours_ouvres ?? 22}</span>
                 </td>
 
-                {/* Dernière MAJ */}
+                {/* Dernière MAJ + badge source */}
                 <td className="assit-td assit-td--date">
-                  {hasData
-                    ? <span className="assit-date">{formatDate(agent.derniere_maj)}</span>
-                    : <span className="assit-new-badge">Non renseigné</span>}
+                  {hasData ? (
+                    <div className="assit-date-cell">
+                      <span className="assit-date">{formatDate(agent.derniere_maj)}</span>
+                      <SourceBadge agent={agent} />
+                    </div>
+                  ) : (
+                    <span className="assit-new-badge">Non renseigné</span>
+                  )}
                 </td>
 
                 {/* Actions */}

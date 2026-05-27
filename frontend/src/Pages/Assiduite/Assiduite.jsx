@@ -16,6 +16,7 @@ import AssiduiteToolbar  from './sections/AssiduiteToolbar/AssiduiteToolbar';
 import AssiduiteTable    from './sections/AssiduiteTable/AssiduiteTable';
 import EditAssiduiteModal from './components/EditAssiduiteModal/EditAssiduiteModal';
 import HistoriqueAssiduiteModal from './components/HistoriqueAssiduiteModal/HistoriqueAssiduiteModal';
+import AssiduiteCalendarModal from './components/AssiduiteCalendarModal/AssiduiteCalendarModal';
 import { useToast } from '../../Shared/Contexts/ToastContext';
 import Loader from '../../Shared/UI/Loader/Loader';
 // #endregion
@@ -35,6 +36,7 @@ export default function Assiduite() {
     selectedMois,
     setSelectedMois,
     saveAssiduite,
+    syncAssiduite,
   } = useAssiduite();
 
   const addToast = useToast();
@@ -43,6 +45,8 @@ export default function Assiduite() {
   const [currentPage,  setCurrentPage] = useState(1);
   const [editingAgent,    setEditingAgent]    = useState(null);
   const [historiqueAgent, setHistoriqueAgent] = useState(null);
+  const [isSyncing,       setIsSyncing]       = useState(false);
+  const [calendarState,   setCalendarState]   = useState(null); // { agent, focus }
 
   // Filtrage par recherche textuelle
   const filtered = useMemo(() => {
@@ -70,6 +74,20 @@ export default function Assiduite() {
     setEditingAgent(null);
   };
 
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const result = await syncAssiduite();
+      const { updated, skipped_overridden, skipped_no_data, errors } = result.stats || {};
+      const msg = `Synchronisation terminée — ${updated} mis à jour, ${skipped_overridden} protégés, ${skipped_no_data} sans données${errors?.length ? `, ${errors.length} erreur(s)` : ''}.`;
+      addToast?.(msg, errors?.length ? 'warning' : 'success');
+    } catch (err) {
+      addToast?.(err.message || 'Erreur lors de la synchronisation', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="assid-page">
 
@@ -84,6 +102,8 @@ export default function Assiduite() {
         onSearchChange={v => { setSearch(v); }}
         total={agents.length}
         filtered={filtered.length}
+        onSync={handleSync}
+        isSyncing={isSyncing}
       />
 
       {/* Contenu */}
@@ -95,6 +115,7 @@ export default function Assiduite() {
               agents={paginatedAgents}
               onEdit={handleEdit}
               onHistory={a => setHistoriqueAgent(a)}
+              onCalendar={(agent, focus) => setCalendarState({ agent, focus })}
             />
 
             {/* Pagination */}
@@ -139,6 +160,15 @@ export default function Assiduite() {
         onClose={() => setHistoriqueAgent(null)}
         agent={historiqueAgent}
         selectedMois={selectedMois}
+      />
+
+      {/* Modal calendrier journalier */}
+      <AssiduiteCalendarModal
+        isOpen={!!calendarState}
+        onClose={() => setCalendarState(null)}
+        agent={calendarState?.agent}
+        selectedMois={selectedMois}
+        focus={calendarState?.focus}
       />
 
     </div>

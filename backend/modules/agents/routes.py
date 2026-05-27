@@ -37,6 +37,9 @@ from modules.agents.services.assiduite_provider import (
     get_justificatif_info,
     delete_justificatif,
 )
+from modules.agents.services.assiduite_sync_provider import sync_assiduite_pour_mois
+from modules.agents.services.assiduite_calendrier_provider import get_calendrier_agent
+from modules.agents.services.assiduite_calendrier_provider import get_calendrier_agent
 from core.socket import emit_update
 
 import os
@@ -474,4 +477,92 @@ def endpoint_delete_justificatif(justif_id):
         return jsonify({"error": str(ve)}), 404
     except Exception as e:
         logger.error("Erreur DELETE /api/assiduite/justificatif/%s : %s", justif_id, e)
+        return jsonify({"error": str(e)}), 500
+
+
+# ─── Synchronisation automatique ─────────────────────────────────────────────
+
+@agents_bp.route("/api/assiduite/sync", methods=["POST"])
+def endpoint_sync_assiduite():
+    """
+    Déclenche la synchronisation automatique de assiduite_mensuelle pour un mois
+    donné, en lisant les données depuis gestionpaie (heures_corrigees + heures_ecart).
+
+    Body JSON : { "mois": "YYYY-MM" }
+
+    Accès restreint : rôle super_admin uniquement.
+
+    Returns:
+        {
+            "success": true,
+            "mois":    "YYYY-MM",
+            "stats":   {
+                "updated":            <int>,
+                "skipped_overridden": <int>,
+                "skipped_no_data":    <int>,
+                "errors":             [...]
+            }
+        }
+    """
+    try:
+        # ── Contrôle d'accès ──────────────────────────────────────────────────
+        try:
+            auth = request.headers.get('Authorization', '')
+            if not auth.startswith('Bearer '):
+                return jsonify({"error": "Authentification requise"}), 401
+            payload = _pyjwt.decode(auth[7:], JWT_SECRET, algorithms=['HS256'])
+            role = payload.get('role', '')
+        except Exception:
+            return jsonify({"error": "Token invalide ou expiré"}), 401
+
+        if role != 'super_admin':
+            return jsonify({"error": "Accès réservé aux super-administrateurs"}), 403
+
+        # ── Validation du mois ────────────────────────────────────────────────
+        body = request.json or {}
+        mois = (body.get('mois') or '').strip()
+        if not mois:
+            return jsonify({"error": "Champ 'mois' obligatoire (format YYYY-MM)"}), 400
+        from datetime import datetime as _dt
+        try:
+            _dt.strptime(mois, "%Y-%m")
+        except ValueError:
+            return jsonify({"error": "Format de mois invalide. Attendu : YYYY-MM"}), 400
+
+        # ── Synchronisation ───────────────────────────────────────────────────
+        stats = sync_assiduite_pour_mois(mois)
+
+        # Notifier les clients connectés en temps réel
+        emit_update("assiduite_synced", {"mois": mois, "stats": stats})
+
+        return jsonify({"success": True, "mois": mois, "stats": stats}), 200
+
+    except Exception as e:
+        logger.error("Erreur POST /api/assiduite/sync : %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# ─── Calendrier journalier ────────────────────────────────────────────────────
+
+@agents_bp.route("/api/assiduite/<matricule>/calendrier", methods=["GET"])
+def endpoint_get_calendrier_agent(matricule):
+    """
+    Retourne le détail journalier de l'assiduité d'un agent pour un mois donné,
+    en lisant directement depuis gestionpaie (heures_corrigees + heures_ecart).
+
+    Query param : mois=YYYY-MM  (défaut = mois courant)
+
+    Returns:
+        { matricule, mois, stats: {...}, jours: [{date, statut, is_retard, …}] }
+    """
+    try:
+        from datetime import datetime as _dt
+        mois = request.args.get("mois") or _dt.now().strftime("%Y-%m")
+        _dt.strptime(mois, "%Y-%m")
+        data = get_calendrier_agent(matricule, mois)
+        return jsonify(data), 200
+    except ValueError:
+        return jsonify({"error": "Format de mois invalide. Attendu : YYYY-MM"}), 400
+    except Exception as e:
+        logger.error("Erreur GET /api/assiduite/%s/calendrier : %s", matricule, e)
         return jsonify({"error": str(e)}), 500

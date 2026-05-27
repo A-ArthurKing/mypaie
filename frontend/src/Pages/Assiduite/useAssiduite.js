@@ -45,15 +45,17 @@ export default function useAssiduite() {
 
   const socket = useSocket();
 
-  // Synchronisation temps réel — recharge quand assiduite_updated ou agent_created
+  // Synchronisation temps réel — recharge quand assiduite_updated, agent_created ou assiduite_synced
   useEffect(() => {
     if (!socket) return;
     const handleUpdate = () => revalidate();
     socket.on('assiduite_updated', handleUpdate);
+    socket.on('assiduite_synced',  handleUpdate);
     socket.on('agent_created',     handleUpdate);
     socket.on('agent_deleted',     handleUpdate);
     return () => {
       socket.off('assiduite_updated', handleUpdate);
+      socket.off('assiduite_synced',  handleUpdate);
       socket.off('agent_created',     handleUpdate);
       socket.off('agent_deleted',     handleUpdate);
     };
@@ -91,12 +93,36 @@ export default function useAssiduite() {
     return res.json();
   }, [selectedMois, mutate, revalidate]);
 
+  /**
+   * Déclenche la synchronisation automatique depuis gestionpaie.
+   * Nécessite le rôle super_admin (contrôlé côté serveur).
+   */
+  const syncAssiduite = useCallback(async () => {
+    const token = localStorage.getItem('mypaie_auth_token') || '';
+    const res = await fetch('/api/assiduite/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ mois: selectedMois }),
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(json.error || 'Erreur lors de la synchronisation');
+    }
+    // Le socket assiduite_synced déclenchera le revalidate automatiquement
+    return json;
+  }, [selectedMois]);
+
   return {
     agents,
     loading,
     selectedMois,
     setSelectedMois,
     saveAssiduite,
+    syncAssiduite,
     revalidate,
   };
 }

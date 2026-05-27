@@ -56,12 +56,15 @@ def get_assiduite_pour_mois(mois: str) -> list:
                     e.matricule, e.nom, e.prenom,
                     p.nom            AS projet,
                     o.libelle        AS operation,
-                    COALESCE(am.abs_injustifie, 0) AS abs_injustifie,
-                    COALESCE(am.retard,         0) AS retard,
-                    COALESCE(am.abs_justifie,   0) AS abs_justifie,
-                    COALESCE(am.cp_css,         0) AS cp_css,
-                    COALESCE(am.jours_ouvres,  22) AS jours_ouvres,
-                    am.updated_at                  AS derniere_maj
+                    COALESCE(am.abs_injustifie,   0) AS abs_injustifie,
+                    COALESCE(am.retard,           0) AS retard,
+                    COALESCE(am.abs_justifie,     0) AS abs_justifie,
+                    COALESCE(am.cp_css,           0) AS cp_css,
+                    COALESCE(am.jours_ouvres,    22) AS jours_ouvres,
+                    COALESCE(am.jours_travailles, 0) AS jours_travailles,
+                    COALESCE(am.is_overridden,    0) AS is_overridden,
+                    am.synced_at                     AS synced_at,
+                    am.updated_at                    AS derniere_maj
                 FROM ref_employes e
                 LEFT JOIN ref_structure_map m ON e.id_structure = m.id
                 LEFT JOIN ref_projets       p ON m.id_projet    = p.id
@@ -99,21 +102,23 @@ def upsert_assiduite(matricule: str, mois: str, data: dict,
         with connection.cursor() as cursor:
             cursor.execute("""
                 INSERT INTO assiduite_mensuelle
-                    (matricule, mois, abs_injustifie, retard, abs_justifie, cp_css, jours_ouvres)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    (matricule, mois, abs_injustifie, retard, abs_justifie,
+                     cp_css, jours_ouvres, is_overridden)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 1)
                 ON DUPLICATE KEY UPDATE
                     abs_injustifie = VALUES(abs_injustifie),
                     retard         = VALUES(retard),
                     abs_justifie   = VALUES(abs_justifie),
                     cp_css         = VALUES(cp_css),
                     jours_ouvres   = VALUES(jours_ouvres),
+                    is_overridden  = 1,
                     updated_at     = CURRENT_TIMESTAMP
             """, (matricule, mois, abs_injustifie, retard, abs_justifie, cp_css, jours_ouvres))
             cursor.execute("""
                 INSERT INTO assiduite_historique
                     (matricule, mois, abs_injustifie, retard, abs_justifie, cp_css,
-                     jours_ouvres, commentaire, modifie_par, modifie_par_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     jours_ouvres, commentaire, modifie_par, modifie_par_id, source)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'MANUEL')
             """, (matricule, mois, abs_injustifie, retard, abs_justifie, cp_css,
                   jours_ouvres, commentaire, modifie_par, modifie_par_id))
             historique_id = cursor.lastrowid
@@ -127,6 +132,7 @@ def upsert_assiduite(matricule: str, mois: str, data: dict,
             "abs_justifie":   abs_justifie,
             "cp_css":         cp_css,
             "jours_ouvres":   jours_ouvres,
+            "is_overridden":  1,
             "historique_id":  historique_id,
         }
     except Exception as e:

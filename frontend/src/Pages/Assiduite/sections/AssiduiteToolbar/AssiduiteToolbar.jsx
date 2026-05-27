@@ -29,6 +29,8 @@ export default function AssiduiteToolbar({
   onSearchChange,
   total,
   filtered,
+  onSync,
+  isSyncing = false,
 }) {
   return (
     <div className="assto-toolbar">
@@ -76,6 +78,19 @@ export default function AssiduiteToolbar({
         <span className="assto-count__sep">/</span>
         {total}
       </div>
+
+      {/* Bouton synchronisation */}
+      {onSync && (
+        <button
+          className={`assto-sync-btn${isSyncing ? ' assto-sync-btn--loading' : ''}`}
+          onClick={onSync}
+          disabled={isSyncing}
+          title="Synchroniser les données depuis gestionpaie"
+        >
+          <i className={`fa-solid fa-rotate${isSyncing ? ' fa-spin' : ''}`} />
+          <span>{isSyncing ? 'Synchronisation…' : 'Synchroniser'}</span>
+        </button>
+      )}
 
     </div>
   );

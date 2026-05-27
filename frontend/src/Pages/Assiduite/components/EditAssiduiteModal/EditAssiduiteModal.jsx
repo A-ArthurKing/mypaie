@@ -127,6 +127,17 @@ export default function EditAssiduiteModal({ isOpen, onClose, agent, selectedMoi
         <form onSubmit={handleSubmit} noValidate>
           <div className="eam-body">
 
+            {/* Avertissement : données auto-synchronisées */}
+            {!agent.is_overridden && agent.synced_at && (
+              <div className="eam-sync-notice">
+                <i className="fa-solid fa-circle-info" />
+                <span>
+                  Ces données sont <strong>synchronisées automatiquement</strong> depuis gestionpaie.
+                  Toute modification manuelle protégera cette ligne de la synchro automatique.
+                </span>
+              </div>
+            )}
+
             {/* Absences */}
             <fieldset className="eam-group">
               <legend className="eam-group__legend">
