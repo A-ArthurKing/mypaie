@@ -23,7 +23,9 @@ from calendar import monthrange
 from collections import defaultdict
 from datetime import date as _date
 
+import pymysql
 from config.db_gestionpaie_connector import get_gestionpaie_connection
+from config.db_mysql_connector import get_mysql_connection
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +79,12 @@ def get_calendrier_agent(matricule: str, mois: str) -> dict:
     date_debut  = f"{mois}-01"
     date_fin    = f"{mois}-{nb_jours:02d}"
 
-    conn = get_gestionpaie_connection()
+    try:
+        conn = get_gestionpaie_connection()
+    except pymysql.err.OperationalError as e:
+        logger.warning("GestionPaie inaccessible pour calendrier %s/%s : %s — fallback local", matricule, mois, e)
+        return _get_calendrier_local_fallback(matricule, mois)
+
     try:
         with conn.cursor() as cur:
             # ── heures_corrigees ───────────────────────────────────────────
@@ -191,8 +198,60 @@ def get_calendrier_agent(matricule: str, mois: str) -> dict:
         jours.append(entry)
 
     return {
-        'matricule': matricule,
-        'mois':      mois,
-        'stats':     stats,
-        'jours':     jours,
+        'matricule':  matricule,
+        'mois':       mois,
+        'stats':      stats,
+        'jours':      jours,
+        'source':     'gestionpaie',
+        'table':      'heures_corrigees',
+        'join_col':   'matricule',
+        'data_cols':  ['heure_hp', 'heure_ht', 'TYPE_CONGE', 'Commentaire'],
+        'disponible': True,
+    }
+
+
+def _get_calendrier_local_fallback(matricule: str, mois: str) -> dict:
+    """
+    Fallback quand GestionPaie est inaccessible.
+    Retourne les stats agrégées depuis assiduite_mensuelle (MySQL local)
+    avec un tableau jours vide et le flag source='local_only'.
+    """
+    empty_stats = {
+        'jours_ouvres':     0,
+        'jours_travailles': 0,
+        'cp_css':           0,
+        'retard':           0,
+        'abs_justifie':     0,
+        'abs_injustifie':   0,
+    }
+    try:
+        conn = get_mysql_connection()
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute(
+                """
+                SELECT jours_ouvres, jours_travailles, cp_css,
+                       retard, abs_justifie, abs_injustifie
+                FROM   assiduite_mensuelle
+                WHERE  matricule = %s AND mois = %s
+                LIMIT  1
+                """,
+                (str(matricule), mois),
+            )
+            row = cur.fetchone()
+        conn.close()
+        if row:
+            empty_stats = {k: int(v or 0) for k, v in row.items()}
+    except Exception as local_err:
+        logger.warning("Fallback local indisponible pour %s/%s : %s", matricule, mois, local_err)
+
+    return {
+        'matricule':  matricule,
+        'mois':       mois,
+        'stats':      empty_stats,
+        'jours':      [],
+        'source':     'local_only',
+        'table':      'assiduite_mensuelle',
+        'join_col':   'matricule',
+        'data_cols':  ['jours_travailles', 'retard', 'abs_injustifie', 'abs_justifie'],
+        'disponible': False,
     }

@@ -72,6 +72,23 @@
     margin: 0;
 }
 
+.acm-source-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 3px 0 0;
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary, #9ca3af);
+    font-family: 'Courier New', monospace;
+}
+.acm-source-meta i { font-size: 0.62rem; }
+.acm-source-meta__table    { color: #6366f1; font-weight: 600; }
+.acm-source-meta__sep      { color: var(--color-text-tertiary, #9ca3af); }
+.acm-source-meta__col      { color: #10b981; font-weight: 600; }
+.acm-source-meta__src      { color: #9ca3af; }
+.acm-source-meta__datacols { color: #f59e0b; font-weight: 600; }
+.acm-source-meta__hint     { color: #9ca3af; font-style: italic; }
+
 .acm-focus-label {
     color: var(--color-accent, #6366f1);
     font-weight: 600;
@@ -236,7 +253,8 @@
     color: var(--color-text-secondary, #6b7280);
 }
 
-.acm-state--error { color: #dc2626; }
+.acm-state--error   { color: #dc2626; }
+.acm-state--warning { color: #d97706; }
 
 /* ── Légende ─────────────────────────────────────────────────────────────── */
 .acm-legend {

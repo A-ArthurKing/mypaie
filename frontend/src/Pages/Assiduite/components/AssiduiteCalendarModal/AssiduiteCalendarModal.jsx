@@ -25,6 +25,17 @@ const STATUT_CFG = {
   HORS_PLANNING: { label: '—',             cls: 'acm-day--hors'       },
 };
 
+// Colonnes déterminantes par focus (table · colonne)
+const FOCUS_COLS = {
+  travaille:  [{ table: 'heures_corrigees', col: 'heure_ht' }],
+  retard:     [{ table: 'heures_ecart',     col: 'code_ecart',  hint: '= 1' }],
+  abs_injust: [{ table: 'heures_corrigees', col: 'heure_ht',    hint: '= 0' },
+               { table: 'heures_ecart',     col: 'code_ecart',  hint: '≠ 2' }],
+  abs_just:   [{ table: 'heures_ecart',     col: 'code_ecart',  hint: '= 2' }],
+  conge:      [{ table: 'heures_corrigees', col: 'TYPE_CONGE' }],
+  null:       [{ table: 'heures_corrigees', col: 'heure_hp' }],
+};
+
 // Couleurs et libellés des chips de stats
 const STATS_CFG = [
   { key: 'jours_travailles', label: 'J.TRAV', focus: 'travaille', color: '#16a34a' },
@@ -139,7 +150,7 @@ export default function AssiduiteCalendarModal({
     )
       .then(r => r.json())
       .then(d => {
-        if (d.error) throw new Error(d.error);
+        if (d.error && d.disponible !== false) throw new Error(d.error);
         setData(d);
       })
       .catch(e => setError(e.message || 'Erreur de chargement'))
@@ -185,6 +196,27 @@ export default function AssiduiteCalendarModal({
                 <span className="acm-focus-label"> · {focusLabel}</span>
               )}
             </p>
+            {data && (() => {
+              const focusCols = FOCUS_COLS[focus] ?? FOCUS_COLS['null'];
+              return (
+                <p className="acm-source-meta">
+                  <i className="fa-solid fa-database" />
+                  {' '}<span className="acm-source-meta__table">{data.table}</span>
+                  <span className="acm-source-meta__sep"> · </span>
+                  <i className="fa-solid fa-link" />
+                  {' '}<span className="acm-source-meta__col">{data.join_col}</span>
+                  {focusCols.map((fc, i) => (
+                    <React.Fragment key={i}>
+                      <span className="acm-source-meta__sep"> · </span>
+                      <i className="fa-solid fa-table-columns" />
+                      {' '}<span className="acm-source-meta__src">{fc.table}</span>
+                      {'.'}<span className="acm-source-meta__datacols">{fc.col}</span>
+                      {fc.hint && <span className="acm-source-meta__hint"> {fc.hint}</span>}
+                    </React.Fragment>
+                  ))}
+                </p>
+              );
+            })()}
           </div>
           <button className="acm-close" onClick={onClose} title="Fermer">
             <i className="fa-solid fa-xmark" />
@@ -229,7 +261,13 @@ export default function AssiduiteCalendarModal({
             </div>
           )}
 
-          {data && (
+          {data && data.disponible === false && (
+            <div className="acm-state acm-state--warning">
+              <i className="fa-solid fa-triangle-exclamation" /> GestionPaie inaccessible — calendrier détaillé non disponible. Stats agrégées affichées ci-dessus.
+            </div>
+          )}
+
+          {data && data.disponible !== false && (
             <div className="acm-grid acm-grid--days">
               {/* Cellules vides pour décaler au bon jour de semaine */}
               {Array.from({ length: offset }).map((_, i) => (

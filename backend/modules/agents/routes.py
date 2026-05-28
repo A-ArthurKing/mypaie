@@ -46,6 +46,8 @@ import os
 import jwt as _pyjwt
 JWT_SECRET = os.getenv('JWT_SECRET', 'super_secret_dev_key_mypaie_2026')
 
+logger = logging.getLogger(__name__)
+
 
 def _get_current_user_info():
     """Decode JWT Bearer token pour identifier l'utilisateur courant. Non-bloquant."""
@@ -557,12 +559,16 @@ def endpoint_get_calendrier_agent(matricule):
     """
     try:
         from datetime import datetime as _dt
+        import pymysql
         mois = request.args.get("mois") or _dt.now().strftime("%Y-%m")
         _dt.strptime(mois, "%Y-%m")
         data = get_calendrier_agent(matricule, mois)
         return jsonify(data), 200
     except ValueError:
         return jsonify({"error": "Format de mois invalide. Attendu : YYYY-MM"}), 400
+    except pymysql.err.OperationalError as e:
+        logger.warning("GestionPaie inaccessible pour calendrier agent %s : %s", matricule, e)
+        return jsonify({"error": "Source de données GestionPaie inaccessible", "disponible": False}), 503
     except Exception as e:
         logger.error("Erreur GET /api/assiduite/%s/calendrier : %s", matricule, e)
         return jsonify({"error": str(e)}), 500
