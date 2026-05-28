@@ -30,9 +30,9 @@ const DEFAULT_PALIERS_MODAL = [
 ];
 
 export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData, projet }) {
-  const [activeStep, setActiveStep] = useState(1); // 1: Statuts, 2: Indicateurs, 3: Valeurs, 4: Paliers
-  const [newCatName, setNewCatName] = useState('');
+  const [activeStep, setActiveStep] = useState(1); 
   const [kpiRefs, setKpiRefs] = useState({});
+  const [isLoadingRefs, setIsLoadingRefs] = useState(false);
   const [kpiInfoModal, setKpiInfoModal] = useState({ isOpen: false, data: null });
   const socket = useSocket();
   const [data, setData] = useState({
@@ -52,50 +52,50 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
   useEffect(() => {
     // Charger les KPIs de référence (Standards + Gold BigQuery)
     const fetchRefs = async () => {
+      if (!isOpen) return;
+      setIsLoadingRefs(true);
       try {
-        const urlRefs = '/api/parametres/references';
-        const urlGold = `/api/parametres/introspection/gold-kpis${projet ? `?projet=${projet}` : ''}`;
-
+        console.log('[GrilleEditorModal] Chargement des KPIs pour projet:', projet);
         const [resRefs, resGold] = await Promise.all([
-          fetch(urlRefs),
-          fetch(urlGold)
+          fetch('/api/parametres/references'),
+          fetch(`/api/parametres/introspection/gold-kpis${projet ? `?projet=${encodeURIComponent(projet)}` : ''}`)
         ]);
+
+        if (!resRefs.ok || !resGold.ok) throw new Error('Erreur API');
 
         const dRefs = await resRefs.json();
         const dGold = await resGold.json();
-
         const kpisMerged = { ...(dRefs.kpis || {}) };
 
-        // Si la recherche par projet est vide, on tente une recherche globale pour ne pas laisser la liste vide
         let finalGoldData = dGold?.data || [];
         if (finalGoldData.length === 0 && projet) {
-          console.log(`[GrilleEditorModal] Aucun KPI pour ${projet}, tentative globale...`);
           const resGlobal = await fetch('/api/parametres/introspection/gold-kpis');
           const dGlobal = await resGlobal.json();
           finalGoldData = dGlobal?.data || [];
         }
 
-        // Fusionner les KPIs Gold BQ s'ils ne sont pas déjà présents
         finalGoldData.forEach(g => {
           const universKey = `BigQuery ${g.univers} (Brut)`;
           if (!kpisMerged[universKey]) kpisMerged[universKey] = [];
-          
-          // On ajoute le nom du projet source dans le libellé pour plus de clarté
-          const displayLibelle = g.projet ? `[${g.projet}] ${g.kpi_code}` : g.kpi_code;
-
           kpisMerged[universKey].push({
             id: `bq_${g.kpi_code}_${g.projet}`,
             tech_key: g.kpi_code,
-            libelle: displayLibelle,
+            libelle: g.projet ? `[${g.projet}] ${g.kpi_code}` : g.kpi_code,
             univers: g.univers,
-            is_bq_raw: true,
-            source_projet: g.projet
+            is_bq_raw: true
           });
         });
 
-        setKpiRefs(kpisMerged);
+        setKpiRefs({ 
+          ...kpisMerged,
+          "SYSTEM": [{ tech_key: 'test_kpi', libelle: 'Test: KPI de secours (Si vide)', univers: 'SYSTEM' }] 
+        });
       } catch (e) {
         console.error("Erreur chargement refs KPIs", e);
+        // Test hardcoded KPI if error
+        setKpiRefs({ "DEBUG": [{ tech_key: 'debug_kpi', libelle: 'DEBUG KPI (API Error)' }] });
+      } finally {
+        setIsLoadingRefs(false);
       }
     };
 
@@ -113,7 +113,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
         socket.off('mapping_kpis_updated', handleUpdate);
       };
     }
-  }, [socket, projet]);
+  }, [socket, projet, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -526,6 +526,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
               categories={data.categories}
               indicateurs={data.indicateurs}
               kpiRefs={kpiRefs}
+              isLoading={isLoadingRefs}
               totalPoidsBonus={totalPoidsBonus}
               onAddCategory={(cat) => setData(prev => ({ ...prev, categories: [...prev.categories, cat] }))}
               onRemoveCategory={removeCategory}

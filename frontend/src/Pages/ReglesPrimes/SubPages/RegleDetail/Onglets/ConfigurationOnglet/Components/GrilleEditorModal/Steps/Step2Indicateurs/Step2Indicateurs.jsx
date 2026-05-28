@@ -2,7 +2,7 @@
  * Fichier : Step2Indicateurs.jsx
  * Rôle    : Étape 2 du GrilleEditorModal - Gestion des catégories et indicateurs (KPIs).
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Select from 'react-select';
 import './Step2Indicateurs.css';
 
@@ -10,6 +10,7 @@ export default function Step2Indicateurs({
   categories, 
   indicateurs, 
   kpiRefs, 
+  isLoading,
   totalPoidsBonus,
   onAddCategory,
   onRemoveCategory,
@@ -24,6 +25,34 @@ export default function Step2Indicateurs({
 }) {
   const [newCatName, setNewCatName] = useState('');
 
+  console.log('[Step2Indicateurs] Rendering with kpiRefs keys:', Object.keys(kpiRefs || {}));
+
+  const options = useMemo(() => {
+    if (!kpiRefs) return [];
+    const groups = [];
+    
+    try {
+      Object.keys(kpiRefs).forEach(univers => {
+        const list = kpiRefs[univers];
+        if (Array.isArray(list) && list.length > 0) {
+          groups.push({
+            label: univers.toUpperCase(),
+            options: list.map(k => ({
+              value: k.tech_key,
+              label: k.libelle || k.tech_key,
+              univers: univers,
+              ...k
+            }))
+          });
+        }
+      });
+    } catch (e) {
+      console.error('[Step2Indicateurs] Error building options:', e);
+    }
+    
+    return groups;
+  }, [kpiRefs]);
+
   const handleAddCatLocal = (e) => {
     e.preventDefault();
     if (newCatName.trim()) {
@@ -34,6 +63,7 @@ export default function Step2Indicateurs({
 
   return (
     <div className="gem-step">
+      {/* ... (rest of the component) */}
       <div className="gem-categories-mgmt">
         <h4 className="gem-mgmt-title">1. Définir les grandes catégories</h4>
         <p className="gem-step-desc">Regroupez vos indicateurs par thématique (ex: Productivité, Qualité).</p>
@@ -104,29 +134,26 @@ export default function Step2Indicateurs({
                   <div className="gem-input-group" style={{ flex: '1 1 300px' }}>
                     <label>Source de donnée (DW) & Nom</label>
                     <div className="gem-select-formula-wrap">
-                      <Select
-                        className="gem-react-select-container"
-                        classNamePrefix="gem-react-select"
-                        menuPortalTarget={document.body}
-                        value={
-                          ind.metric_key 
-                            ? { value: ind.metric_key, label: ind.nom || ind.metric_key } 
-                            : null
-                        }
-                        onChange={(opt) => onUpdateIndicator(ind.id, 'metric_key', opt?.value)}
-                        options={Object.entries(kpiRefs).map(([univers, list]) => ({
-                          label: univers,
-                          options: list.map(k => ({
-                            value: k.tech_key,
-                            label: k.libelle,
-                            ...k
-                          }))
-                        }))}
-                        placeholder="Rechercher un KPI..."
-                        isClearable
-                        isSearchable
-                        styles={customSelectStyles}
-                      />
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <Select
+                          className="gem-react-select-container"
+                          classNamePrefix="gem-react-select"
+                          menuPortalTarget={document.body}
+                          value={
+                            ind.metric_key 
+                              ? { value: ind.metric_key, label: ind.nom || ind.metric_key } 
+                              : null
+                          }
+                          onChange={(opt) => onUpdateIndicator(ind.id, 'metric_key', opt?.value)}
+                          options={options}
+                        isLoading={isLoading}
+                        noOptionsMessage={() => isLoading ? "Chargement..." : `Aucun KPI trouvé pour ce projet`}
+                        placeholder={isLoading ? "Chargement des KPIs..." : "Rechercher un KPI..."}
+                          isClearable
+                          isSearchable
+                          styles={customSelectStyles}
+                        />
+                      </div>
                       {indIsFormula && (
                         <button
                           type="button"
