@@ -221,7 +221,9 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="modal-body">
             <div className="form-group">
-              <label htmlFor="nom">Nom de la règle *</label>
+              <label htmlFor="nom">
+                <i className="fa-solid fa-signature"></i> Nom de la règle *
+              </label>
               <input 
                 type="text" 
                 id="nom" 
@@ -234,38 +236,44 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
             </div>
 
             <div className="form-group">
-              <label htmlFor="projet_id">Projet cible</label>
+              <label htmlFor="projet_id">
+                <i className="fa-solid fa-diagram-project"></i> Projet cible
+              </label>
               <CustomSelect id="projet_id" name="projet_id" value={selections.projet_id} onChange={handleSelectionChange} placeholder={`-- Sélectionner un projet (${refs.projets.length} disponible(s)) --`} options={refs.projets.map(p => ({ value: p.id, label: p.libelle }))} />
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="id_sous_projet">
-                  Sous-projet {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
+                  <i className="fa-solid fa-sitemap"></i> Sous-projet {!selections.projet_id && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Projet d'abord)</span>}
                 </label>
                 <CustomSelect id="id_sous_projet" name="id_sous_projet" value={selections.id_sous_projet} onChange={handleSelectionChange} isDisabled={!selections.projet_id} placeholder={`-- ${filteredSousProjets.length} sous-projet(s) --`} options={filteredSousProjets.map(f => ({ value: f.id, label: f.libelle }))} />
               </div>
               <div className="form-group">
                 <label htmlFor="id_operation">
-                  Opération {!selections.id_sous_projet && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Sous-projet d'abord)</span>}
+                  <i className="fa-solid fa-gears"></i> Opération {!selections.id_sous_projet && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Sous-projet d'abord)</span>}
                 </label>
                 <CustomSelect id="id_operation" name="id_operation" value={selections.id_operation} onChange={handleSelectionChange} isDisabled={!selections.id_sous_projet && !selections.projet_id} placeholder={`-- ${filteredOperations.length} opération(s) --`} options={filteredOperations.map(o => ({ value: o.id, label: o.libelle }))} />
               </div>
               <div className="form-group">
                 <label htmlFor="id_activite">
-                  Activité {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
+                  <i className="fa-solid fa-bolt"></i> Activité {!selections.id_operation && <span style={{color:'var(--color-text-muted)',fontWeight:'normal'}}>(sélectionner Opération d'abord)</span>}
                 </label>
                 <CustomSelect id="id_activite" name="id_activite" value={selections.id_activite} onChange={handleSelectionChange} isDisabled={!selections.id_operation} placeholder={`-- ${filteredActivites.length} activité(s) --`} options={filteredActivites.map(a => ({ value: a.id, label: a.libelle }))} />
               </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="periodicite">Périodicité</label>
+              <label htmlFor="periodicite">
+                <i className="fa-solid fa-calendar-check"></i> Périodicité
+              </label>
               <CustomSelect id="periodicite" name="periodicite" value={formData.periodicite} onChange={handleChange} options={[ { value: "mensuelle", label: "Mensuelle" }, { value: "trimestrielle", label: "Trimestrielle" }, { value: "annuelle", label: "Annuelle" } ]} />
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Description</label>
+              <label htmlFor="description">
+                <i className="fa-solid fa-align-left"></i> Description
+              </label>
               <textarea 
                 id="description" 
                 name="description" 
@@ -398,9 +406,12 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
           </div>{/* /.modal-body */}
 
           <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>Annuler</button>
+            <button type="button" className="btn-cancel" onClick={onClose}>
+              <i className="fa-solid fa-xmark"></i> Annuler
+            </button>
             <button type="submit" className="btn-submit">
-              {regleToEdit ? 'Enregistrer les modifications' : 'Créer la règle'}
+              <i className={regleToEdit ? "fa-solid fa-floppy-disk" : "fa-solid fa-plus"}></i>
+              {regleToEdit ? ' Enregistrer les modifications' : ' Créer la règle'}
             </button>
           </div>
         </form>

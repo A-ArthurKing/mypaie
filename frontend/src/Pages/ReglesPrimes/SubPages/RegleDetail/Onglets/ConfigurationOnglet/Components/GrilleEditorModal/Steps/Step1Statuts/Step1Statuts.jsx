@@ -13,7 +13,9 @@ export default function Step1Statuts({ statuts, onAdd, onRemove, onUpdate }) {
         {statuts.map((s, i) => (
           <div key={i} className="gem-row gem-row--statut">
             <div className="gem-input-group">
-              <label>Libellé Niveau</label>
+              <label>
+                <i className="fa-solid fa-layer-group"></i> Libellé Niveau
+              </label>
               <input 
                 placeholder="Ex: Senior" 
                 value={s.nom} 
@@ -21,7 +23,9 @@ export default function Step1Statuts({ statuts, onAdd, onRemove, onUpdate }) {
               />
             </div>
             <div className="gem-input-group" style={{ flex: '0 0 140px' }}>
-              <label>Prime Base</label>
+              <label>
+                <i className="fa-solid fa-money-bill-wave"></i> Prime Base
+              </label>
               <input 
                 type="number"
                 placeholder="Ex: 1200" 
@@ -30,7 +34,9 @@ export default function Step1Statuts({ statuts, onAdd, onRemove, onUpdate }) {
               />
             </div>
             <div className="gem-input-group" style={{ flex: '0 0 140px' }}>
-              <label>Super Bonus</label>
+              <label>
+                <i className="fa-solid fa-star"></i> Super Bonus
+              </label>
               <input 
                 type="number"
                 placeholder="Ex: 500" 

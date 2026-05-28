@@ -597,7 +597,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
             </button>
           ) : (
             <button className="btn btn-success" onClick={handleFinalSave}>
-              <i className="fa-solid fa-check"></i> Enregistrer la grille
+              <i className="fa-solid fa-floppy-disk"></i> Enregistrer la grille
             </button>
           )}
         </div>

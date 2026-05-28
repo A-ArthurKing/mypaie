@@ -30,7 +30,9 @@ export default function Step5ReglesSpeciales({
           <div key={p.id} className="gem-extra-prime-card">
             <div className="gem-row">
               <div className="gem-input-group">
-                <label>Nom de la prime</label>
+                <label>
+                  <i className="fa-solid fa-tag"></i> Nom de la prime
+                </label>
                 <input 
                   placeholder="Ex: Prime Challenge" 
                   value={p.nom} 
@@ -38,7 +40,9 @@ export default function Step5ReglesSpeciales({
                 />
               </div>
               <div className="gem-input-group" style={{ flex: '0 0 220px' }}>
-                <label>Type d'attribution</label>
+                <label>
+                  <i className="fa-solid fa-hand-holding-dollar"></i> Type d'attribution
+                </label>
                 <select value={p.type} onChange={(e) => onUpdate(p.id, 'type', e.target.value)}>
                   <option value="fixe">Fixe (Par défaut)</option>
                   <option value="conditionnelle">Conditionnelle (Calculée)</option>

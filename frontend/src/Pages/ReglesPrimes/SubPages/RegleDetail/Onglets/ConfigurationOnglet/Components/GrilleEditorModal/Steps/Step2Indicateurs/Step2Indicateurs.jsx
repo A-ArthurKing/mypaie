@@ -168,37 +168,43 @@ export default function Step2Indicateurs({
                   </div>
 
                   <div className="gem-input-group" style={{ flex: '0 0 130px' }}>
-                    <label>Sens objectif</label>
+                    <label>
+                      <i className="fa-solid fa-compass"></i> Sens objectif
+                    </label>
                     <select
                       value={ind.direction || 'higher_better'}
                       onChange={(e) => onUpdateIndicator(ind.id, 'direction', e.target.value)}
                     >
-                      <option value="higher_better">↑ Plus = Mieux</option>
-                      <option value="lower_better">↓ Moins = Mieux</option>
+                      <option value="higher_better">Plus = Mieux</option>
+                      <option value="lower_better">Moins = Mieux</option>
                     </select>
                   </div>
 
                   <div className="gem-input-group" style={{ flex: '0 0 145px' }}>
-                    <label>Comportement</label>
+                    <label>
+                      <i className="fa-solid fa-scale-unbalanced"></i> Comportement
+                    </label>
                     <select 
                       value={ind.type_ponderation || 'bonus'} 
                       onChange={(e) => onUpdateIndicator(ind.id, 'type_ponderation', e.target.value)}
                     >
-                      <option value="bonus">💰 Bonus (Pts)</option>
-                      <option value="malus">📉 Pénalité (Pts)</option>
-                      <option value="eliminatoire">🚫 Éliminatoire</option>
-                      <option value="coefficient">✖️ Global (%)</option>
+                      <option value="bonus">Bonus (Pts)</option>
+                      <option value="malus">Pénalité (Pts)</option>
+                      <option value="eliminatoire">Éliminatoire</option>
+                      <option value="coefficient">Global (%)</option>
                     </select>
                   </div>
 
                   <div className="gem-input-group" style={{ flex: '0 0 155px' }}>
-                    <label>Mode prime</label>
+                    <label>
+                      <i className="fa-solid fa-calculator"></i> Mode prime
+                    </label>
                     <select
                       value={ind.mode_prime || 'score_global'}
                       onChange={(e) => onUpdateIndicator(ind.id, 'mode_prime', e.target.value)}
                     >
-                      <option value="score_global">📊 Score global</option>
-                      <option value="montant_direct">💰 Tranches de valeur</option>
+                      <option value="score_global">Score global</option>
+                      <option value="montant_direct">Tranches de valeur</option>
                       <option value="pourcentage_valeur">% de la valeur</option>
                     </select>
                   </div>
