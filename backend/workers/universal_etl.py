@@ -122,6 +122,17 @@ def _run_performance(src, days_back=730):
         base_sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, {date_expr} as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, {kpi_val_sql} as kpi_value FROM `{PROJECT_ID}.{src.table_source}` WHERE {src.colonne_matricule} IS NOT NULL AND {src.colonne_kpi_value} IS NOT NULL AND {src.colonne_date} IS NOT NULL {date_filter}"
         sql = f"SELECT matricule, date_ref, projet, kpi_code, SUM(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM ({base_sql}) WHERE kpi_code IS NOT NULL GROUP BY matricule, date_ref, projet, kpi_code"
     
+    elif src.type_structure == "PIVOTED":
+        # colonne_kpi_code contient la liste des colonnes à extraire séparées par des virgules
+        unpivot_cols = src.colonne_kpi_code
+        base_sql = f"""
+            SELECT CAST({src.colonne_matricule} AS STRING) as matricule, {date_expr} as date_ref, '{src.projet_nom}' as projet, kpi_code, CAST(kpi_value AS FLOAT64) as kpi_value 
+            FROM `{src.table_source}`
+            UNPIVOT(kpi_value FOR kpi_code IN ({unpivot_cols}))
+            WHERE {src.colonne_matricule} IS NOT NULL {date_filter}
+        """
+        sql = f"SELECT matricule, date_ref, projet, kpi_code, SUM(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM ({base_sql}) WHERE kpi_code IS NOT NULL GROUP BY matricule, date_ref, projet, kpi_code"
+
     else:
         log.warning(f"Type de structure {src.type_structure} non supporté pour PERFORMANCE.")
         return
@@ -156,6 +167,15 @@ def _run_quality(src, days_back=730):
                f" FROM `{PROJECT_ID}.{src.table_source}`"
                f" WHERE {src.colonne_agent_fallback} IS NOT NULL {date_filter}")
                
+    if src.univers == 'QUALITE' and src.type_structure == 'PIVOTED':
+        unpivot_cols = src.colonne_kpi_code
+        base_sql = f"""
+            SELECT {mat_expr} as matricule, {date_expr} as date_ref, {projet_expr} as projet, kpi_code, CAST(kpi_value AS FLOAT64) as kpi_value 
+            FROM `{src.table_source}`
+            UNPIVOT(kpi_value FOR kpi_code IN ({unpivot_cols}))
+            WHERE {src.colonne_agent_fallback} IS NOT NULL {date_filter}
+        """
+
     sql = f"""
         SELECT matricule, date_ref, projet, kpi_code, AVG(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at
         FROM ({base_sql})
