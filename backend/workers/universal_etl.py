@@ -62,6 +62,19 @@ def setup():
     client.query(udf).result()
 
 # ── RÉSOLUTION DES RÈGLES DYNAMIQUES ───────────────────────────────────────────
+def _get_date_expr(col_name):
+    """
+    Tente de convertir une colonne en DATE BigQuery.
+    Gère le format standard YYYY-MM-DD et le format spécifique DD-MM-YY HH:MM.
+    """
+    return f"""
+        CASE 
+            WHEN REGEXP_CONTAINS(CAST({col_name} AS STRING), r'^\\d{{2}}-\\d{{2}}-\\d{{2}} \\d{{2}}:\\d{{2}}$')
+                THEN PARSE_DATE('%d-%m-%y', SPLIT(CAST({col_name} AS STRING), ' ')[OFFSET(0)])
+            ELSE SAFE_CAST(CAST({col_name} AS STRING) AS DATE)
+        END
+    """
+
 def _get_sql_expressions(src, raw_col_code, raw_col_val):
     # 1. Alias via MySQL
     try:
@@ -95,25 +108,31 @@ def _get_sql_expressions(src, raw_col_code, raw_col_val):
     return kpi_code_sql, kpi_val_sql
 
 # ── PROCESS PERFORMANCE ─────────────────────────────────────────────────────────
-def _run_performance(src):
+def _run_performance(src, days_back=730):
+    date_expr = _get_date_expr(src.colonne_date)
+    date_filter = f"AND {date_expr} >= DATE_SUB(CURRENT_DATE(), INTERVAL {days_back} DAY)" if days_back else ""
+    
     if src.type_structure == "JSON":
         kpi_code_sql, kpi_val_sql = _get_sql_expressions(src, "u.kpi_nom", "u.kpi_valeur")
-        base_sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, {kpi_val_sql} as kpi_value FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_matricule} IS NOT NULL"
+        base_sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, {date_expr} as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, {kpi_val_sql} as kpi_value FROM `{PROJECT_ID}.{src.table_source}`, UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u WHERE {src.colonne_matricule} IS NOT NULL {date_filter}"
         sql = f"SELECT matricule, date_ref, projet, kpi_code, SUM(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM ({base_sql}) WHERE kpi_code IS NOT NULL GROUP BY matricule, date_ref, projet, kpi_code"
 
     elif src.type_structure == "TALL":
         kpi_code_sql, kpi_val_sql = _get_sql_expressions(src, src.colonne_kpi_code, src.colonne_kpi_value)
-        base_sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, DATE({src.colonne_date}) as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, {kpi_val_sql} as kpi_value FROM `{PROJECT_ID}.{src.table_source}` WHERE {src.colonne_matricule} IS NOT NULL AND {src.colonne_kpi_value} IS NOT NULL AND {src.colonne_date} IS NOT NULL"
+        base_sql = f"SELECT CAST({src.colonne_matricule} AS STRING) as matricule, {date_expr} as date_ref, '{src.projet_nom}' as projet, {kpi_code_sql} as kpi_code, {kpi_val_sql} as kpi_value FROM `{PROJECT_ID}.{src.table_source}` WHERE {src.colonne_matricule} IS NOT NULL AND {src.colonne_kpi_value} IS NOT NULL AND {src.colonne_date} IS NOT NULL {date_filter}"
         sql = f"SELECT matricule, date_ref, projet, kpi_code, SUM(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at FROM ({base_sql}) WHERE kpi_code IS NOT NULL GROUP BY matricule, date_ref, projet, kpi_code"
     
     else:
         log.warning(f"Type de structure {src.type_structure} non supporté pour PERFORMANCE.")
         return
 
-    client.query(f"MERGE {TABLE_PERF_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
+    target_filter = f"AND T.date_ref >= DATE_SUB(CURRENT_DATE(), INTERVAL {days_back} DAY)" if days_back else ""
+    client.query(f"MERGE {TABLE_PERF_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code {target_filter} WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
 
 # ── PROCESS QUALITE ─────────────────────────────────────────────────────────────
-def _run_quality(src):
+def _run_quality(src, days_back=730):
+    date_expr = _get_date_expr(src.colonne_date)
+    date_filter = f"AND {date_expr} >= DATE_SUB(CURRENT_DATE(), INTERVAL {days_back} DAY)" if days_back else ""
     mat_expr = f"COALESCE(CAST({src.colonne_matricule} AS STRING), {src.colonne_agent_fallback})" if src.colonne_matricule else src.colonne_agent_fallback
     
     # Si le projet est configuré sur DYNAMIC, on lit la colonne "Projet" de la vue
@@ -121,21 +140,21 @@ def _run_quality(src):
     
     if src.type_structure == "JSON":
         kpi_code_sql, kpi_val_sql = _get_sql_expressions(src, "u.kpi_nom", "u.kpi_valeur")
-        base_sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
+        base_sql = (f"SELECT {mat_expr} as matricule, {date_expr} as date_ref,"
                f" {projet_expr} as projet,"
                f" ({kpi_code_sql}) as kpi_code,"
                f" ({kpi_val_sql}) as kpi_value"
                f" FROM `{PROJECT_ID}.{src.table_source}`,"
                f" UNNEST(`{PROJECT_ID}.{DATASET_PAIE}.deplier_json`({src.colonne_cle_json})) as u"
-               f" WHERE {src.colonne_agent_fallback} IS NOT NULL")
+               f" WHERE {src.colonne_agent_fallback} IS NOT NULL {date_filter}")
     else:
         kpi_code_sql, kpi_val_sql = _get_sql_expressions(src, src.colonne_kpi_code, src.colonne_kpi_value)
-        base_sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
+        base_sql = (f"SELECT {mat_expr} as matricule, {date_expr} as date_ref,"
                f" {projet_expr} as projet,"
                f" ({kpi_code_sql}) as kpi_code,"
                f" ({kpi_val_sql}) as kpi_value"
                f" FROM `{PROJECT_ID}.{src.table_source}`"
-               f" WHERE {src.colonne_agent_fallback} IS NOT NULL")
+               f" WHERE {src.colonne_agent_fallback} IS NOT NULL {date_filter}")
                
     sql = f"""
         SELECT matricule, date_ref, projet, kpi_code, AVG(kpi_value) as kpi_value, CURRENT_TIMESTAMP() as processed_at
@@ -144,18 +163,19 @@ def _run_quality(src):
         GROUP BY matricule, date_ref, projet, kpi_code
     """
     
-    client.query(f"MERGE {TABLE_QUAL_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
+    target_filter = f"AND T.date_ref >= DATE_SUB(CURRENT_DATE(), INTERVAL {days_back} DAY)" if days_back else ""
+    client.query(f"MERGE {TABLE_QUAL_SILVER} T USING ({sql}) S ON T.matricule=S.matricule AND T.date_ref=S.date_ref AND T.projet=S.projet AND T.kpi_code=S.kpi_code {target_filter} WHEN MATCHED THEN UPDATE SET kpi_value=S.kpi_value, processed_at=S.processed_at WHEN NOT MATCHED THEN INSERT (matricule, date_ref, projet, kpi_code, kpi_value, processed_at) VALUES (S.matricule, S.date_ref, S.projet, S.kpi_code, S.kpi_value, S.processed_at)").result()
 
 # ── ORCHESTRATION ───────────────────────────────────────────────────────────────
-def run():
+def run(days_back=730):
     sources = list(client.query(f"SELECT * FROM {TABLE_CONFIG} WHERE is_active = TRUE").result())
     for src in sources:
         log.info(f"Traitement : [{src.univers}] {src.projet_nom}")
         
         if src.univers == 'PERFORMANCE':
-            _run_performance(src)
+            _run_performance(src, days_back=days_back)
         elif src.univers == 'QUALITE':
-            _run_quality(src)
+            _run_quality(src, days_back=days_back)
         else:
             log.warning(f"Univers inconnu et ignoré: {src.univers}")
 

@@ -49,12 +49,13 @@ def discover_gold_kpis(projet: str = None) -> List[Dict]:
     Interroge les tables Gold (paie_performance_mensuelle et paie_qualite_mensuelle)
     pour découvrir dynamiquement tous les kpi_code disponibles.
     Permet de créer un pont entre la Data (BQ) et l'Application (UI).
+    Si un projet est fourni, on cherche par inclusion (ex: PVCP -> %PVCP%).
     """
     client = get_bigquery_client()
     perf_table = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.paie_performance_mensuelle`"
     qual_table = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.paie_qualite_mensuelle`"
     
-    where_clause = f"WHERE projet = '{projet}'" if projet else ""
+    where_clause = f"WHERE projet LIKE '%{projet}%'" if projet else ""
     
     query = f"""
         SELECT DISTINCT kpi_code, projet, 'PERF' as univers 
