@@ -115,12 +115,14 @@ def _run_performance(src):
 # ── PROCESS QUALITE ─────────────────────────────────────────────────────────────
 def _run_quality(src):
     mat_expr = f"COALESCE(CAST({src.colonne_matricule} AS STRING), {src.colonne_agent_fallback})" if src.colonne_matricule else src.colonne_agent_fallback
-    projet = src.projet_nom
+    
+    # Si le projet est configuré sur DYNAMIC, on lit la colonne "Projet" de la vue
+    projet_expr = "Projet" if src.projet_nom.upper() == "DYNAMIC" else f"'{src.projet_nom}'"
     
     if src.type_structure == "JSON":
         kpi_code_sql, kpi_val_sql = _get_sql_expressions(src, "u.kpi_nom", "u.kpi_valeur")
         base_sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
-               f" '{projet}' as projet,"
+               f" {projet_expr} as projet,"
                f" ({kpi_code_sql}) as kpi_code,"
                f" ({kpi_val_sql}) as kpi_value"
                f" FROM `{PROJECT_ID}.{src.table_source}`,"
@@ -129,7 +131,7 @@ def _run_quality(src):
     else:
         kpi_code_sql, kpi_val_sql = _get_sql_expressions(src, src.colonne_kpi_code, src.colonne_kpi_value)
         base_sql = (f"SELECT {mat_expr} as matricule, DATE({src.colonne_date}) as date_ref,"
-               f" '{projet}' as projet,"
+               f" {projet_expr} as projet,"
                f" ({kpi_code_sql}) as kpi_code,"
                f" ({kpi_val_sql}) as kpi_value"
                f" FROM `{PROJECT_ID}.{src.table_source}`"

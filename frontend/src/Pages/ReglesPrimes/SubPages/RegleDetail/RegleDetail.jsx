@@ -7,8 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './RegleDetail.css';
-import ObjectifsOnglet from './Onglets/ObjectifsOnglet/ObjectifsOnglet'
-import VariablesOnglet from './Onglets/CadrePresenceOnglet/CadrePresenceOnglet'
+import ConfigurationOnglet from './Onglets/ConfigurationOnglet/ConfigurationOnglet'
 import AgentsOnglet from './Onglets/TableauDeBordOnglet/TableauDeBordOnglet'
 import useApiSWR from '../../../../Shared/Hooks/useApiSWR';
 import { fetchRegle } from '../../../../Shared/Utils/apiFetchers';
@@ -17,9 +16,8 @@ import AiSidebar from '../../Components/AiSidebar/AiSidebar';
 import { useSocket } from '../../../../Shared/Contexts/SocketContext';
 
 const ONGLETS = [
-  { id: 'objectifs', label: 'Objectifs & Scoring', icon: 'fa-solid fa-bullseye' },
-  { id: 'variables', label: 'Cadre & Présence',  icon: 'fa-solid fa-sliders' },
-  { id: 'agents',    label: 'Tableau de bord',   icon: 'fa-solid fa-users' },
+  { id: 'objectifs', label: 'Configuration',       icon: 'fa-solid fa-sliders' },
+  { id: 'agents',    label: 'Tableau de bord',     icon: 'fa-solid fa-users' },
 ];
 
 export default function RegleDetail() {
@@ -128,8 +126,7 @@ export default function RegleDetail() {
 
         {/* ── Contenu de l'onglet actif ── */}
         <div className="regle-detail__tab-content">
-          {ongletActif === 'objectifs' && <ObjectifsOnglet regle={regle} onRefresh={handleRefresh} />}
-          {ongletActif === 'variables' && <VariablesOnglet regle={regle} onRefresh={handleRefresh} />}
+          {ongletActif === 'objectifs' && <ConfigurationOnglet regle={regle} onRefresh={handleRefresh} />}
           {ongletActif === 'agents'    && <AgentsOnglet   regle={regle} onRefresh={handleRefresh} />}
         </div>
       </div>

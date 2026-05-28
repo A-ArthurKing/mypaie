@@ -11,7 +11,18 @@ import { useToast } from '../../../../Shared/Contexts/ToastContext';
 import CustomSelect from '../../../../Shared/CustomSelect/CustomSelect';
 import './CreateRegleModal.css';
 
+const MODES_PRORATA = [
+  { key: 'jours',   label: 'Par jours ouvrés',      icon: 'fa-solid fa-calendar-day' },
+  { key: 'heures',  label: 'Par heures effectuées', icon: 'fa-solid fa-clock' },
+  { key: 'aucun',   label: 'Aucun prorata',          icon: 'fa-solid fa-circle-check' },
+];
+
+const BASES_HORAIRES = [169, 176, 191];
+
 export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regleToDuplicate }) {
+  const existingConfigTemps = regleToEdit?.grille_objectifs?.config_temps
+    || regleToDuplicate?.grille_objectifs?.config_temps;
+
   const [formData, setFormData] = useState({
     nom: regleToEdit?.nom || (regleToDuplicate ? `${regleToDuplicate.nom} (Copie)` : ''),
     id_structure: regleToEdit?.id_structure || regleToDuplicate?.id_structure || '',
@@ -19,6 +30,15 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
     description: regleToEdit?.description || regleToDuplicate?.description || '',
     grille_objectifs: regleToDuplicate?.grille_objectifs || null
   });
+
+  // ── État local pour la configuration Temps & Prorata ──────────────────────
+  const [configTemps, setConfigTemps] = useState({
+    jours_ouvres:        existingConfigTemps?.jours_ouvres        ?? 22,
+    base_horaire:        existingConfigTemps?.base_horaire        ?? 191,
+    mode_prorata:        existingConfigTemps?.mode_prorata        ?? 'jours',
+    seuil_minimum_jours: existingConfigTemps?.seuil_minimum_jours ?? null,
+  });
+  const [showConfigTemps, setShowConfigTemps] = useState(false);
 
   const socket = useSocket();
   const addToast = useToast();
@@ -160,13 +180,19 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
     const url = regleToEdit ? `/api/regles/${regleToEdit.id}` : '/api/regles';
     const method = regleToEdit ? 'PUT' : 'POST';
 
+    // Fusionner config_temps dans grille_objectifs
+    const grilleAvecConfig = {
+      ...(formData.grille_objectifs || {}),
+      config_temps: configTemps,
+    };
+
     try {
       const response = await fetch(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, grille_objectifs: grilleAvecConfig }),
       });
 
       if (!response.ok) {
@@ -249,7 +275,127 @@ export default function CreateRegleModal({ onClose, onCreated, regleToEdit, regl
                 onChange={handleChange}
               ></textarea>
             </div>
-          </div>
+
+            {/* ── Section Configuration Temps & Prorata ─────────────────── */}
+            <div className="crm-config-temps">
+              <button
+                type="button"
+                className="crm-config-temps__toggle"
+                onClick={() => setShowConfigTemps(v => !v)}
+              >
+                <i className="fa-solid fa-clock"></i>
+                Configuration Temps &amp; Prorata
+                <span className="crm-config-temps__summary">
+                  {configTemps.mode_prorata === 'aucun'
+                    ? 'Sans prorata'
+                    : configTemps.mode_prorata === 'heures'
+                    ? `${configTemps.base_horaire} h · par heures`
+                    : `${configTemps.jours_ouvres} j · par jours`}
+                </span>
+                <i className={`fa-solid fa-chevron-${showConfigTemps ? 'up' : 'down'} crm-config-temps__chevron`}></i>
+              </button>
+
+              {showConfigTemps && (
+                <div className="crm-config-temps__body">
+
+                  {/* Mode prorata */}
+                  <div className="crm-ct-field">
+                    <label className="crm-ct-label">Mode de calcul du prorata</label>
+                    <div className="crm-ct-modes">
+                      {MODES_PRORATA.map(m => (
+                        <button
+                          key={m.key}
+                          type="button"
+                          className={`crm-ct-mode${configTemps.mode_prorata === m.key ? ' crm-ct-mode--active' : ''}`}
+                          onClick={() => setConfigTemps(p => ({ ...p, mode_prorata: m.key }))}
+                        >
+                          <i className={m.icon}></i> {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Jours ouvrés + Base horaire */}
+                  <div className="crm-ct-row">
+                    <div className="crm-ct-field">
+                      <label className="crm-ct-label">Jours ouvrés du mois</label>
+                      <div className="crm-ct-input-group">
+                        <input
+                          type="number"
+                          className="crm-ct-input"
+                          min={1}
+                          max={31}
+                          value={configTemps.jours_ouvres}
+                          onChange={e => setConfigTemps(p => ({ ...p, jours_ouvres: parseInt(e.target.value, 10) || 22 }))}
+                        />
+                        <span className="crm-ct-unit">j</span>
+                      </div>
+                    </div>
+
+                    {configTemps.mode_prorata === 'heures' && (
+                      <div className="crm-ct-field">
+                        <label className="crm-ct-label">Base horaire mensuelle</label>
+                        <div className="crm-ct-input-group">
+                          <div className="crm-ct-presets">
+                            {BASES_HORAIRES.map(b => (
+                              <button
+                                key={b}
+                                type="button"
+                                className={`crm-ct-preset${configTemps.base_horaire === b ? ' crm-ct-preset--active' : ''}`}
+                                onClick={() => setConfigTemps(p => ({ ...p, base_horaire: b }))}
+                              >{b} h</button>
+                            ))}
+                            <input
+                              type="number"
+                              className="crm-ct-input crm-ct-input--sm"
+                              min={1} max={300}
+                              placeholder="Autre…"
+                              value={BASES_HORAIRES.includes(configTemps.base_horaire) ? '' : configTemps.base_horaire}
+                              onChange={e => {
+                                const n = parseInt(e.target.value, 10);
+                                if (!isNaN(n) && n > 0) setConfigTemps(p => ({ ...p, base_horaire: n }));
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seuil minimum */}
+                  <div className="crm-ct-field crm-ct-field--seuil">
+                    <label className="crm-ct-label">
+                      <input
+                        type="checkbox"
+                        checked={configTemps.seuil_minimum_jours !== null}
+                        onChange={e => setConfigTemps(p => ({
+                          ...p,
+                          seuil_minimum_jours: e.target.checked ? 15 : null
+                        }))}
+                        style={{ marginRight: '6px' }}
+                      />
+                      Seuil minimum de présence
+                    </label>
+                    {configTemps.seuil_minimum_jours !== null && (
+                      <div className="crm-ct-input-group" style={{ marginTop: '6px' }}>
+                        <input
+                          type="number"
+                          className="crm-ct-input"
+                          min={1}
+                          max={31}
+                          value={configTemps.seuil_minimum_jours}
+                          onChange={e => setConfigTemps(p => ({ ...p, seuil_minimum_jours: parseInt(e.target.value, 10) || 1 }))}
+                        />
+                        <span className="crm-ct-unit">j minimum pour obtenir la prime</span>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+          </div>{/* /.modal-body */}
 
           <div className="modal-footer">
             <button type="button" className="btn-cancel" onClick={onClose}>Annuler</button>

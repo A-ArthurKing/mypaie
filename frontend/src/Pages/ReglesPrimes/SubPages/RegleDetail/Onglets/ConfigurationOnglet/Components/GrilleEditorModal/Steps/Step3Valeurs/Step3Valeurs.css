@@ -1,0 +1,101 @@
+.gem-preview-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.78rem;
+}
+
+.gem-preview-table th {
+    background: var(--color-bg-sidebar);
+    color: rgba(255, 255, 255, 0.75);
+    padding: 7px 10px;
+    font-size: 0.65rem;
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+.gem-preview-table th:first-child {
+    text-align: left;
+    color: rgba(255, 255, 255, 0.5);
+    background: var(--color-bg-sidebar);
+    min-width: 110px;
+}
+
+.gem-th-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.gem-th-name-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gem-th-name {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+    color: #fff;
+}
+
+.gem-th-type {
+    font-size: 0.52rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    letter-spacing: 0.05em;
+}
+
+.tag-bonus { color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+.tag-malus { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
+.tag-eliminatoire { color: #fff; background: var(--color-error); border-color: var(--color-error); }
+.tag-coefficient { color: var(--color-accent); border-color: var(--color-accent-soft); }
+
+.gem-cell-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    justify-content: center;
+}
+
+.gem-cell-unit {
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    font-weight: 700;
+    min-width: 14px;
+}
+
+.gem-preview-table tr:nth-child(odd) td { background: var(--color-surface); }
+.gem-preview-table tr:nth-child(even) td { background: var(--color-bg-app); }
+.gem-preview-table tr:hover td { background: var(--color-accent-soft); transition: background 0.15s; }
+
+.gem-preview-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    vertical-align: middle;
+}
+
+.gem-preview-table td:first-child {
+    background: var(--color-surface-2) !important;
+    font-weight: var(--weight-semibold);
+    font-size: 0.75rem;
+    width: 120px;
+    min-width: 100px;
+    color: var(--color-text-primary);
+    border-right: 2px solid var(--color-border-subtle);
+    padding-left: 12px;
+}

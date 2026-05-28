@@ -122,6 +122,167 @@
     flex: 1;
 }
 
+/* ── Configuration Temps & Prorata (inline dans modal) ────────────────── */
+.crm-config-temps {
+    border: 1px solid var(--color-border-subtle, #e5e7eb);
+    border-radius: var(--radius-sm, 8px);
+    overflow: hidden;
+}
+
+.crm-config-temps__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--color-bg-app, #f9fafb);
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-sm, 0.85rem);
+    font-weight: var(--weight-medium, 500);
+    color: var(--color-text-secondary, #374151);
+    text-align: left;
+    transition: background 0.15s;
+}
+
+.crm-config-temps__toggle:hover {
+    background: var(--color-surface-hover, #f3f4f6);
+}
+
+.crm-config-temps__toggle > i:first-child {
+    color: var(--color-accent, #6366f1);
+}
+
+.crm-config-temps__summary {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #9ca3af);
+    font-weight: 400;
+}
+
+.crm-config-temps__chevron {
+    font-size: 0.7rem;
+    color: var(--color-text-muted, #9ca3af);
+    flex-shrink: 0;
+}
+
+.crm-config-temps__body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-top: 1px solid var(--color-border-subtle, #e5e7eb);
+    background: var(--color-surface, #fff);
+}
+
+.crm-ct-label {
+    font-size: 0.75rem;
+    font-weight: var(--weight-medium, 500);
+    color: var(--color-text-secondary, #6b7280);
+    margin-bottom: 6px;
+    display: block;
+}
+
+.crm-ct-modes {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.crm-ct-mode {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: var(--radius-sm, 6px);
+    background: var(--color-bg-app, #f9fafb);
+    color: var(--color-text-secondary, #374151);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.crm-ct-mode:hover {
+    border-color: var(--color-accent, #6366f1);
+    color: var(--color-accent, #6366f1);
+}
+
+.crm-ct-mode--active {
+    border-color: var(--color-accent, #6366f1);
+    background: var(--color-accent, #6366f1);
+    color: #fff;
+}
+
+.crm-ct-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.crm-ct-row .crm-ct-field {
+    flex: 1;
+    min-width: 120px;
+}
+
+.crm-ct-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.crm-ct-input {
+    padding: 6px 10px;
+    width: 80px;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: var(--radius-sm, 6px);
+    background: var(--color-bg-app, #f9fafb);
+    color: var(--color-text-primary, #111827);
+    font-size: 0.85rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.crm-ct-input:focus { border-color: var(--color-accent, #6366f1); }
+.crm-ct-input--sm   { width: 68px; }
+
+.crm-ct-unit {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #9ca3af);
+}
+
+.crm-ct-presets {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.crm-ct-preset {
+    padding: 4px 10px;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 5px;
+    background: var(--color-bg-app, #f9fafb);
+    color: var(--color-text-secondary, #374151);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.crm-ct-preset:hover { border-color: var(--color-accent, #6366f1); color: var(--color-accent, #6366f1); }
+
+.crm-ct-preset--active {
+    border-color: var(--color-accent, #6366f1);
+    background: var(--color-accent, #6366f1);
+    color: #fff;
+}
+
+.crm-ct-field--seuil label { cursor: pointer; display: flex; align-items: center; }
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;

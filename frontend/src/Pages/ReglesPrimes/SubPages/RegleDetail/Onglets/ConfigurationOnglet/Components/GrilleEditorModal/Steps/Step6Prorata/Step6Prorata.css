@@ -1,0 +1,115 @@
+.gem-ct-section { margin-bottom: 24px; }
+.gem-ct-label { display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); margin-bottom: 12px; }
+.gem-ct-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+.gem-ct-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.gem-ct-mode-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--color-surface-2);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--color-text-muted);
+    transition: all var(--transition-base);
+}
+
+.gem-ct-mode-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gem-ct-mode-title { font-weight: 700; font-size: var(--text-sm); color: var(--color-text-primary); }
+.gem-ct-mode-desc { font-size: 0.75rem; color: var(--color-text-muted); }
+
+.gem-ct-mode-btn:hover {
+    border-color: var(--color-accent);
+    background: var(--color-surface-hover);
+    transform: translateY(-2px);
+}
+
+.gem-ct-mode-btn.active {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+}
+
+.gem-ct-mode-btn.active .gem-ct-mode-icon {
+    background: var(--color-accent);
+    color: white;
+}
+
+.gem-ct-active-tick {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: var(--color-accent);
+    font-size: 1rem;
+}
+
+.gem-ct-config-card {
+    background: var(--color-surface);
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-sm);
+}
+
+.gem-input-with-unit {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.gem-input-with-unit input {
+    flex: 1;
+    padding-right: 60px !important;
+}
+
+.gem-input-unit {
+    position: absolute;
+    right: 14px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.gem-input-hint {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--color-text-disabled);
+    margin-top: 4px;
+}
+
+.gem-ct-bases { display: flex; gap: 8px; }
+.gem-ct-base-btn {
+    padding: 10px 18px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    transition: all var(--transition-fast);
+}
+.gem-ct-base-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.gem-ct-base-btn.active { border-color: var(--color-accent); background: var(--color-accent); color: white; }

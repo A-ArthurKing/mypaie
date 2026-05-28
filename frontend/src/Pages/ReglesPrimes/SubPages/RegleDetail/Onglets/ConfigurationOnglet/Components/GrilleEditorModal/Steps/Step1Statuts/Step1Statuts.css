@@ -1,0 +1,14 @@
+.gem-row--statut {
+    background: var(--color-surface);
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-xs);
+}
+
+.gem-statuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
