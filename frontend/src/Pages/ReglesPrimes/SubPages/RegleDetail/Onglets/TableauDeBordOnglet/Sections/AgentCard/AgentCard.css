@@ -20,7 +20,7 @@
 
 .agent-card {
     display: grid;
-    grid-template-columns: 200px 1fr 260px 180px;
+    grid-template-columns: 240px 1.2fr 240px 200px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
@@ -40,7 +40,7 @@
 .agent-card__kpis,
 .agent-card__assiduite,
 .agent-card__result {
-    padding: 16px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -68,17 +68,35 @@
 
 /* Titre de section */
 .agent-card__section-title {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 800;
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-    padding-bottom: 6px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    min-height: 24px;
+}
+
+.agent-card__missing-data-badge {
+    color: #ef4444;
+    font-size: 0.62rem;
+    font-weight: 700;
+    background-color: #fef2f2;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #fecaca;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .agent-card__result .agent-card__section-title {
@@ -105,15 +123,18 @@
 }
 
 .agent-card__name {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--color-text-primary);
     line-height: 1.2;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .agent-card__name strong {
     display: block;
     font-weight: 800;
     text-transform: uppercase;
+    margin-bottom: 2px;
 }
 
 .agent-card__projet {
@@ -234,11 +255,11 @@
 
 .agent-card__kpi-header {
     display: grid;
-    grid-template-columns: 8px 1fr 60px 60px 50px 60px;
+    grid-template-columns: 8px 1.5fr 50px 50px 45px 55px;
     align-items: center;
     gap: 8px;
     padding-bottom: 6px;
-    font-size: 0.6rem;
+    font-size: 0.58rem;
     font-weight: 800;
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -253,10 +274,10 @@
 
 .agent-card__kpi-row {
     display: grid;
-    grid-template-columns: 8px 1fr 60px 60px 50px 60px;
+    grid-template-columns: 8px 1.5fr 50px 50px 45px 55px;
     align-items: center;
     gap: 8px;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     padding: 4px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.02);
 }
@@ -270,12 +291,13 @@
 .agent-card__kpi-name {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+    font-size: 0.7rem;
 }
 
 .agent-card__kpi-formula-btn {
@@ -642,8 +664,8 @@
 .agent-card__prime-details {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding-bottom: 8px;
+    gap: 10px;
+    padding-bottom: 12px;
     border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
 }
 
@@ -651,7 +673,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .agent-card__prime-label {
@@ -660,18 +682,19 @@
     color: rgba(255, 255, 255, 0.55);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    white-space: nowrap;
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
+    flex: 1; /* Permet de prendre l'espace restant sans pousser la valeur */
 }
 
 .agent-card__prime-value {
-    font-size: 0.88rem;
+    font-size: 0.95rem; /* Légèrement plus grand */
     font-weight: 900;
     color: white;
     white-space: nowrap;
+    text-align: right;
+    margin-left: auto;
 }
 
 .agent-card__prime-unit {
@@ -703,24 +726,27 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 2px 0;
+    padding: 6px 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
 }
 
 .agent-card__pts-label {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.55);
-    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .agent-card__pts-val {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 900;
     color: var(--color-accent);
     display: flex;
     align-items: center;
-    gap: 4px;
-    white-space: nowrap;
+    gap: 6px;
 }
 
 .agent-card__prime-row--extra {

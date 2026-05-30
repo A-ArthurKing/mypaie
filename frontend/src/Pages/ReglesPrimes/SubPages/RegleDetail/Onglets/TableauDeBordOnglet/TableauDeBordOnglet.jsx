@@ -11,6 +11,7 @@ import ToolbarSection from './Sections/ToolbarSection/ToolbarSection';
 import AgentCard from './Sections/AgentCard/AgentCard';
 import KpiInfoModal from '../../../../../../Components/KpiInfoModal/KpiInfoModal';
 import { useSocket } from '../../../../../../Shared/Contexts/SocketContext';
+import { buildFormuleAlgo, buildFormuleHumain } from '../ConfigurationOnglet/Components/GrilleEditorModal/Steps/Step7Recapitulatif/FormulaGenerator';
 
 // ─── Helpers de Normalisation ────────────────────────────────────────────────
 
@@ -64,20 +65,11 @@ const METRIC_DIRECTION = {
 };
 
 /**
- * Résout la clé metric (dmt | cvr | tx_mea | avg_ca | qualite | heures)
- * depuis un indicateur. Utilise `ind.metric_key` (nouveau système)
- * ou un matching par nom normalisé (legacy).
+ * Résout la clé metric depuis un indicateur.
+ * Si metric_key est renseigné (KPI brut BigQuery), on l'utilise directement.
  */
 function resolveMetricKey(ind) {
   if (ind.metric_key) return ind.metric_key;
-  
-  const nom = (ind.nom || '').toLowerCase().replace(/[\s._-]/g, '');
-  if (nom.includes('dmt') || nom.includes('durée') || nom.includes('traitement')) return 'dmt';
-  if (nom.includes('cvr') || nom.includes('convers')) return 'taux_conversion_calc';
-  if (nom.includes('mea')) return 'tx_mea';
-  if (nom.includes('avg') || nom.includes('ca') || nom.includes('nbr') || nom.includes('chiffre')) return 'chiffre_affaire';
-  if (nom.includes('qualit')) return 'note_globale';
-  if (nom.includes('heure')) return 'heure_hp';
   return null;
 }
 
@@ -107,9 +99,6 @@ export default function TableauDeBordOnglet({ regle }) {
   // Unification des données (nouveau système Step 4)
   const [unifiedMap, setUnifiedMap] = useState({});
   const [loadingUnified, setLoadingUnified] = useState(false);
-
-  // Affichage DMT : 's' = secondes brutes, 'min' = Xm XXs
-  const [dmtUnit, setDmtUnit] = useState('s');
 
   // Mois sélectionné (format 'YYYY-MM'), initialisé au mois courant
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -222,52 +211,33 @@ export default function TableauDeBordOnglet({ regle }) {
 
   // ─── Calcul Assiduité & Malus ──────────────────────────────────────────────
 
-  /** Résoud la valeur réelle depuis les maps de state selon la clé metric */
-  const getRealValue = (metricKey, mat) => {
-    const m = String(mat);
-    const agentData = unifiedMap[m] || {};
-    const kpis = agentData.kpis || {};
-    
-    if (!metricKey) return null;
-
-    const lowerKey = metricKey.toLowerCase();
-
-    // 0. Recherche dans detail_kpis (structure retournée par /calcul)
+  /**
+   * Résoud la valeur réelle d'un KPI pour un agent.
+   * Source unique : detail_kpis retourné par le backend (calcul unifié BigQuery).
+   * - Priorité 1 : correspondance par kpi_id (identifiant technique de la grille)
+   * - Priorité 2 : correspondance par metric_key (insensible à la casse)
+   */
+  const getRealValue = (metricKey, mat, kpiId) => {
+    const agentData = unifiedMap[String(mat)] || {};
     const detailKpis = agentData.detail_kpis || [];
-    const fromDetail = detailKpis.find(k => k.metric_key === metricKey)
-                    || detailKpis.find(k => (k.metric_key || '').toLowerCase() === lowerKey);
-    if (fromDetail && fromDetail.valeur_reelle !== null && fromDetail.valeur_reelle !== undefined) {
-      return fromDetail.valeur_reelle;
+
+    if (kpiId) {
+      const entry = detailKpis.find(k => k.kpi_id === kpiId);
+      if (entry && entry.valeur_reelle !== null && entry.valeur_reelle !== undefined) {
+        return entry.valeur_reelle;
+      }
     }
 
-    // 1. Recherche directe (case-sensitive)
-    if (kpis[metricKey] !== undefined) return kpis[metricKey];
-
-    // 2. Recherche insensible à la casse
-    const upperKey = metricKey.toUpperCase();
-    if (kpis[lowerKey] !== undefined) return kpis[lowerKey];
-    if (kpis[upperKey] !== undefined) return kpis[upperKey];
-
-    // 3. Mappings historiques et spécifiques
-    switch (lowerKey) {
-      case 'dmt':                  return kpis.dmt ?? kpis.DMT ?? null;
-      case 'taux_conversion_calc': 
-      case 'is_converted':
-      case 'cvr':                  return kpis.cvr ?? kpis.TAUX_CONVERSION ?? null;
-      case 'avg_ca':
-      case 'avg_nbr':              return kpis.avg_nbr ?? kpis.avg_ca ?? null;
-      case 'chiffre_affaire':      
-      case 'revenue_amt_eur':      
-      case 'net_booking_rental_amt_eur': return kpis.CHIFFRE_AFFAIRE ?? kpis.chiffre_affaire ?? null;
-      case 'note_qualite_globale': 
-      case 'note_globale':         
-      case 'qualite':              return kpis.NOTE_QUALITE ?? kpis.note_qualite ?? null;
-      case 'heure_total':          return kpis.HEURE_TOTAL ?? kpis.heure_total ?? null;
-      case 'tx_mea':               return kpis.tx_mea ?? kpis.TX_MEA ?? null;
-      case 'nb_appels':            return kpis.nb_appels ?? kpis.NB_APPELS ?? null;
-      case 'nb_ventes':            return kpis.nb_ventes ?? kpis.NB_VENTES ?? null;
-      default:                     return null;
+    if (metricKey) {
+      const lowerKey = metricKey.toLowerCase();
+      const entry = detailKpis.find(k => k.metric_key === metricKey)
+                 || detailKpis.find(k => (k.metric_key || '').toLowerCase() === lowerKey);
+      if (entry && entry.valeur_reelle !== null && entry.valeur_reelle !== undefined) {
+        return entry.valeur_reelle;
+      }
     }
+
+    return null;
   };
 
   /**
@@ -470,7 +440,7 @@ export default function TableauDeBordOnglet({ regle }) {
       }
 
       let objectif    = parseTargetValue(rawObj);
-      const reel      = metricKey ? getRealValue(metricKey, agentMatricule) : null;
+      const reel      = getRealValue(metricKey, agentMatricule, ind.id);
       const direction = ind.direction || METRIC_DIRECTION[metricKey] || 'higher_better';
       const weight    = parseFloat(ind.poids) || 0;
 
@@ -625,10 +595,21 @@ export default function TableauDeBordOnglet({ regle }) {
       const isElig = data.sanction !== 'Oui';
       if (isElig) eligible++; else nonEligible++;
 
-      const kpiResults = calculateKpiResults(a.matricule, data.statut, data.sanction);
-      const assiduite  = calculateAssiduite(a.matricule);
-      const results    = calculateMontantFinal(a.matricule, data.statut, data.sanction, kpiResults, assiduite);
-      totalMasse += (results.prime || 0) + (results.super_bonus || 0) + (results.total_extra || 0);
+      // Utiliser le résultat du moteur unifié si disponible
+      const unifiedResult = unifiedMap[String(a.matricule)];
+      if (unifiedResult) {
+        totalMasse += (unifiedResult.prime_finale || 0);
+        // Ajouter les primes additionnelles si elles existent dans le JSON (non gérées par le moteur encore)
+        const kpiResults = calculateKpiResults(a.matricule, data.statut, data.sanction);
+        const assiduite  = calculateAssiduite(a.matricule);
+        const results    = calculateMontantFinal(a.matricule, data.statut, data.sanction, kpiResults, assiduite);
+        totalMasse += (results.total_extra || 0);
+      } else {
+        const kpiResults = calculateKpiResults(a.matricule, data.statut, data.sanction);
+        const assiduite  = calculateAssiduite(a.matricule);
+        const results    = calculateMontantFinal(a.matricule, data.statut, data.sanction, kpiResults, assiduite);
+        totalMasse += (results.prime || 0) + (results.super_bonus || 0) + (results.total_extra || 0);
+      }
     });
 
     const avgPrime = eligible > 0 ? totalMasse / eligible : 0;
@@ -647,15 +628,6 @@ export default function TableauDeBordOnglet({ regle }) {
     return filterStatut === 'eligible' ? isEligible : !isEligible;
   });
 
-  /** Formate une valeur DMT (en secondes) selon l'unité choisie */
-  const formatDmt = (sec) => {
-    if (sec == null) return '—';
-    if (dmtUnit === 'min') {
-      return `${Math.floor(sec / 60)}m\u00a0${String(Math.round(sec % 60)).padStart(2, '0')}s`;
-    }
-    return `${Math.round(sec)}s`;
-  };
-
   /** Gère l'affichage sélectif des formules dans la modale */
   const handleShowFormula = (typeOrData) => {
     // Accepte un objet formula directement (KPI dynamiques)
@@ -665,24 +637,41 @@ export default function TableauDeBordOnglet({ regle }) {
       return;
     }
     const type = typeOrData;
+    const grille = regle?.grille_objectifs || {};
+
+    // Cas spécial : Total Prime -> Formule Algorithmique complète (Synthesis)
+    if (type === 'total_prime') {
+      const lines = buildFormuleAlgo(grille, grille.config_temps);
+      const prose = buildFormuleHumain(grille, grille.config_temps);
+      setModalData({
+        title: "Synthèse de la formule de calcul",
+        lines: lines,
+        prose: prose,
+        sourceTable: "Moteur de calcul unifié (backend)",
+        description: "Cette synthèse représente l'intégralité de la logique appliquée pour passer des données brutes au montant final."
+      });
+      setShowFormulaModal(true);
+      return;
+    }
+
     const allFormulas = {
       prime_brute: {
         title: "Montant de la prime hors Super Bonus",
-        formula: "=SIERREUR((Montant_Cible * Points_KPI / 100) * (1 + Malus%); \"\")",
+        formula: "prime_brute * score_global / 100",
         sourceTable: "Base MySQL (matrice_primes.grille_objectifs)",
-        metrics: "Montant Cible (H13), Points KPI (AF13), Malus Assiduité (AO13)"
+        metrics: "Montant Cible, Score Global (Paliers KPI)"
       },
       total_sb: {
         title: "Super Bonus (si configuré)",
-        formula: "=SIERREUR((Montant_SB_Cible * Points_KPI / 100) * (1 + Malus%); \"\")",
+        formula: "prime_brute_sb * score_global / 100",
         sourceTable: "Base MySQL (matrice_primes.grille_objectifs)",
-        metrics: "Montant SB Cible (H13), Points KPI (AF13), Malus Assiduité (AO13)"
+        metrics: "Montant SB Cible, Score Global"
       },
       total_prime: {
-        title: "Total avec Super Bonus",
-        formula: "=Montant_Prime_hors_SB + Super_Bonus (Calculé ou Manuel)",
-        sourceTable: "Calculé dynamiquement",
-        metrics: "montant_final, montant_sb_cible"
+        title: "Total de la prime",
+        formula: "(Prime_Brute + Super_Bonus) * Facteur_Malus * Prorata_Présence",
+        sourceTable: "Calculé dynamiquement (Moteur de calcul)",
+        metrics: "montant_final, malus_pct, taux_prorata"
       },
       points_final: {
         title: "Nombre de points Final",
@@ -791,20 +780,19 @@ export default function TableauDeBordOnglet({ regle }) {
                 max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`}
                 onChange={e => setSelectedMonth(e.target.value)}
               />
-              <button
-                className="agents-table__dmt-unit-toggle"
-                onClick={() => setDmtUnit(u => u === 's' ? 'min' : 's')}
-                title="Basculer affichage DMT : secondes / minutes"
-              >DMT {dmtUnit === 's' ? 's <> mn' : 'mn <> s'}</button>
             </div>
           </div>
           <div className="agents-dashboard">
             {filtered.map((a, i) => {
               const data         = localAgentsData[a.matricule] || { statut: 'Confirmé', sanction: 'Non', abs_injust: 0, retards: 0, abs_just: 0, cp_css: 0 };
+              const unified      = unifiedMap[String(a.matricule)];
+              
               const kpiResults   = calculateKpiResults(a.matricule, data.statut, data.sanction);
               const assiduite    = calculateAssiduite(a.matricule);
               const results      = calculateMontantFinal(a.matricule, data.statut, data.sanction, kpiResults, assiduite);
-              const montantFinal = results.prime;
+              
+              // Si on a un résultat unifié du backend, il écrase les calculs locaux
+              const montantFinal = unified ? unified.prime_finale : results.prime;
               const calcSB       = results.super_bonus;
               const totalExtra   = results.total_extra;
               const extraPrimes  = results.extra_primes;
@@ -812,7 +800,7 @@ export default function TableauDeBordOnglet({ regle }) {
               // Total = Prime scorée + Super Bonus + Primes additionnelles
               const totalPrime   = (montantFinal || 0) + (calcSB || 0) + totalExtra;
               
-              const ptsFinal     = (kpiResults.total_points * (1 + assiduite.malus_pct)).toFixed(1);
+              const ptsFinal     = unified ? unified.score_global : (kpiResults.total_points * (1 + assiduite.malus_pct)).toFixed(1);
               const anyLoading   = loadingUnified;
 
               return (
@@ -822,6 +810,7 @@ export default function TableauDeBordOnglet({ regle }) {
                   data={data}
                   kpiResults={kpiResults}
                   assiduite={assiduite}
+                  unified={unified} // Passer les détails (malus, prorata) à la carte
                   results={results}
                   montantFinal={montantFinal}
                   calcSB={calcSB}
@@ -829,7 +818,6 @@ export default function TableauDeBordOnglet({ regle }) {
                   totalPrime={totalPrime}
                   ptsFinal={ptsFinal}
                   anyLoading={anyLoading}
-                  dmtUnit={dmtUnit}
                   unifiedKpis={unifiedMap[String(a.matricule)] || {}}
                   handleUpdateLocalData={handleUpdateLocalData}
                   handleShowFormula={handleShowFormula}

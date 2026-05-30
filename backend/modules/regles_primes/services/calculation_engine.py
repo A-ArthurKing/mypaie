@@ -26,23 +26,45 @@ def _get_kpi_value(agent_kpis: dict, metric_key: str):
       1. Correspondance exacte (case-sensitive)
       2. Lowercase / UPPERCASE
       3. Correspondance insensible à la casse (scan)
+      4. Fallback BigQuery : {metric_key}_avg  (ratio / durée / taux)
+      5. Fallback BigQuery : {metric_key}_sum  (volume / count)
+      6. Fallback insensible à la casse pour _avg / _sum
     Retourne None si aucune clé ne correspond.
     """
     if not metric_key:
         return None
+    # 1. Exact
     v = agent_kpis.get(metric_key)
     if v is not None:
         return v
+    # 2. lower / UPPER
     v = agent_kpis.get(metric_key.lower())
     if v is not None:
         return v
     v = agent_kpis.get(metric_key.upper())
     if v is not None:
         return v
+    # 3. Scan insensible à la casse (sans suffixe)
     lk = metric_key.lower()
     for k, val in agent_kpis.items():
         if k.lower() == lk and val is not None:
             return val
+    # 4-5. Fallback BigQuery : la source renvoie {code}_avg et {code}_sum
+    #      On préfère _avg (valeur la plus représentative pour les ratios / durées)
+    #      puis _sum (volumes).
+    for suffix in ('_avg', '_sum'):
+        v = agent_kpis.get(f"{metric_key}{suffix}")
+        if v is not None:
+            return v
+        v = agent_kpis.get(f"{metric_key.lower()}{suffix}")
+        if v is not None:
+            return v
+    # 6. Scan insensible à la casse avec suffixes
+    for suffix in ('_avg', '_sum'):
+        target = f"{lk}{suffix}"
+        for k, val in agent_kpis.items():
+            if k.lower() == target and val is not None:
+                return val
     return None
 
 def _get_agents_statuts(matricules: List[str]) -> Dict[str, str]:

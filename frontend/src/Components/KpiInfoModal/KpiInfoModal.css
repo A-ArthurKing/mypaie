@@ -110,6 +110,48 @@
     border-color: rgba(239, 68, 68, 0.3);
 }
 
+/* ── Tabs ───────────────────────────────────── */
+.kim-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 24px 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+    background: var(--color-surface);
+}
+
+.kim-tab {
+    padding: 10px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kim-tab i {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.kim-tab:hover {
+    color: var(--color-text-primary);
+}
+
+.kim-tab.is-active {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+}
+
+.kim-tab.is-active i {
+    opacity: 1;
+}
+
 /* ── Body ────────────────────────────────────── */
 .kim-body {
     padding: 22px 24px;
@@ -167,8 +209,8 @@
 
 /* ── Formula box ─────────────────────────────── */
 .kim-formula-box {
-    background: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
+    background: #0f172a; /* Fond sombre pour le code */
+    border: 1px solid #1e293b;
     border-radius: 10px;
     overflow: hidden;
 }
@@ -177,39 +219,95 @@
     padding: 14px 16px;
     font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
     font-size: 0.82rem;
-    line-height: 1.9;
+    line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-all;
-    color: var(--color-text-primary);
+    color: #e2e8f0; /* Texte clair sur fond sombre */
 }
+
+/* Support pour les lignes structurées (Synthesis Mode) */
+.kim-lines-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.kim-line {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    padding: 1px 4px;
+}
+
+.kim-line--comment { color: #94a3b8; font-style: italic; }
+.kim-line--keyword { color: #38bdf8; font-weight: bold; }
+.kim-line--assign  { color: #ffffff; }
+.kim-line--danger  { color: #ef4444; font-weight: bold; }
+.kim-line--warn    { color: #f59e0b; }
+.kim-line--result  { color: #22c55e; font-weight: bold; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 4px; margin-top: 4px; }
+.kim-line--plain   { color: #94a3b8; }
+
+/* ── Prose ───────────────────────────────────── */
+.kim-prose-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.kim-prose-item {
+    padding: 14px 16px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px;
+}
+
+.kim-prose-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.kim-prose-text {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+}
+
+.kim-prose-text strong {
+    color: var(--color-accent);
+}
+
 
 /* Tokens de coloration syntaxique */
 .kim-fml-table {
-    color: #3b82f6;
+    color: #60a5fa; /* Bleu clair */
 }
 
 .kim-fml-dot {
-    color: var(--color-text-muted);
-    opacity: 0.5;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .kim-fml-col {
-    color: var(--color-accent);
+    color: #fb923c; /* Orange */
     font-weight: 700;
 }
 
 .kim-fml-op {
-    color: #8b5cf6;
+    color: #a78bfa; /* Violet clair */
     font-weight: 700;
     padding: 0 4px;
 }
 
 .kim-fml-num {
-    color: #10b981;
+    color: #4ade80; /* Vert vif */
 }
 
 .kim-fml-plain {
-    color: var(--color-text-primary);
+    color: #e2e8f0;
 }
 
 /* ── Source badge ────────────────────────────── */
@@ -269,7 +367,6 @@
     padding: 10px 12px;
     background: var(--color-surface-2);
     border-radius: 8px;
-    border-left: 3px solid var(--color-accent);
 }
 
 /* ── Séparateur multi-formule ────────────────── */

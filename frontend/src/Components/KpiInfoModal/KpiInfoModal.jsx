@@ -5,7 +5,7 @@
  * Dépend  : KpiInfoModal.css
  * Module  : mypaie / Components
  */
-import React from 'react';
+import React, { useState } from 'react';
 import './KpiInfoModal.css';
 
 /**
@@ -56,9 +56,13 @@ function renderFormula(formula) {
 }
 
 export default function KpiInfoModal({ isOpen, onClose, data }) {
+  const [activeTab, setActiveTab] = useState('algo');
+
   if (!isOpen || !data) return null;
 
   const items = Array.isArray(data) ? data : [data];
+  // On vérifie si on a des données de synthèse (tabs)
+  const isSynthesis = items.length === 1 && items[0].lines && items[0].prose;
 
   return (
     <div className="kim-overlay" onClick={onClose}>
@@ -74,67 +78,116 @@ export default function KpiInfoModal({ isOpen, onClose, data }) {
           </button>
         </div>
 
+        {isSynthesis && (
+          <div className="kim-tabs">
+            <button 
+              className={`kim-tab ${activeTab === 'algo' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('algo')}
+            >
+              <i className="fa-solid fa-code"></i> Formule Algorithmique
+            </button>
+            <button 
+              className={`kim-tab ${activeTab === 'human' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('human')}
+            >
+              <i className="fa-solid fa-comment-dots"></i> Langage Naturel
+            </button>
+          </div>
+        )}
+
         <div className="kim-body">
-          {items.map((item, index) => (
-            <div key={index} className={`kim-section ${items.length > 1 ? 'kim-section--multi' : ''}`}>
-              {items.length > 1 && <h3 className="kim-section-title">{item.title}</h3>}
+          {items.map((item, index) => {
+            const showAlgo = !isSynthesis || activeTab === 'algo';
+            const showHuman = isSynthesis && activeTab === 'human';
 
-              {/* ── Formule ── */}
-              <div className="kim-detail-item">
-                <span className="kim-detail-label">
-                  <i className="fa-solid fa-calculator"></i>
-                  {items.length === 1 ? 'Formule de calcul' : `Formule : ${item.title}`}
-                </span>
-                <div className="kim-formula-box">
-                  <div className="kim-formula-code">
-                    {renderFormula(item.formula)}
-                  </div>
-                </div>
-              </div>
+            return (
+              <div key={index} className={`kim-section ${items.length > 1 ? 'kim-section--multi' : ''}`}>
+                {items.length > 1 && <h3 className="kim-section-title">{item.title}</h3>}
 
-              {/* ── Source ── */}
-              <div className="kim-detail-item">
-                <span className="kim-detail-label">
-                  <i className="fa-solid fa-database"></i> Source
-                </span>
-                <div>
-                  <span className="kim-badge-source">
-                    <i className="fa-solid fa-server" style={{ fontSize: '0.65rem' }}></i>
-                    {item.sourceTable}
-                  </span>
-                </div>
-              </div>
+                {/* ── Tab Algorithmique ── */}
+                {showAlgo && (
+                  <>
+                    <div className="kim-detail-item">
+                      <span className="kim-detail-label">
+                        <i className="fa-solid fa-calculator"></i>
+                        {items.length === 1 ? 'Formule de calcul' : `Formule : ${item.title}`}
+                      </span>
+                      <div className="kim-formula-box">
+                        <div className="kim-formula-code">
+                          {item.lines ? (
+                            <div className="kim-lines-container">
+                              {item.lines.map((line, lidx) => (
+                                <div key={lidx} className={`kim-line kim-line--${line.type}`}>
+                                  {line.text === 'blank' ? '\u00a0' : line.text}
+                                </div>
+                              ))}
+                            </div>
+                          ) : renderFormula(item.formula)}
+                        </div>
+                      </div>
+                    </div>
 
-              {/* ── Métriques ── */}
-              {item.metrics && (
-                <div className="kim-detail-item">
-                  <span className="kim-detail-label">
-                    <i className="fa-solid fa-code"></i> Métriques
-                  </span>
-                  <div className="kim-metrics-list">
-                    {item.metrics.split(',').map((m, idx) => (
-                      <span key={idx} className="kim-badge-metric">{m.trim()}</span>
+                    <div className="kim-detail-item">
+                      <span className="kim-detail-label">
+                        <i className="fa-solid fa-database"></i> Source
+                      </span>
+                      <div>
+                        <span className="kim-badge-source">
+                          <i className="fa-solid fa-server" style={{ fontSize: '0.65rem' }}></i>
+                          {item.sourceTable}
+                        </span>
+                      </div>
+                    </div>
+
+                    {item.metrics && (
+                      <div className="kim-detail-item">
+                        <span className="kim-detail-label">
+                          <i className="fa-solid fa-code"></i> Métriques
+                        </span>
+                        <div className="kim-metrics-list">
+                          {item.metrics.split(',').map((m, idx) => (
+                            <span key={idx} className="kim-badge-metric">{m.trim()}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {item.description && !isSynthesis && (
+                      <div className="kim-detail-item">
+                        <span className="kim-detail-label">
+                          <i className="fa-solid fa-align-left"></i> Description
+                        </span>
+                        <div className="kim-description-text">{item.description}</div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ── Tab Langage Naturel ── */}
+                {showHuman && item.prose && (
+                  <div className="kim-prose-container">
+                    {item.prose.map((p, pidx) => (
+                      <div key={pidx} className="kim-prose-item">
+                        <div className="kim-prose-title">{p.title}</div>
+                        <div 
+                          className="kim-prose-text"
+                          dangerouslySetInnerHTML={{ 
+                            __html: p.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          }}
+                        />
+                      </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* ── Description ── */}
-              {item.description && (
-                <div className="kim-detail-item">
-                  <span className="kim-detail-label">
-                    <i className="fa-solid fa-align-left"></i> Description
-                  </span>
-                  <div className="kim-description-text">{item.description}</div>
-                </div>
-              )}
-
-              {index < items.length - 1 && <hr className="kim-separator" />}
-            </div>
-          ))}
+                {index < items.length - 1 && <hr className="kim-separator" />}
+              </div>
+            );
+          })}
         </div>
 
       </div>
     </div>
   );
 }
+

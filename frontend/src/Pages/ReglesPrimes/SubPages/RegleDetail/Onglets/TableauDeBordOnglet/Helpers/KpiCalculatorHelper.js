@@ -51,59 +51,34 @@ export const METRIC_DIRECTION = {
 };
 
 /**
- * Résout la clé metric (dmt | cvr | tx_mea | avg_ca | qualite | heures)
- * depuis un indicateur.
+ * Résout la clé metric depuis un indicateur.
+ * Si metric_key est renseigné (KPI brut BigQuery), on l'utilise directement.
+ * Pas de transformation — le metric_key est la clé exacte telle que stockée dans la grille.
  */
 export function resolveMetricKey(ind) {
   if (ind.metric_key) return ind.metric_key;
-  
-  const nom = (ind.nom || '').toLowerCase().replace(/[\s._-]/g, '');
-  if (nom.includes('dmt') || nom.includes('durée') || nom.includes('traitement')) return 'dmt';
-  if (nom.includes('cvr') || nom.includes('convers')) return 'taux_conversion_calc';
-  if (nom.includes('mea')) return 'tx_mea';
-  if (nom.includes('avg') || nom.includes('ca') || nom.includes('nbr') || nom.includes('chiffre')) return 'chiffre_affaire';
-  if (nom.includes('qualit')) return 'note_globale';
-  if (nom.includes('heure')) return 'heure_hp';
   return null;
 }
 
-/** Résoud la valeur réelle depuis les maps de state selon la clé metric */
+/**
+ * Résoud la valeur réelle d'un KPI pour un agent.
+ * Source unique : detail_kpis retourné par le backend (calcul unifié BigQuery).
+ */
 export const getRealValue = (metricKey, mat, unifiedMap) => {
-  const m = String(mat);
-  const agentData = unifiedMap[m] || {};
-  const kpis = agentData.kpis || {};
-  
+  const agentData = unifiedMap[String(mat)] || {};
+  const detailKpis = agentData.detail_kpis || [];
+
   if (!metricKey) return null;
 
-  // 1. Recherche directe (case-sensitive)
-  if (kpis[metricKey] !== undefined) return kpis[metricKey];
-
-  // 2. Recherche insensible à la casse
   const lowerKey = metricKey.toLowerCase();
-  const upperKey = metricKey.toUpperCase();
-  if (kpis[lowerKey] !== undefined) return kpis[lowerKey];
-  if (kpis[upperKey] !== undefined) return kpis[upperKey];
+  const entry = detailKpis.find(k => k.metric_key === metricKey)
+             || detailKpis.find(k => (k.metric_key || '').toLowerCase() === lowerKey);
 
-  // 3. Mappings historiques et spécifiques
-  switch (lowerKey) {
-    case 'dmt':                  return kpis.dmt ?? kpis.DMT ?? null;
-    case 'taux_conversion_calc': 
-    case 'is_converted':
-    case 'cvr':                  return kpis.cvr ?? kpis.TAUX_CONVERSION ?? null;
-    case 'avg_ca':
-    case 'avg_nbr':              return kpis.avg_nbr ?? kpis.avg_ca ?? null;
-    case 'chiffre_affaire':      
-    case 'revenue_amt_eur':      
-    case 'net_booking_rental_amt_eur': return kpis.CHIFFRE_AFFAIRE ?? kpis.chiffre_affaire ?? null;
-    case 'note_qualite_globale': 
-    case 'note_globale':         
-    case 'qualite':              return kpis.NOTE_QUALITE ?? kpis.note_qualite ?? null;
-    case 'heure_total':          return kpis.HEURE_TOTAL ?? kpis.heure_total ?? null;
-    case 'tx_mea':               return kpis.tx_mea ?? kpis.TX_MEA ?? null;
-    case 'nb_appels':            return kpis.nb_appels ?? kpis.NB_APPELS ?? null;
-    case 'nb_ventes':            return kpis.nb_ventes ?? kpis.NB_VENTES ?? null;
-    default:                     return null;
+  if (entry && entry.valeur_reelle !== null && entry.valeur_reelle !== undefined) {
+    return entry.valeur_reelle;
   }
+
+  return null;
 };
 
 export const findStatutConfigForAgent = (currentStatutLabel, regle) => {

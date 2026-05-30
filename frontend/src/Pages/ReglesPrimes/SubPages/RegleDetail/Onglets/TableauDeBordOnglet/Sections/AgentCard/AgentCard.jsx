@@ -16,14 +16,10 @@ const KPI_COLORS = {
   heures:  '#94a3b8',
 };
 
-const formatKpiReel = (kpi, dmtUnit) => {
+const formatKpiReel = (kpi) => {
   if (kpi.reel == null) return null;
   const key = (kpi.metricKey || '').toLowerCase();
   switch (key) {
-    case 'dmt':
-      return dmtUnit === 'min'
-        ? `${Math.floor(kpi.reel / 60)}m\u00a0${String(Math.round(kpi.reel % 60)).padStart(2, '0')}s`
-        : `${Math.round(kpi.reel)}s`;
     case 'cvr':
     case 'tx_mea':
     case 'qualite':
@@ -34,18 +30,14 @@ const formatKpiReel = (kpi, dmtUnit) => {
     case 'heures':
       return `${kpi.reel.toFixed(1)}h`;
     default:
-      return typeof kpi.reel === 'number' ? kpi.reel.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : String(kpi.reel);
+      return typeof kpi.reel === 'number' ? kpi.reel.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : String(kpi.reel);
   }
 };
 
-const formatKpiObj = (kpi, dmtUnit) => {
+const formatKpiObj = (kpi) => {
   if (kpi.objectif == null) return null;
   const key = (kpi.metricKey || '').toLowerCase();
   switch (key) {
-    case 'dmt':
-      return dmtUnit === 'min'
-        ? `${Math.floor(kpi.objectif / 60)}m\u00a0${String(Math.round(kpi.objectif % 60)).padStart(2, '0')}s`
-        : `${Math.round(kpi.objectif)}s`;
     case 'cvr':
     case 'tx_mea':
     case 'qualite':
@@ -54,7 +46,7 @@ const formatKpiObj = (kpi, dmtUnit) => {
     case 'chiffre_affaire':
       return `${kpi.objectif.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}`;
     default:
-      return typeof kpi.objectif === 'number' ? kpi.objectif.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : String(kpi.objectif);
+      return typeof kpi.objectif === 'number' ? kpi.objectif.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : String(kpi.objectif);
   }
 };
 
@@ -116,6 +108,7 @@ const AgentCard = ({
   data,
   kpiResults,
   assiduite,
+  unified, // Données réelles calculées par le moteur (malus, prorata)
   results,
   montantFinal,
   calcSB,
@@ -123,7 +116,6 @@ const AgentCard = ({
   totalPrime,
   ptsFinal,
   anyLoading,
-  dmtUnit,
   unifiedKpis,
   handleUpdateLocalData,
   handleShowFormula
@@ -174,11 +166,11 @@ const AgentCard = ({
 
       {/* ─── 2. Performance KPI ─── */}
       <div className="agent-card__kpis">
-        <div className="agent-card__section-title" style={{ display: 'flex', alignItems: 'center' }}>
-          KPI Performance
+        <div className="agent-card__section-title">
+          <span>KPI Performance</span>
           {results.hasMissingData && (
-            <span style={{ marginLeft: '12px', color: '#ef4444', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#fef2f2', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fecaca' }}>
-              <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '4px' }}></i>
+            <span className="agent-card__missing-data-badge">
+              <i className="fa-solid fa-triangle-exclamation"></i>
               Données incomplètes (Prime 0)
             </span>
           )}
@@ -226,8 +218,8 @@ const AgentCard = ({
           ) : (
             kpiResults.kpis.map(kpi => {
               const color   = KPI_COLORS[kpi.metricKey] || '#94a3b8';
-              const reelStr = anyLoading ? null : formatKpiReel(kpi, dmtUnit);
-              const objStr  = formatKpiObj(kpi, dmtUnit);
+              const reelStr = anyLoading ? null : formatKpiReel(kpi);
+              const objStr  = formatKpiObj(kpi);
               const attPct  = kpi.taux_atteinte != null ? Math.round(kpi.taux_atteinte * 100) : null;
               
               return (
@@ -235,6 +227,9 @@ const AgentCard = ({
                   <span className="agent-card__kpi-dot" style={{ background: color }}></span>
                   <span className="agent-card__kpi-name" title={kpi.nom}>
                     {kpi.nom}
+                    {!kpi.metricKey && (
+                      <i className="fa-solid fa-triangle-exclamation" style={{ color: '#f59e0b', marginLeft: '4px', fontSize: '0.7rem' }} title="Lien BigQuery manquant (metric_key vide). Mettez à jour la grille (Étape 2)."></i>
+                    )}
                     {kpi.is_formula && kpi.formula && (
                       <button
                         type="button"
@@ -347,6 +342,30 @@ const AgentCard = ({
               </span>
             )}
           </div>
+
+          {/* Malus Assiduité (Moteur Unifié) */}
+          {unified?.malus_assiduite && (
+            <div className="agent-card__prime-row">
+              <span className="agent-card__prime-label" style={{ color: '#ef4444' }}>
+                <i className="fa-solid fa-triangle-exclamation"></i> Malus {unified.malus_assiduite.kpi}
+              </span>
+              <span className="agent-card__prime-value" style={{ color: '#ef4444' }}>
+                -{unified.malus_assiduite.malus_pct}%
+              </span>
+            </div>
+          )}
+
+          {/* Prorata Présence (Moteur Unifié) */}
+          {unified?.prorata_presence && unified.prorata_presence.taux < 100 && (
+            <div className="agent-card__prime-row">
+              <span className="agent-card__prime-label" style={{ color: '#6366f1' }}>
+                <i className="fa-solid fa-clock-rotate-left"></i> Prorata {unified.prorata_presence.mode}
+              </span>
+              <span className="agent-card__prime-value" style={{ color: '#6366f1' }}>
+                {unified.prorata_presence.taux}%
+              </span>
+            </div>
+          )}
 
           <div className="agent-card__prime-row">
             <span className="agent-card__prime-label">

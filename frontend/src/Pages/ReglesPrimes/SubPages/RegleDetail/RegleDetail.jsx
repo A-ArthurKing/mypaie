@@ -106,9 +106,19 @@ export default function RegleDetail() {
             <h1 className="regle-detail__nom">{regle.nom}</h1>
             <span className="regle-detail__code">{regle.code}</span>
           </div>
-          <span className={`regle-detail__badge regle-detail__badge--${regle.actif ? 'actif' : 'inactif'}`}>
-            {regle.actif ? 'Actif' : 'Inactif'}
-          </span>
+          <div className="regle-detail__header-right">
+            <button 
+              className={`regle-detail__btn-refresh ${isValidating ? 'is-loading' : ''}`} 
+              onClick={handleRefresh}
+              title="Recharger les données (Grille + Calculs)"
+            >
+              <i className={`fa-solid ${isValidating ? 'fa-rotate fa-spin' : 'fa-arrows-rotate'}`}></i>
+              {isValidating ? 'Actualisation...' : 'Actualiser'}
+            </button>
+            <span className={`regle-detail__badge regle-detail__badge--${regle.actif ? 'actif' : 'inactif'}`}>
+              {regle.actif ? 'Actif' : 'Inactif'}
+            </span>
+          </div>
         </header>
 
         {/* ── Onglets ── */}
