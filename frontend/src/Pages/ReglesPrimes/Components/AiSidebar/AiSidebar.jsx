@@ -349,6 +349,20 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, 
           } catch (e) {
             elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
           }
+        } else if (codeBlockType.trim() === 'kpi_format_request') {
+          try {
+            const data = JSON.parse(fullCode);
+            elements.push(
+              <KpiFormatForm
+                key={keyIdx++}
+                kpis={data.kpis || []}
+                onSubmit={(formats) => onActionClick('submit_kpi_formats', formats)}
+                submitted={confirmedKpis['_formats_submitted_' + msgId] || false}
+              />
+            );
+          } catch (e) {
+            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
+          }
         } else {
           elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
         }
@@ -529,6 +543,16 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
       
       const msgLines = items.map(p => `- Pour "${p.user_name}", j'utilise le KPI : [${p.code_kpi}] – ${p.libelle}`);
       await sendMessageToBot("Je valide les choix suivants :\n" + msgLines.join("\n"));
+    } else if (actionType === 'submit_kpi_formats') {
+      // payload est le dictionnaire formats mappé par code_kpi
+      setConfirmedKpis(prev => ({ ...prev, ['_formats_submitted_' + msgId]: true }));
+      
+      const formatLines = Object.values(payload).map(f => 
+        `- **${f.user_name || f.libelle}** (${f.code_kpi}) : Unité = ${f.unite}, Mode de calcul = ${f.mode_prime}`
+      );
+      
+      const msg = `Voici mes choix de format pour les KPIs :\n${formatLines.join('\n')}\n\nVous pouvez passer à l'étape suivante.`;
+      await sendMessageToBot(msg);
     } else if (actionType === 'select_multiple_kpis') {
       // payload est une liste d'objets KPI
       const selectedNames = payload.map(k => k.libelle).join(', ');
