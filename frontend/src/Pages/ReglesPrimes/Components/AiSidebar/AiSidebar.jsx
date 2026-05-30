@@ -201,7 +201,7 @@ function KpiListingCard({ kpis, onSelectMany }) {
   );
 }
 
-function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, pendingKpiSelections = {} }) {
+function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis = {}, pendingKpiSelections = {} }) {
   if (!text) return null;
   const lines = text.split('\n');
   const elements = [];
@@ -223,15 +223,28 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, 
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    const trimmedLine = line.trim();
     
-    // Code block handling
-    if (line.startsWith('```')) {
+    // Code block handling (flexible detection)
+    if (trimmedLine.includes('```')) {
       flushList();
+      
+      // Si la ligne contient du texte avant les backticks, on traite le texte d'abord
+      const backtickIndex = trimmedLine.indexOf('```');
+      if (backtickIndex > 0 && !inCodeBlock) {
+        const preText = trimmedLine.substring(0, backtickIndex).trim();
+        if (preText) {
+          elements.push(<p key={keyIdx++} className="ai-md-p">{parseInline(preText, keyIdx * 100)}</p>);
+        }
+      }
+
       if (inCodeBlock) {
-        // End of code block
+        // Fin du bloc
         const fullCode = codeBlockContent.join('\n');
-        if (codeBlockType.trim() === 'json_grille_proposal' || codeBlockType.trim() === 'json_grille_applied') {
-          const isApplied = codeBlockType.trim() === 'json_grille_applied';
+        const cleanType = codeBlockType.trim();
+        
+        if (cleanType === 'json_grille_proposal' || cleanType === 'json_grille_applied') {
+          const isApplied = cleanType === 'json_grille_applied';
           try {
             const proposal = JSON.parse(fullCode);
             elements.push(
@@ -318,7 +331,7 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, 
           } catch (e) {
             elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
           }
-        } else if (codeBlockType.trim() === 'kpi_selection_request') {
+        } else if (cleanType === 'kpi_selection_request') {
           try {
             const data = JSON.parse(fullCode);
             const resolvedUserName = data.user_name || data.user_kpi_name;
@@ -336,7 +349,7 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, 
           } catch (e) {
             elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
           }
-        } else if (codeBlockType.trim() === 'kpi_listing_request') {
+        } else if (cleanType === 'kpi_listing_request') {
           try {
             const data = JSON.parse(fullCode);
             elements.push(
@@ -349,7 +362,7 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, 
           } catch (e) {
             elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
           }
-        } else if (codeBlockType.trim() === 'kpi_format_request') {
+        } else if (cleanType === 'kpi_format_request') {
           try {
             const data = JSON.parse(fullCode);
             elements.push(
@@ -370,9 +383,11 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, 
         codeBlockContent = [];
         codeBlockType = '';
       } else {
-        // Start of code block
+        // Début du bloc
         inCodeBlock = true;
-        codeBlockType = line.substring(3);
+        // On récupère le type après les backticks
+        const typePart = trimmedLine.substring(trimmedLine.indexOf('```') + 3).trim();
+        codeBlockType = typePart;
       }
       continue;
     }
