@@ -230,11 +230,20 @@ export default function TableauDeBordOnglet({ regle }) {
     
     if (!metricKey) return null;
 
+    const lowerKey = metricKey.toLowerCase();
+
+    // 0. Recherche dans detail_kpis (structure retournée par /calcul)
+    const detailKpis = agentData.detail_kpis || [];
+    const fromDetail = detailKpis.find(k => k.metric_key === metricKey)
+                    || detailKpis.find(k => (k.metric_key || '').toLowerCase() === lowerKey);
+    if (fromDetail && fromDetail.valeur_reelle !== null && fromDetail.valeur_reelle !== undefined) {
+      return fromDetail.valeur_reelle;
+    }
+
     // 1. Recherche directe (case-sensitive)
     if (kpis[metricKey] !== undefined) return kpis[metricKey];
 
     // 2. Recherche insensible à la casse
-    const lowerKey = metricKey.toLowerCase();
     const upperKey = metricKey.toUpperCase();
     if (kpis[lowerKey] !== undefined) return kpis[lowerKey];
     if (kpis[upperKey] !== undefined) return kpis[upperKey];

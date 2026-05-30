@@ -73,7 +73,7 @@
 .gem-info-box i { color: var(--color-info); font-size: 1rem; margin-top: 2px; }
 
 /* #region FORM ELEMENTS */
-.gem-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-end; }
+.gem-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; align-items: flex-end; }
 .gem-modal input, .gem-modal select {
     padding: 10px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
     font-size: var(--text-sm); background: var(--color-surface); color: var(--color-text-primary);

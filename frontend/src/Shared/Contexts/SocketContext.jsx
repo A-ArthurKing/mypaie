@@ -30,7 +30,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('[Socket] Déconnecté');
+      // Déconnexion gérée silencieusement
     });
 
     return () => newSocket.close();

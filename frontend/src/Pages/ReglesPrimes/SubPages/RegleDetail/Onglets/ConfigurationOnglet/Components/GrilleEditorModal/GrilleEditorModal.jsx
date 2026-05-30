@@ -47,6 +47,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
     jours_ouvres: 22,
     base_horaire: 191,
     seuil_minimum_jours: null,
+    malus_assiduite: [],
   });
 
   useEffect(() => {
@@ -55,7 +56,6 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
       if (!isOpen) return;
       setIsLoadingRefs(true);
       try {
-        console.log('[GrilleEditorModal] Chargement des KPIs pour projet:', projet);
         const [resRefs, resGold] = await Promise.all([
           fetch('/api/parametres/references'),
           fetch(`/api/parametres/introspection/gold-kpis${projet ? `?projet=${encodeURIComponent(projet)}` : ''}`)
@@ -103,7 +103,6 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
 
     if (socket) {
       const handleUpdate = () => {
-        console.log('[RealTime] Mise à jour des références détectée');
         fetchRefs();
       };
       socket.on('kpi_standards_updated', handleUpdate);
@@ -132,7 +131,7 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
           primes_additionnelles: initialData.primes_additionnelles || []
         });
         if (initialData.config_temps) {
-          setConfigTemps(initialData.config_temps);
+          setConfigTemps({ malus_assiduite: [], ...initialData.config_temps });
         }
       } else {
         // Mode création : paliers par défaut calqués sur l'Excel

@@ -178,7 +178,7 @@
     align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 10px 14px;
+    padding: 10px 5px;
     background: transparent;
     border-radius: var(--radius-md);
     color: var(--color-text-secondary);
@@ -211,6 +211,7 @@
     width: 20px;
     text-align: center;
     transition: transform var(--transition-base);
+    margin:auto;
 }
 
 .sidebar__nav-item:hover .sidebar__nav-icon {

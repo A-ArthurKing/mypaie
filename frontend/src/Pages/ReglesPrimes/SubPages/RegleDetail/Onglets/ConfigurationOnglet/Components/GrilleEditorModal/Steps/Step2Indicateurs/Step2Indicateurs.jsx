@@ -25,8 +25,6 @@ export default function Step2Indicateurs({
 }) {
   const [newCatName, setNewCatName] = useState('');
 
-  console.log('[Step2Indicateurs] Rendering with kpiRefs keys:', Object.keys(kpiRefs || {}));
-
   const options = useMemo(() => {
     if (!kpiRefs) return [];
     const groups = [];
@@ -221,11 +219,16 @@ export default function Step2Indicateurs({
 
                   <div className="gem-input-group" style={{ flex: '0 0 100px' }}>
                     <label>Format</label>
-                    <div className="gem-readonly-val">
-                      {ind.type === 'pourcentage' ? '%' : ind.type === 'devise' ? 'DH/€' : 'Nb'}
-                    </div>
+                    <select
+                      value={ind.type || 'entier'}
+                      onChange={(e) => onUpdateIndicator(ind.id, 'type', e.target.value)}
+                    >
+                      <option value="entier">Nb (Entier)</option>
+                      <option value="pourcentage">% (Pourcent)</option>
+                      <option value="devise">DH/€ (Devise)</option>
+                    </select>
                   </div>
-                  <button className="gem-btn-icon danger gem-mt-label" onClick={() => onRemoveIndicator(ind.id)}>
+                  <button type="button" className="gem-btn-icon danger gem-mt-label" onClick={() => onRemoveIndicator(ind.id)}>
                     <i className="fa-solid fa-trash"></i>
                   </button>
                 </div>
@@ -335,7 +338,7 @@ export default function Step2Indicateurs({
                     <option value="">Rattacher à...</option>
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <button className="gem-btn-icon danger" onClick={() => onRemoveIndicator(ind.id)}>
+                  <button type="button" className="gem-btn-icon danger" onClick={() => onRemoveIndicator(ind.id)}>
                     <i className="fa-solid fa-trash"></i>
                   </button>
                 </div>

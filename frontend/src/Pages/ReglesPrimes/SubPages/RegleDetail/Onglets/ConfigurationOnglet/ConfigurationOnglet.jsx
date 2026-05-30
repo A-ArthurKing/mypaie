@@ -30,6 +30,7 @@ export default function ConfigurationOnglet({ regle, onRefresh }) {
   const [pendingGrilleUuid, setPendingGrilleUuid] = useState(null);
   const [selectedVersions, setSelectedVersions] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteVersionConfirm, setDeleteVersionConfirm] = useState(null);
 
   const configsCacheKey = regle?.id ? `regle:${regle.id}:configs` : null;
 
@@ -140,6 +141,22 @@ export default function ConfigurationOnglet({ regle, onRefresh }) {
     }
   };
 
+  const handleDeleteVersion = async () => {
+    if (!deleteVersionConfirm) return;
+    try {
+      const res = await fetch(`/api/regles/${regle.id}/configs/${deleteVersionConfirm.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setDeleteVersionConfirm(null);
+        refreshConfigs();
+        addToast("Version supprimée", 'success');
+      } else {
+        addToast("Erreur lors de la suppression de la version", 'error');
+      }
+    } catch (e) {
+      addToast("Erreur lors de la suppression de la version", 'error');
+    }
+  };
+
   const handleMoveGrille = async (uuid, direction) => {
     const uuids = Object.keys(grillesGroups);
     const index = uuids.indexOf(uuid);
@@ -215,6 +232,7 @@ export default function ConfigurationOnglet({ regle, onRefresh }) {
                 setIsEditorOpen(true);
               }}
               onDelete={() => setDeleteConfirm({ uuid, nom: currentVersion.grille_nom || 'cette grille' })}
+              onDeleteVersion={(id, libelle) => setDeleteVersionConfirm({ id, libelle })}
               onMoveUp={() => handleMoveGrille(uuid, 'up')}
               onMoveDown={() => handleMoveGrille(uuid, 'down')}
               isFirst={index === 0}
@@ -248,6 +266,17 @@ export default function ConfigurationOnglet({ regle, onRefresh }) {
         onConfirm={handleDeleteGrille}
         title="Supprimer la grille"
         message={`Êtes-vous sûr de vouloir supprimer la grille "${deleteConfirm?.nom}" ? Toutes ses versions seront définitivement supprimées.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={!!deleteVersionConfirm}
+        onClose={() => setDeleteVersionConfirm(null)}
+        onConfirm={handleDeleteVersion}
+        title="Supprimer la version"
+        message={`Êtes-vous sûr de vouloir supprimer la version "${deleteVersionConfirm?.libelle}" ?`}
         confirmText="Supprimer"
         cancelText="Annuler"
         type="danger"

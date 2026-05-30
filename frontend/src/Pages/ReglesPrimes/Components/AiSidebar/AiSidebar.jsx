@@ -45,7 +45,98 @@ function getPreviousMonthRange() {
   return { debut: `${year}-${monthStr}-01`, fin: `${year}-${monthStr}-${lastDay}`, label };
 }
 
-function MarkdownMessage({ text, onActionClick, simulation }) {
+function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedKpi }) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  if (confirmedKpi) {
+    return (
+      <div className="ai-kpi-card ai-kpi-card--confirmed">
+        <i className="fa-solid fa-check-circle"></i>
+        <span className="ai-kpi-card__user-name">"{userName}"</span>
+        <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
+        <div className="ai-kpi-card__confirmed-info">
+          <span className="ai-kpi-card__confirmed-libelle">{confirmedKpi.libelle}</span>
+          <code className="ai-kpi-card__code">{confirmedKpi.code_kpi}</code>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPicker || !suggested) {
+    return (
+      <div className="ai-kpi-card ai-kpi-card--picking">
+        <div className="ai-kpi-card__pick-header">
+          {showPicker && (
+            <button className="ai-kpi-back-btn" onClick={() => setShowPicker(false)} type="button">
+              <i className="fa-solid fa-arrow-left"></i>
+            </button>
+          )}
+          <span>
+            {!suggested
+              ? <><strong>"{userName}"</strong> — aucune correspondance. Choisissez :</>
+              : <>Choisissez pour <strong>"{userName}"</strong> :</>}
+          </span>
+        </div>
+        <div className="ai-kpi-card__list">
+          {(candidates || []).map((kpi, i) => (
+            <button
+              key={i}
+              className="ai-kpi-card__list-item"
+              onClick={() => onSelect({ user_name: userName, ...kpi })}
+              type="button"
+            >
+              <span className="ai-kpi-card__list-libelle">{kpi.libelle}</span>
+              <span className="ai-kpi-card__list-meta">
+                <code className="ai-kpi-card__code">{kpi.code_kpi}</code>
+                {kpi.univers && (
+                  <span className={`ai-kpi-card__badge ai-kpi-card__badge--${kpi.univers.toLowerCase()}`}>
+                    {kpi.univers}
+                  </span>
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ai-kpi-card ai-kpi-card--suggestion">
+      <div className="ai-kpi-card__body">
+        <span className="ai-kpi-card__user-name">"{userName}"</span>
+        <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
+        <div className="ai-kpi-card__suggestion-info">
+          <span className="ai-kpi-card__suggestion-libelle">{suggested.libelle}</span>
+          <code className="ai-kpi-card__code">{suggested.code_kpi}</code>
+          {suggested.univers && (
+            <span className={`ai-kpi-card__badge ai-kpi-card__badge--${suggested.univers.toLowerCase()}`}>
+              {suggested.univers}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="ai-kpi-card__actions">
+        <button
+          className="ai-kpi-btn ai-kpi-btn--validate"
+          onClick={() => onSelect({ user_name: userName, ...suggested })}
+          type="button"
+        >
+          <i className="fa-solid fa-check"></i> Valider
+        </button>
+        <button
+          className="ai-kpi-btn ai-kpi-btn--reject"
+          onClick={() => setShowPicker(true)}
+          type="button"
+        >
+          <i className="fa-solid fa-xmark"></i> Autre KPI
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {} }) {
   if (!text) return null;
   const lines = text.split('\n');
   const elements = [];
@@ -162,6 +253,22 @@ function MarkdownMessage({ text, onActionClick, simulation }) {
           } catch (e) {
             elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
           }
+        } else if (codeBlockType.trim() === 'kpi_selection_request') {
+          try {
+            const data = JSON.parse(fullCode);
+            elements.push(
+              <KpiSelectorCard
+                key={keyIdx++}
+                userName={data.user_name}
+                suggested={data.suggested || null}
+                candidates={data.candidates || []}
+                onSelect={(kpi) => onActionClick('select_kpi', kpi)}
+                confirmedKpi={confirmedKpis[data.user_name] || null}
+              />
+            );
+          } catch (e) {
+            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
+          }
         } else {
           elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
         }
@@ -233,6 +340,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState(null);
   const [proposalSimulations, setProposalSimulations] = useState({});
+  const [confirmedKpis, setConfirmedKpis] = useState({});
 
   // Charger la liste des conversations (Historique)
   const { data: conversations = [], revalidate: refreshHistory } = useApiSWR(
@@ -276,6 +384,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
     setCurrentConvId(null);
     setMessages([INITIAL_MESSAGE]);
     setIsLocked(false);
+    setConfirmedKpis({});
     setView('chat');
   };
 
@@ -325,6 +434,10 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
       } finally {
         setIsLoading(false);
       }
+    } else if (actionType === 'select_kpi') {
+      setConfirmedKpis(prev => ({ ...prev, [payload.user_name]: payload }));
+      const msg = `Pour "${payload.user_name}", j'utilise le KPI : [${payload.code_kpi}] – ${payload.libelle}`;
+      await sendMessageToBot(msg);
     } else if (actionType === 'request_simulation') {
       const grilleConfig = payload;
       setProposalSimulations(prev => ({ ...prev, [msgId]: { loading: true, agents: null, error: null } }));
@@ -620,7 +733,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
                       <i className="fa-solid fa-ellipsis fa-fade"></i>
                     </div>
                   ) : msg.sender === 'bot' ? (
-                    <MarkdownMessage text={msg.text} msgId={msg.id} onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} simulation={proposalSimulations[msg.id]} />
+                    <MarkdownMessage text={msg.text} msgId={msg.id} onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} simulation={proposalSimulations[msg.id]} confirmedKpis={confirmedKpis} />
                   ) : (
                     msg.text
                   )}

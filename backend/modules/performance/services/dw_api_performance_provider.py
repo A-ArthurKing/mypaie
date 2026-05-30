@@ -214,63 +214,45 @@ from tools.kpi_engine import evaluate_formula, get_kpi_registry
 # #endregion
 
 
-# #region KPI NATIVE DYNAMIQUES — chargement depuis config_kpis
+# #region HELPERS — Mapping matricule numérique ↔ nom BQ
 
-def _load_native_bq_kpi_definitions() -> list:
+def _load_nom_matricule_mapping(matricules: list) -> dict:
     """
-    Charge depuis MySQL config_kpis les KPIs NATIVE PERF ayant des codes BigQuery définis.
-    Retourne une liste de dicts { code_kpi, bq_kpi_codes: [list], bq_aggregation: SUM|AVG }.
-    En cas d'erreur (MySQL indisponible), retourne une liste vide — non bloquant.
+    Charge depuis ref_employes le mapping { NOM_COMPLET_UPPER: matricule_numerique }
+    pour les matricules demandés.
+
+    BigQuery paie_performance_mensuelle stocke NOM + ' ' + PRENOM comme identifiant
+    dans la colonne 'matricule'. Cette fonction permet la correspondance inverse.
+    Retourne {} en cas d'erreur (non-bloquant).
     """
+    if not matricules:
+        return {}
     try:
         import pymysql
         from config.db_mysql_connector import get_mysql_connection
         conn = get_mysql_connection()
         with conn.cursor(pymysql.cursors.DictCursor) as cur:
-            cur.execute("""
-                SELECT code_kpi, bq_kpi_codes, bq_aggregation
-                FROM config_kpis
-                WHERE univers = 'PERF'
-                  AND type = 'NATIVE'
-                  AND bq_kpi_codes IS NOT NULL
-                  AND is_active = 1
-            """)
+            phs = ",".join(["%s"] * len(matricules))
+            cur.execute(
+                f"SELECT matricule, nom, prenom FROM ref_employes WHERE matricule IN ({phs})",
+                list(matricules)
+            )
             rows = cur.fetchall()
         conn.close()
-
-        result = []
-        for r in rows:
-            codes_raw = r.get('bq_kpi_codes')
-            if isinstance(codes_raw, str):
-                try:
-                    codes = json.loads(codes_raw)
-                except Exception:
-                    continue
-            elif isinstance(codes_raw, list):
-                codes = codes_raw
-            else:
-                continue
-
-            # Validation de sécurité : seuls les codes alphanumériques + underscore sont acceptés
-            safe_codes = [c.lower() for c in codes if re.match(r'^[a-zA-Z0-9_]+$', str(c))]
-            if not safe_codes:
-                continue
-
-            # Le code_kpi doit aussi être alphanumérique + underscore (pour l'alias SQL)
-            code_kpi = str(r['code_kpi'])
-            if not re.match(r'^[a-zA-Z0-9_]+$', code_kpi):
-                logger.warning("code_kpi ignoré (caractères invalides) : %s", code_kpi)
-                continue
-
-            result.append({
-                'code_kpi': code_kpi,
-                'bq_codes': safe_codes,
-                'aggregation': r.get('bq_aggregation') or 'SUM',
-            })
-        return result
+        return {
+            (r['nom'].strip() + ' ' + r['prenom'].strip()).upper(): str(r['matricule'])
+            for r in rows if r.get('nom') and r.get('prenom')
+        }
     except Exception as e:
-        logger.warning("_load_native_bq_kpi_definitions: impossible de charger depuis MySQL : %s", e)
-        return []
+        logger.warning("Impossible de charger le mapping nom→matricule depuis ref_employes : %s", e)
+        return {}
+
+# #endregion
+
+
+# #region KPI NATIVE DYNAMIQUES — chargement depuis config_kpis
+
+# (Suppression de _load_native_bq_kpi_definitions car on passe en dynamique total)
 
 # #endregion
 
@@ -281,20 +263,25 @@ def get_perf_totaux_par_matricule(
     matricules: list,
 ) -> dict:
     """
-    Retourne les métriques de performance agrégées par matricule.
-    Inclut les métriques hardcodées (DMT, CVR…) ET toutes les formules
-    dynamiques définies dans matrice_kpis_mapping (is_formula=1).
-    Résultat : { matricule_str: { "dmt": X, "cvr": Y, "avg_nbr": Z, … } }
+    Retourne TOUTES les métriques de performance brutes de BigQuery par matricule.
+    Renvoie systématiquement {kpi_code}_sum et {kpi_code}_avg.
+    Résultat : { matricule_str: { "Duration_call_sum": X, "Duration_call_avg": Y, ... } }
     """
     if not matricules:
         return {}
 
     client = get_bigquery_client()
-    # Utilisation de la table mensuelle Gold (plus fiable et performante pour les totaux)
     table_ref = f"`{GCP_PROJECT_ID}.{BQ_DATASET_PAIE}.paie_performance_mensuelle`"
 
-    mat_literals = ", ".join(f"'{str(m).upper()}'" for m in matricules)
-    where_clauses = [f"UPPER(matricule) IN ({mat_literals})"]
+    # Mapping NOM_COMPLET_UPPER → matricule_numerique
+    nom_mat_map = _load_nom_matricule_mapping(matricules)
+    if nom_mat_map:
+        mat_literals = ", ".join(f"'{name}'" for name in nom_mat_map.keys())
+        where_clauses = [f"UPPER(matricule) IN ({mat_literals})"]
+    else:
+        mat_literals = ", ".join(f"'{str(m).upper()}'" for m in matricules)
+        where_clauses = [f"UPPER(matricule) IN ({mat_literals})"]
+        
     query_params = []
 
     if date_debut:
@@ -306,148 +293,39 @@ def get_perf_totaux_par_matricule(
 
     where_str = "WHERE " + " AND ".join(where_clauses)
 
-    # --- Colonnes fixes (backward compat) ---
-    fixed_columns = """
-            COALESCE(
-              MAX(CASE WHEN LOWER(kpi_code) = 'net_booking_rental_amt_eur' THEN valeur_sum ELSE NULL END),
-              MAX(CASE WHEN LOWER(kpi_code) = 'chiffre_affaire'            THEN valeur_sum ELSE NULL END),
-              MAX(CASE WHEN LOWER(kpi_code) = 'revenue_amt_eur'            THEN valeur_sum ELSE NULL END),
-              MAX(CASE WHEN LOWER(kpi_code) = 'revenue'                    THEN valeur_sum ELSE NULL END),
-              0
-            ) AS sum_chiffre_affaire,
-            SUM(IF(LOWER(kpi_code) IN ('booking_nbr', 'nb_ventes', 'bkg'), valeur_sum, 0)) AS nb_ventes_total,
-            SUM(IF(LOWER(kpi_code) IN ('in_call_nbr', 'nb_appels', 'incoming_call'), valeur_sum, 0)) AS nb_appels_total,
-            SUM(IF(LOWER(kpi_code) IN ('in_call_min_nbr', 'temps_appel'), valeur_sum, 0)) AS sum_temps_appel,
-            SUM(IF(LOWER(kpi_code) IN ('agent_logged_time_min_nbr', 'call_worked_time_min_nbr', 'temps_production'), valeur_sum, 0)) AS sum_temps_production,
-            SUM(IF(LOWER(kpi_code) IN ('csat_nbr', 'csat', 'avr_csat'), valeur_sum, 0)) AS sum_csat,
-            SUM(IF(LOWER(kpi_code) IN ('total_csat_num', 'nb_csat'), valeur_sum, 0)) AS nb_csat_total,
-            AVG(IF(LOWER(kpi_code) IN ('tx_mea'), valeur_avg, 0)) AS tx_mea_avg,
-            AVG(IF(LOWER(kpi_code) IN ('taux_conversion', 'is_converted', 'taux_conversion_calc'), valeur_avg, 0)) AS avg_taux_conversion"""
-
-    # --- Colonnes dynamiques depuis config_kpis (nouveaux KPIs NATIVE) ---
-    # Codes BQ déjà couverts par les colonnes fixes ci-dessus — ne pas dupliquer
-    _fixed_bq_codes = {
-        'net_booking_rental_amt_eur', 'chiffre_affaire', 'revenue_amt_eur', 'revenue',
-        'booking_nbr', 'nb_ventes', 'bkg', 'in_call_nbr', 'nb_appels', 'incoming_call',
-        'in_call_min_nbr', 'temps_appel', 'agent_logged_time_min_nbr',
-        'call_worked_time_min_nbr', 'temps_production', 'csat_nbr', 'csat', 'avr_csat',
-        'total_csat_num', 'nb_csat', 'tx_mea', 'taux_conversion',
-        'is_converted', 'taux_conversion_calc',
-    }
-
-    native_kpi_defs = _load_native_bq_kpi_definitions()
-    dyn_col_parts = []
-    dyn_kpi_map = []  # list of (code_kpi, col_alias)
-
-    for kpi_def in native_kpi_defs:
-        # Filtrer les codes déjà gérés par le bloc fixe
-        new_codes = [c for c in kpi_def['bq_codes'] if c not in _fixed_bq_codes]
-        if not new_codes:
-            continue
-        codes_str = ", ".join(f"'{c}'" for c in new_codes)
-        col_alias = f"dyn_{kpi_def['code_kpi'].lower()}"
-        agg = kpi_def['aggregation']
-        if agg == 'AVG':
-            dyn_col_parts.append(
-                f"AVG(IF(LOWER(kpi_code) IN ({codes_str}), valeur_avg, NULL)) AS {col_alias}"
-            )
-        else:
-            dyn_col_parts.append(
-                f"SUM(IF(LOWER(kpi_code) IN ({codes_str}), valeur_sum, 0)) AS {col_alias}"
-            )
-        dyn_kpi_map.append((kpi_def['code_kpi'], col_alias))
-
-    dyn_sql_part = (",\n            " + ",\n            ".join(dyn_col_parts)) if dyn_col_parts else ""
-
+    # Extraction Totale (Wide-Fetch) sans filtrer par noms de KPIs
     sql = f"""
         SELECT
             matricule,
-            {fixed_columns}{dyn_sql_part}
+            kpi_code,
+            SUM(valeur_sum) as total_sum,
+            AVG(valeur_avg) as total_avg
         FROM {table_ref}
         {where_str}
-        GROUP BY matricule
+        GROUP BY matricule, kpi_code
     """
-
-    # Charger le dictionnaire complet des KPIs pour la résolution
-    kpi_registry = get_kpi_registry()
 
     try:
         job_config = bigquery.QueryJobConfig(query_parameters=query_params)
         rows = list(client.query(sql, job_config=job_config).result())
+        
         result = {}
+        # Construction dynamique
         for r in rows:
-            mat = str(r["matricule"]).upper()
+            bq_mat = str(r["matricule"]).upper()
+            mat = nom_mat_map.get(bq_mat, bq_mat)
             
-            nb_appels = r["nb_appels_total"] or 0
-            temps_appel = r["sum_temps_appel"] or 0
-            nb_ventes = r["nb_ventes_total"] or 0
-            ca = r["sum_chiffre_affaire"] or 0
-            nb_csat = r["nb_csat_total"] or 0
-            sum_csat = r["sum_csat"] or 0
-            
-            dmt_sec = (temps_appel / nb_appels * 60) if nb_appels > 0 else None
-            cvr_pct = (nb_ventes / nb_appels * 100) if nb_appels > 0 else None
-            avg_ca = ca / nb_ventes if nb_ventes > 0 else None
-            csat_moyen = (sum_csat / nb_csat) if nb_csat > 0 else None
-            avg_nbr = ca / nb_ventes if nb_ventes > 0 else None
+            kpi_code = r["kpi_code"]
+            if not kpi_code:
+                continue
+                
+            if mat not in result:
+                result[mat] = {}
+                
+            # Double Export
+            result[mat][f"{kpi_code}_sum"] = r["total_sum"]
+            result[mat][f"{kpi_code}_avg"] = r["total_avg"]
 
-            # Métriques hardcodées (Compatibilité ascendante)
-            _cvr   = round(cvr_pct, 2)   if cvr_pct   is not None else None
-            _dmt   = round(dmt_sec, 1)   if dmt_sec   is not None else None
-            _txmea = round(r["tx_mea_avg"], 2) if r["tx_mea_avg"] is not None else None
-            _avgnbr= round(avg_nbr, 2)   if avg_nbr   is not None else None
-            entry = {
-                # Clés lowercase (compat ascendante)
-                "dmt":       _dmt,
-                "cvr":       _cvr,
-                "tx_mea":    _txmea,
-                "avg_ca":    round(avg_ca, 2)        if avg_ca     is not None else None,
-                "csat_moyen":round(csat_moyen, 2)    if csat_moyen is not None else None,
-                "avg_nbr":   _avgnbr,
-                "nb_ventes": int(nb_ventes)          if nb_ventes is not None else None,
-                "nb_appels": int(nb_appels)          if nb_appels is not None else None,
-                "nb_csat":   int(nb_csat)            if nb_csat   is not None else None,
-                # Alias code_kpi canoniques (garantit que metric_key = code_kpi matchent directement)
-                "IS_CONVERTED": _cvr,   # code_kpi IS_CONVERTED = cvr (taux conversion %)
-                "DMT":          _dmt,   # code_kpi DMT = dmt (durée moyenne appel en secondes)
-                "TX_MEA":       _txmea, # code_kpi TX_MEA = tx_mea (taux mise en attente %)
-                "AVG_NBR":      _avgnbr,# code_kpi AVG_NBR = avg_nbr (avg CA/réservations)
-            }
-
-            # Contexte de données brutes pour le moteur (noms normalisés)
-            # On mappe les noms de colonnes BigQuery vers des tags utilisables
-            formula_ctx = {
-                "CHIFFRE_AFFAIRE":  r["sum_chiffre_affaire"],
-                "NB_VENTES":        r["nb_ventes_total"],
-                "NB_APPELS":        r["nb_appels_total"],
-                "TEMPS_PRODUCTION": r["sum_temps_production"],
-                "TEMPS_APPEL":      r["sum_temps_appel"],
-                "CSAT":             r["sum_csat"],
-                "NB_CSAT":          r["nb_csat_total"],
-                "TX_MEA":           r["tx_mea_avg"],
-                "TAUX_CONVERSION":  r["avg_taux_conversion"],
-            }
-            # Ajouter aussi les clés minuscules par sécurité
-            formula_ctx.update({k.lower(): v for k, v in formula_ctx.items()})
-
-            # --- Injection des KPIs NATIVE dynamiques dans formula_ctx + entry ---
-            # code_kpi est utilisé tel quel comme clé → getRealValue le trouve via lookup direct
-            for code_kpi, col_alias in dyn_kpi_map:
-                val = r.get(col_alias)
-                formula_ctx[code_kpi] = val
-                formula_ctx[code_kpi.lower()] = val
-
-            # Fusionner les métriques brutes dans l'entrée pour les rendre disponibles au frontend
-            entry.update(formula_ctx)
-
-            # Évaluation dynamique de chaque KPI Virtuel défini dans le registre
-            for code, kpi in kpi_registry.items():
-                if kpi.get('type') == 'VIRTUAL' and kpi.get('formule'):
-                    # On ne calcule que s'il n'est pas déjà présent (évite d'écraser les hardcodés)
-                    if code not in entry:
-                        entry[code] = evaluate_formula(kpi['formule'], formula_ctx, kpi_registry)
-
-            result[mat] = entry
         return result
     except GoogleCloudError as e:
         logger.error("Erreur BigQuery perf totaux par matricule : %s", e)

@@ -69,7 +69,7 @@ def get_regle_by_id(regle_id: int) -> dict | None:
                 SELECT 
                     mp.id, mp.code, mp.libelle, mp.id_structure, mp.sirh_filtre, mp.periodicite, mp.description,
                     mp.periode_debut, mp.periode_fin, mp.actif, mp.created_at, mp.updated_at,
-                    mp.grille_objectifs,
+                    mp.grille_objectifs, mp.formule_lisible,
                     rp.nom AS libelle_projet
                 FROM matrice_primes mp
                 LEFT JOIN ref_structure_map rsm ON rsm.id = mp.id_structure
@@ -112,6 +112,7 @@ def get_regle_by_id(regle_id: int) -> dict | None:
                 "periode_fin": str(row["periode_fin"]) if row["periode_fin"] else None,
                 "actif": bool(row["actif"]),
                 "grille_objectifs": grille_objectifs,
+                "formule_lisible": row.get("formule_lisible"),
                 "created_at": str(row["created_at"]) if row["created_at"] else None,
                 "updated_at": str(row["updated_at"]) if row["updated_at"] else None,
             }
@@ -125,21 +126,24 @@ def get_regle_by_id(regle_id: int) -> dict | None:
 
 def update_regle_grille(regle_id: int, grille_objectifs: dict):
     """
-    Met à jour uniquement le champ JSON grille_objectifs d'une règle.
+    Met à jour grille_objectifs et dérive + persiste formule_lisible en même temps.
+    La formule est recalculée à chaque sauvegarde de grille → toujours synchrone.
     """
     import json
+    from modules.regles_primes.services.calculation_engine import build_formule_lisible
     # Normaliser les metric_key vers les code_kpi canoniques avant sauvegarde
     grille_objectifs = _normalize_metric_keys(grille_objectifs)
+    formule_lisible  = build_formule_lisible(grille_objectifs)
     connection = None
     try:
         connection = get_mysql_connection()
         with connection.cursor() as cursor:
             sql = """
                 UPDATE matrice_primes 
-                SET grille_objectifs = %s
+                SET grille_objectifs = %s, formule_lisible = %s
                 WHERE id = %s
             """
-            cursor.execute(sql, (json.dumps(grille_objectifs), regle_id))
+            cursor.execute(sql, (json.dumps(grille_objectifs), formule_lisible or None, regle_id))
             connection.commit()
             return {"status": "success", "message": "Grille mise à jour"}
     except Exception as e:
@@ -234,9 +238,30 @@ def delete_grille(regle_id: int, grille_uuid: str):
     try:
         connection = get_mysql_connection()
         with connection.cursor() as cursor:
+            if grille_uuid == 'null':
+                cursor.execute(
+                    "DELETE FROM matrice_primes_configs WHERE matrice_id = %s AND grille_uuid IS NULL",
+                    (regle_id,)
+                )
+            else:
+                cursor.execute(
+                    "DELETE FROM matrice_primes_configs WHERE matrice_id = %s AND grille_uuid = %s",
+                    (regle_id, grille_uuid)
+                )
+            connection.commit()
+            return {"status": "success", "deleted": cursor.rowcount}
+    finally:
+        if connection: connection.close()
+
+def delete_regle_config(regle_id: int, config_id: int):
+    """Supprime une version spécifique d'une grille (identifiée par son id config)."""
+    connection = None
+    try:
+        connection = get_mysql_connection()
+        with connection.cursor() as cursor:
             cursor.execute(
-                "DELETE FROM matrice_primes_configs WHERE matrice_id = %s AND grille_uuid = %s",
-                (regle_id, grille_uuid)
+                "DELETE FROM matrice_primes_configs WHERE matrice_id = %s AND id = %s",
+                (regle_id, config_id)
             )
             connection.commit()
             return {"status": "success", "deleted": cursor.rowcount}

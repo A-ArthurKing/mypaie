@@ -113,3 +113,111 @@
 }
 .gem-ct-base-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .gem-ct-base-btn.active { border-color: var(--color-accent); background: var(--color-accent); color: white; }
+
+/* ── Malus Assiduité ── */
+.gem-malus-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.gem-btn-add-malus {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--color-accent-soft);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    color: var(--color-accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.gem-btn-add-malus:hover { background: var(--color-accent); color: white; }
+
+.gem-malus-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    background: var(--color-surface-2);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+.gem-malus-empty i { font-size: 1.2rem; opacity: 0.5; }
+
+.gem-malus-list { display: flex; flex-direction: column; gap: 12px; }
+
+.gem-malus-rule {
+    position: relative;
+    padding: 16px 56px 16px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+}
+
+.gem-malus-rule__badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--color-warning-soft, #fef3c7);
+    border: 1px solid var(--color-warning, #f59e0b);
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #b45309;
+    margin-bottom: 10px;
+}
+
+.gem-malus-rule__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.gem-malus-rule__summary {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--color-border-subtle);
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.gem-malus-rule__summary i { color: var(--color-warning, #f59e0b); }
+
+.gem-malus-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.gem-malus-tag--total { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.gem-malus-tag--partial { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+
+.gem-malus-rule__delete {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.gem-info-box--orange {
+    background: #fffbeb;
+    border-color: #fcd34d;
+}
+.gem-info-box--orange i { color: #d97706; }
+.gem-info-box--orange p { color: #92400e; }

@@ -721,3 +721,215 @@
   color: #111827;
 }
 
+/* ── KPI Selector Cards ── */
+.ai-kpi-card {
+  margin: 3px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  border: 1.5px solid var(--color-border);
+  background: #fff;
+}
+
+/* État 1 : suggestion en attente */
+.ai-kpi-card--suggestion {
+  border-color: var(--color-accent);
+}
+
+.ai-kpi-card__body {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 8px 10px;
+}
+
+.ai-kpi-card__user-name {
+  font-weight: 700;
+  font-style: italic;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.ai-kpi-card__arrow {
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.ai-kpi-card__suggestion-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ai-kpi-card__suggestion-libelle {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ai-kpi-card__code {
+  font-size: 0.67rem;
+  font-family: monospace;
+  color: var(--color-text-muted);
+  background: var(--color-bg-alt, #f3f4f6);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+}
+
+.ai-kpi-card__badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ai-kpi-card__badge--perf    { background: #dbeafe; color: #1d4ed8; }
+.ai-kpi-card__badge--qualite { background: #d1fae5; color: #065f46; }
+.ai-kpi-card__badge--heures  { background: #fef3c7; color: #92400e; }
+
+/* Boutons Valider / Autre KPI */
+.ai-kpi-card__actions {
+  display: flex;
+  border-top: 1px solid var(--color-border);
+}
+
+.ai-kpi-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background-color 0.15s;
+}
+
+.ai-kpi-btn + .ai-kpi-btn {
+  border-left: 1px solid var(--color-border);
+}
+
+.ai-kpi-btn--validate          { color: #16a34a; }
+.ai-kpi-btn--validate:hover    { background: #f0fdf4; }
+.ai-kpi-btn--reject            { color: #dc2626; }
+.ai-kpi-btn--reject:hover      { background: #fef2f2; }
+
+/* État 2 : picker (liste complète) */
+.ai-kpi-card--picking {
+  border-color: var(--color-primary, #7c3aed);
+}
+
+.ai-kpi-card__pick-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  color: var(--color-text-primary);
+  background: var(--color-bg-alt, #f9fafb);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ai-kpi-back-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: background-color 0.15s;
+}
+
+.ai-kpi-back-btn:hover { background: var(--color-bg-hover, #f3f4f6); }
+
+.ai-kpi-card__list {
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-kpi-card__list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.ai-kpi-card__list-item:hover {
+  background: var(--color-bg-hover, #f3f4f6);
+  border-color: var(--color-accent);
+}
+
+.ai-kpi-card__list-libelle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+}
+
+.ai-kpi-card__list-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* État 3 : confirmé */
+.ai-kpi-card--confirmed {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 10px;
+  color: #166534;
+  font-size: 0.78rem;
+}
+
+.ai-kpi-card--confirmed .fa-check-circle {
+  color: #16a34a;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.ai-kpi-card--confirmed .ai-kpi-card__user-name {
+  font-weight: 700;
+  font-style: italic;
+  color: #166534;
+}
+
+.ai-kpi-card__confirmed-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ai-kpi-card__confirmed-libelle {
+  font-weight: 600;
+  color: #166534;
+}
+

@@ -11,7 +11,7 @@ from core.socket import emit_update
 from modules.regles_primes.services.dw_api_regles_provider import (
     create_regle, get_regles, get_regle_by_id, update_regle_grille,
     get_regle_configs, create_regle_config, set_active_config,
-    update_regle, delete_regle, delete_grille
+    update_regle, delete_regle, delete_grille, delete_regle_config
 )
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,16 @@ def endpoint_update_grilles_order(regle_id):
 def endpoint_delete_grille(regle_id, grille_uuid):
     try:
         res = delete_grille(regle_id, grille_uuid)
+        emit_update("regle_configs_updated", {"regle_id": regle_id})
+        return jsonify(res), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@regles_primes_bp.route("/api/regles/<int:regle_id>/configs/<int:config_id>", methods=["DELETE"])
+def endpoint_delete_regle_config(regle_id, config_id):
+    try:
+        from modules.regles_primes.services.dw_api_regles_provider import delete_regle_config
+        res = delete_regle_config(regle_id, config_id)
         emit_update("regle_configs_updated", {"regle_id": regle_id})
         return jsonify(res), 200
     except Exception as e:

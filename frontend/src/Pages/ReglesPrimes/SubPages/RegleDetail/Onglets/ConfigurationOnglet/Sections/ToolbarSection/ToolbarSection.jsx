@@ -5,7 +5,7 @@
  * Dépend  : ToolbarSection.css
  * Module  : mypaie / Pages / ReglesPrimes / SubPages / RegleDetail / ObjectifsOnglet
  */
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './ToolbarSection.css';
 
 export default function ToolbarSection({
@@ -16,12 +16,25 @@ export default function ToolbarSection({
   onActivateConfig,
   onEdit,
   onDelete,
+  onDeleteVersion,
   onMoveUp,
   onMoveDown,
   isFirst,
   isLast,
 }) {
   const activeConfig = configs.find(c => c.id === activeConfigId);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="objectifs-toolbar">
@@ -47,19 +60,44 @@ export default function ToolbarSection({
         <h3 className="objectifs-toolbar__title">{title}</h3>
         
         <div className="version-manager" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <div className="version-selector">
-                <label>Version :</label>
-                <select 
-                    value={activeConfigId || ''} 
-                    onChange={(e) => onSelectConfig(Number(e.target.value))}
-                    className="version-select"
-                >
-                    {configs.map(c => (
-                        <option key={c.id} value={c.id}>
-                            {c.libelle} {c.est_active ? '✓' : ''}
-                        </option>
-                    ))}
-                </select>
+            <div className="version-selector-beautiful" ref={dropdownRef}>
+                <label>VERSION :</label>
+                <div className="custom-select-wrapper" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                  <div className="custom-select-trigger">
+                    <span>
+                      {activeConfig ? activeConfig.libelle : 'Sélectionner...'}
+                    </span>
+                    <i className={`fa-solid fa-chevron-down transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}></i>
+                  </div>
+                  {isDropdownOpen && (
+                    <div className="custom-select-menu">
+                      {configs.map(c => (
+                        <div 
+                          key={c.id} 
+                          className={`custom-select-option ${c.id === activeConfigId ? 'selected' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectConfig(c.id);
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          <div className="option-label">{c.libelle}</div>
+                          {c.est_active && <span className="option-badge">Active</span>}
+                          {c.id === activeConfigId && <i className="fa-solid fa-check option-check"></i>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {activeConfig && (
+                  <button 
+                      className="btn-toolbar btn-toolbar--delete-version" 
+                      onClick={() => onDeleteVersion(activeConfig.id, activeConfig.libelle)} 
+                      title="Supprimer cette version uniquement"
+                  >
+                      <i className="fa-solid fa-trash-can"></i>
+                  </button>
+                )}
             </div>
 
             {activeConfig && !activeConfig.est_active && (
