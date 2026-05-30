@@ -47,96 +47,91 @@ function getPreviousMonthRange() {
 
 function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedKpi, pendingKpi }) {
   const [showPicker, setShowPicker] = useState(false);
-
   const currentKpi = confirmedKpi || pendingKpi;
 
-  if (currentKpi) {
-    return (
-      <div className={`ai-kpi-card ${confirmedKpi ? 'ai-kpi-card--confirmed' : 'ai-kpi-card--pending'}`}>
-        <i className={`fa-solid ${confirmedKpi ? 'fa-check-circle' : 'fa-hourglass-half'}`}></i>
-        <span className="ai-kpi-card__user-name">"{userName}"</span>
-        <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
-        <div className="ai-kpi-card__confirmed-info">
-          <span className="ai-kpi-card__confirmed-libelle">{currentKpi.libelle}</span>
-          <code className="ai-kpi-card__code">{currentKpi.code_kpi}</code>
+  return (
+    <div className={`ai-kpi-card ${confirmedKpi ? 'ai-kpi-card--confirmed' : (pendingKpi ? 'ai-kpi-card--pending' : '')} ${(!suggested && !currentKpi) ? 'ai-kpi-card--error' : ''}`} style={{ marginBottom: '8px' }}>
+      {currentKpi ? (
+        <div className="ai-kpi-card__body" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px' }}>
+          <i className={`fa-solid ${confirmedKpi ? 'fa-check-circle' : 'fa-hourglass-half'}`} style={{ color: confirmedKpi ? 'var(--color-success)' : '#f59e0b' }}></i>
+          <span className="ai-kpi-card__user-name" style={{ fontWeight: 'bold' }}>"{userName}"</span>
+          <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
+          <div className="ai-kpi-card__confirmed-info">
+            <span className="ai-kpi-card__confirmed-libelle">{currentKpi.libelle}</span>
+            <code className="ai-kpi-card__code">{currentKpi.code_kpi}</code>
+          </div>
         </div>
-        {pendingKpi && !confirmedKpi && (
-          <span style={{ fontSize: '0.7rem', color: '#f59e0b', marginLeft: 'auto', fontWeight: 'bold' }}>En attente</span>
-        )}
-      </div>
-    );
-  }
-
-  if (showPicker || !suggested) {
-    return (
-      <div className="ai-kpi-card ai-kpi-card--picking">
-        <div className="ai-kpi-card__pick-header">
-          {showPicker && (
-            <button className="ai-kpi-back-btn" onClick={() => setShowPicker(false)} type="button">
-              <i className="fa-solid fa-arrow-left"></i>
-            </button>
-          )}
-          <span>
-            {!suggested
-              ? <><strong>"{userName}"</strong> — aucune correspondance. Choisissez :</>
-              : <>Choisissez pour <strong>"{userName}"</strong> :</>}
-          </span>
-        </div>
-        <div className="ai-kpi-card__list">
-          {(candidates || []).map((kpi, i) => (
-            <button
-              key={i}
-              className="ai-kpi-card__list-item"
-              onClick={() => onSelect({ user_name: userName, ...kpi })}
-              type="button"
-            >
-              <span className="ai-kpi-card__list-libelle">{kpi.libelle}</span>
-              <span className="ai-kpi-card__list-meta">
+      ) : (showPicker || !suggested) ? (
+        <div className="ai-kpi-card--picking" style={{ padding: '12px' }}>
+          <div className="ai-kpi-card__pick-header" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {showPicker && suggested && (
+              <button className="ai-kpi-back-btn" onClick={() => setShowPicker(false)} type="button">
+                <i className="fa-solid fa-arrow-left"></i>
+              </button>
+            )}
+            <span style={{ fontSize: '0.85rem' }}>
+              {!suggested ? <strong>"{userName}"</strong> : <>Choisissez pour <strong>"{userName}"</strong> :</>}
+            </span>
+          </div>
+          <div className="ai-kpi-card__list" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {(candidates || []).map((kpi, i) => (
+              <button key={i} className="ai-kpi-card__list-item" onClick={() => onSelect({ user_name: userName, ...kpi })} type="button">
+                <span className="ai-kpi-card__list-libelle">{kpi.libelle}</span>
                 <code className="ai-kpi-card__code">{kpi.code_kpi}</code>
-                {kpi.univers && (
-                  <span className={`ai-kpi-card__badge ai-kpi-card__badge--${kpi.univers.toLowerCase()}`}>
-                    {kpi.univers}
-                  </span>
-                )}
-              </span>
-            </button>
-          ))}
+              </button>
+            ))}
+            {(!candidates || candidates.length === 0) && (
+              <div style={{ fontSize: '0.75rem', color: '#ef4444', fontStyle: 'italic' }}>Aucun KPI trouvé.</div>
+            )}
+          </div>
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <div className="ai-kpi-card--suggestion" style={{ padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span className="ai-kpi-card__user-name" style={{ fontWeight: 'bold' }}>"{userName}"</span>
+            <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
+            <div className="ai-kpi-card__suggestion-info">
+              <span className="ai-kpi-card__suggestion-libelle">{suggested.libelle}</span>
+              <code className="ai-kpi-card__code">{suggested.code_kpi}</code>
+            </div>
+          </div>
+          <div className="ai-kpi-card__actions" style={{ display: 'flex', gap: '6px' }}>
+            <button className="ai-kpi-btn ai-kpi-btn--validate" onClick={() => onSelect({ user_name: userName, ...suggested })} type="button" style={{ flex: 1, padding: '4px 8px', fontSize: '0.75rem' }}>
+              <i className="fa-solid fa-check"></i> Choisir
+            </button>
+            <button className="ai-kpi-btn ai-kpi-btn--reject" onClick={() => setShowPicker(true)} type="button" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+              Autre
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MultiKpiSelector({ data, onSelect, confirmedKpis, pendingKpiSelections }) {
+  const items = [
+    ...(data.resolved || []).map(k => ({ user_name: k.user_name, suggested: k, candidates: [] })),
+    ...(data.unresolved || []).map(k => ({ user_name: k.user_name, suggested: null, candidates: k.candidates || [] })),
+    ...(data.items || []) // Compatibilité avec l'ancien format items[]
+  ];
 
   return (
-    <div className="ai-kpi-card ai-kpi-card--suggestion">
-      <div className="ai-kpi-card__body">
-        <span className="ai-kpi-card__user-name">"{userName}"</span>
-        <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
-        <div className="ai-kpi-card__suggestion-info">
-          <span className="ai-kpi-card__suggestion-libelle">{suggested.libelle}</span>
-          <code className="ai-kpi-card__code">{suggested.code_kpi}</code>
-          {suggested.univers && (
-            <span className={`ai-kpi-card__badge ai-kpi-card__badge--${suggested.univers.toLowerCase()}`}>
-              {suggested.univers}
-            </span>
-          )}
-        </div>
+    <div className="ai-multi-selector" style={{ background: '#f1f5f9', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '10px 0' }}>
+      <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <i className="fa-solid fa-magnifying-glass"></i> Validation du mapping KPI
       </div>
-      <div className="ai-kpi-card__actions">
-        <button
-          className="ai-kpi-btn ai-kpi-btn--validate"
-          onClick={() => onSelect({ user_name: userName, ...suggested })}
-          type="button"
-        >
-          <i className="fa-solid fa-check"></i> Choisir
-        </button>
-        <button
-          className="ai-kpi-btn ai-kpi-btn--reject"
-          onClick={() => setShowPicker(true)}
-          type="button"
-        >
-          <i className="fa-solid fa-xmark"></i> Autre KPI
-        </button>
-      </div>
+      {items.map((item, idx) => (
+        <KpiSelectorCard
+          key={idx}
+          userName={item.user_name}
+          suggested={item.suggested || item.best_guess}
+          candidates={item.candidates}
+          onSelect={onSelect}
+          confirmedKpi={confirmedKpis[item.user_name]}
+          pendingKpi={pendingKpiSelections[item.user_name]}
+        />
+      ))}
     </div>
   );
 }
@@ -203,228 +198,173 @@ function KpiListingCard({ kpis, onSelectMany }) {
 
 function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis = {}, pendingKpiSelections = {} }) {
   if (!text) return null;
-  const lines = text.split('\n');
-  const elements = [];
-  let listItems = [];
-  let listType = null;
-  let keyIdx = 0;
   
-  let inCodeBlock = false;
-  let codeBlockType = '';
-  let codeBlockContent = [];
+  const elements = [];
+  let keyIdx = 0;
 
-  const flushList = () => {
-    if (listItems.length === 0) return;
-    const Tag = listType === 'ol' ? 'ol' : 'ul';
-    elements.push(<Tag key={keyIdx++} className="ai-md-list">{listItems}</Tag>);
-    listItems = [];
-    listType = null;
+  // 1. Extraire tous les blocs de code (```type ... ```)
+  // On utilise un regex global pour trouver tous les blocs
+  const codeBlockRegex = /```(\w+)?\s*([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+
+  const processPlainMarkdown = (content) => {
+    if (!content.trim()) return;
+    const lines = content.split('\n');
+    let listItems = [];
+    let listType = null;
+
+    const flushList = () => {
+      if (listItems.length === 0) return;
+      const Tag = listType === 'ol' ? 'ol' : 'ul';
+      elements.push(<Tag key={keyIdx++} className="ai-md-list">{listItems}</Tag>);
+      listItems = [];
+      listType = null;
+    };
+
+    lines.forEach(line => {
+      const hMatch = line.match(/^\s*(#{1,4})\s+(.+)/);
+      const ulMatch = line.match(/^\s*[*\-]\s+(.+)/);
+      const olMatch = line.match(/^\s*\d+\.\s+(.+)/);
+
+      if (hMatch) {
+        flushList();
+        const level = Math.min(hMatch[1].length + 3, 6);
+        const Tag = `h${level}`;
+        elements.push(<Tag key={keyIdx++} className="ai-md-heading">{parseInline(hMatch[2], keyIdx * 100)}</Tag>);
+      } else if (ulMatch) {
+        if (listType === 'ol') flushList();
+        listType = 'ul';
+        listItems.push(<li key={keyIdx++}>{parseInline(ulMatch[1], keyIdx * 100)}</li>);
+      } else if (olMatch) {
+        if (listType === 'ul') flushList();
+        listType = 'ol';
+        listItems.push(<li key={keyIdx++}>{parseInline(olMatch[1], keyIdx * 100)}</li>);
+      } else if (line.trim() === '') {
+        if (!listType) elements.push(<div key={keyIdx++} className="ai-md-spacer"></div>);
+      } else {
+        flushList();
+        elements.push(<p key={keyIdx++} className="ai-md-p">{parseInline(line, keyIdx * 100)}</p>);
+      }
+    });
+    flushList();
   };
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmedLine = line.trim();
-    
-    // Code block handling (flexible detection)
-    if (trimmedLine.includes('```')) {
-      flushList();
-      
-      // Si la ligne contient du texte avant les backticks, on traite le texte d'abord
-      const backtickIndex = trimmedLine.indexOf('```');
-      if (backtickIndex > 0 && !inCodeBlock) {
-        const preText = trimmedLine.substring(0, backtickIndex).trim();
-        if (preText) {
-          elements.push(<p key={keyIdx++} className="ai-md-p">{parseInline(preText, keyIdx * 100)}</p>);
-        }
-      }
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    // Traiter le texte avant le bloc
+    const plainBefore = text.substring(lastIndex, match.index);
+    processPlainMarkdown(plainBefore);
 
-      if (inCodeBlock) {
-        // Fin du bloc
-        const fullCode = codeBlockContent.join('\n');
-        const cleanType = codeBlockType.trim();
-        
-        if (cleanType === 'json_grille_proposal' || cleanType === 'json_grille_applied') {
-          const isApplied = cleanType === 'json_grille_applied';
-          try {
-            const proposal = JSON.parse(fullCode);
-            elements.push(
-              <div key={keyIdx++} className={`ai-grille-proposal ${isApplied ? 'applied' : ''}`}>
-                <div className="ai-grille-proposal-title">
-                  <i className={`fa-solid ${isApplied ? 'fa-check-circle' : 'fa-file-invoice'}`}></i> {isApplied ? 'Grille Appliquée' : 'Proposition de Grille'}
-                </div>
-                <div className="ai-grille-proposal-body">
-                  <strong>{proposal.grille_nom || proposal.nom || "Nouvelle Grille"}</strong>
-                  {isApplied ? (
-                    <p className="ai-grille-proposal-status"><i className="fa-solid fa-check"></i> Cette configuration a été validée et appliquée.</p>
-                  ) : (
+    const type = (match[1] || '').trim();
+    const content = match[2];
+
+    // Traiter le bloc spécifique
+    if (type === 'json_grille_proposal' || type === 'json_grille_applied') {
+      const isApplied = type === 'json_grille_applied';
+      try {
+        const proposal = JSON.parse(content.trim());
+        elements.push(
+          <div key={keyIdx++} className={`ai-grille-proposal ${isApplied ? 'applied' : ''}`}>
+            <div className="ai-grille-proposal-title">
+              <i className={`fa-solid ${isApplied ? 'fa-check-circle' : 'fa-file-invoice'}`}></i> {isApplied ? 'Grille Appliquée' : 'Proposition de Grille'}
+            </div>
+            <div className="ai-grille-proposal-body">
+              <strong>{proposal.grille_nom || proposal.nom || "Nouvelle Grille"}</strong>
+              {isApplied ? (
+                <p className="ai-grille-proposal-status"><i className="fa-solid fa-check"></i> Cette configuration a été validée et appliquée.</p>
+              ) : (
+                <>
+                  <p>Cliquez ci-dessous pour valider et appliquer cette configuration.</p>
+                  <div className="ai-grille-actions">
+                    <button className="ai-btn-apply-grille" onClick={() => onActionClick('create_grille', proposal)}>
+                      Valider et Créer la règle
+                    </button>
+                    {!simulation && (
+                      <button className="ai-btn-simulate" onClick={() => onActionClick('request_simulation', proposal)} type="button">
+                        <i className="fa-solid fa-flask-vial"></i> Simuler
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+              {simulation && (
+                <div className="ai-simulation-section">
+                  {simulation.loading ? (
+                    <div className="ai-simulation-loading"><i className="fa-solid fa-spinner fa-spin"></i> Simulation en cours...</div>
+                  ) : simulation.error ? (
+                    <div className="ai-simulation-error"><i className="fa-solid fa-triangle-exclamation"></i> {simulation.error}</div>
+                  ) : simulation.agents && simulation.agents.length > 0 ? (
                     <>
-                      <p>Cliquez ci-dessous pour valider et appliquer cette configuration.</p>
-                      <div className="ai-grille-actions">
-                        <button 
-                          className="ai-btn-apply-grille"
-                          onClick={() => onActionClick('create_grille', proposal)}
-                        >
-                          Valider et Créer la règle
-                        </button>
-                        {!simulation && (
-                          <button
-                            className="ai-btn-simulate"
-                            onClick={() => onActionClick('request_simulation', proposal)}
-                            type="button"
-                          >
-                            <i className="fa-solid fa-flask-vial"></i> Simuler
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                  {simulation && (
-                    <div className="ai-simulation-section">
-                      {simulation.loading ? (
-                        <div className="ai-simulation-loading">
-                          <i className="fa-solid fa-spinner fa-spin"></i> Simulation en cours sur le mois précédent...
-                        </div>
-                      ) : simulation.error ? (
-                        <div className="ai-simulation-error">
-                          <i className="fa-solid fa-triangle-exclamation"></i> {simulation.error}
-                        </div>
-                      ) : simulation.agents && simulation.agents.length > 0 ? (
-                        <>
-                          <div className="ai-simulation-header">
-                            <i className="fa-solid fa-flask-vial"></i> Simulation — <em>{simulation.mois}</em>
+                      <div className="ai-simulation-header"><i className="fa-solid fa-flask-vial"></i> Simulation — <em>{simulation.mois}</em></div>
+                      {simulation.agents.map(agent => (
+                        <div key={agent.matricule} className="ai-simulation-agent">
+                          <div className="ai-simulation-agent-header">
+                            <span className="ai-simulation-agent-name">{agent.nom}</span>
+                            <span className="ai-simulation-agent-badge">{agent.statut}</span>
                           </div>
-                          {simulation.agents.map(agent => (
-                            <div key={agent.matricule} className="ai-simulation-agent">
-                              <div className="ai-simulation-agent-header">
-                                <span className="ai-simulation-agent-name">{agent.nom}</span>
-                                <span className="ai-simulation-agent-badge">{agent.statut}</span>
-                              </div>
-                              <table className="ai-simulation-table">
-                                <thead>
-                                  <tr><th>KPI</th><th>Réel</th><th>Obj.</th><th>Att.</th><th>Pts</th></tr>
-                                </thead>
-                                <tbody>
-                                  {(agent.kpiResults.kpis || []).map((k, i) => (
-                                    <tr key={i}>
-                                      <td title={k.nom}>{k.nom?.length > 18 ? k.nom.substring(0, 18) + '…' : k.nom}</td>
-                                      <td>{k.reel != null ? (typeof k.reel === 'number' ? (k.reel % 1 === 0 ? k.reel : k.reel.toFixed(1)) : k.reel) : '—'}</td>
-                                      <td>{k.objectif != null ? k.objectif : '—'}</td>
-                                      <td className={k.taux_atteinte != null ? (k.taux_atteinte >= 1 ? 'sim-ok' : 'sim-nok') : ''}>{k.taux_atteinte != null ? Math.round(k.taux_atteinte * 100) + '%' : '—'}</td>
-                                      <td className={k.points_gagnes > 0 ? 'sim-pts' : ''}>{k.points_gagnes ?? 0}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                              <div className="ai-simulation-total">
-                                <span>Score : <strong>{agent.kpiResults.total_points} pts</strong></span>
-                                <span className="ai-simulation-prime">Prime : <strong>{agent.totalPrime.toLocaleString('fr-FR')} DH</strong></span>
-                              </div>
-                            </div>
-                          ))}
-                        </>
-                      ) : null}
-                    </div>
-                  )}
+                          <table className="ai-simulation-table">
+                            <thead><tr><th>KPI</th><th>Réel</th><th>Obj.</th><th>Att.</th><th>Pts</th></tr></thead>
+                            <tbody>
+                              {(agent.kpiResults.kpis || []).map((k, i) => (
+                                <tr key={i}>
+                                  <td title={k.nom}>{k.nom?.length > 18 ? k.nom.substring(0, 18) + '…' : k.nom}</td>
+                                  <td>{k.reel != null ? (typeof k.reel === 'number' ? (k.reel % 1 === 0 ? k.reel : k.reel.toFixed(1)) : k.reel) : '—'}</td>
+                                  <td>{k.objectif != null ? k.objectif : '—'}</td>
+                                  <td className={k.taux_atteinte != null ? (k.taux_atteinte >= 1 ? 'sim-ok' : 'sim-nok') : ''}>{k.taux_atteinte != null ? Math.round(k.taux_atteinte * 100) + '%' : '—'}</td>
+                                  <td className={k.points_gagnes > 0 ? 'sim-pts' : ''}>{k.points_gagnes ?? 0}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          <div className="ai-simulation-total">
+                            <span>Score : <strong>{agent.kpiResults.total_points} pts</strong></span>
+                            <span className="ai-simulation-prime">Prime : <strong>{agent.totalPrime.toLocaleString('fr-FR')} DH</strong></span>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : null}
                 </div>
-              </div>
-            );
-          } catch (e) {
-            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
-          }
-        } else if (cleanType === 'kpi_selection_request') {
-          try {
-            const data = JSON.parse(fullCode);
-            const resolvedUserName = data.user_name || data.user_kpi_name;
-            elements.push(
-              <KpiSelectorCard
-                key={keyIdx++}
-                userName={resolvedUserName}
-                suggested={data.suggested || data.best_guess || null}
-                candidates={data.candidates || []}
-                onSelect={(kpi) => onActionClick('select_kpi', kpi)}
-                confirmedKpi={confirmedKpis[resolvedUserName] || null}
-                pendingKpi={pendingKpiSelections && pendingKpiSelections[resolvedUserName] ? pendingKpiSelections[resolvedUserName] : null}
-              />
-            );
-          } catch (e) {
-            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
-          }
-        } else if (cleanType === 'kpi_listing_request') {
-          try {
-            const data = JSON.parse(fullCode);
-            elements.push(
-              <KpiListingCard
-                key={keyIdx++}
-                kpis={data.kpis || []}
-                onSelectMany={(kpis) => onActionClick('select_multiple_kpis', kpis)}
-              />
-            );
-          } catch (e) {
-            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
-          }
-        } else if (cleanType === 'kpi_format_request') {
-          try {
-            const data = JSON.parse(fullCode);
-            elements.push(
-              <KpiFormatForm
-                key={keyIdx++}
-                kpis={data.kpis || []}
-                onSubmit={(formats) => onActionClick('submit_kpi_formats', formats)}
-                submitted={confirmedKpis['_formats_submitted_' + msgId] || false}
-              />
-            );
-          } catch (e) {
-            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
-          }
-        } else {
-          elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
-        }
-        inCodeBlock = false;
-        codeBlockContent = [];
-        codeBlockType = '';
-      } else {
-        // Début du bloc
-        inCodeBlock = true;
-        // On récupère le type après les backticks
-        const typePart = trimmedLine.substring(trimmedLine.indexOf('```') + 3).trim();
-        codeBlockType = typePart;
+              )}
+            </div>
+          </div>
+        );
+      } catch (e) {
+        elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
-      continue;
-    }
-    
-    if (inCodeBlock) {
-      codeBlockContent.push(line);
-      continue;
-    }
-
-    const hMatch = line.match(/^\s*(#{1,4})\s+(.+)/);
-    const ulMatch = line.match(/^\s*[*\-]\s+(.+)/);
-    const olMatch = line.match(/^\s*\d+\.\s+(.+)/);
-
-    if (hMatch) {
-      flushList();
-      const level = Math.min(hMatch[1].length + 3, 6);
-      const Tag = `h${level}`;
-      elements.push(<Tag key={keyIdx++} className="ai-md-heading">{parseInline(hMatch[2], keyIdx * 100)}</Tag>);
-    } else if (ulMatch) {
-      if (listType === 'ol') flushList();
-      listType = 'ul';
-      listItems.push(<li key={keyIdx++}>{parseInline(ulMatch[1], keyIdx * 100)}</li>);
-    } else if (olMatch) {
-      if (listType === 'ul') flushList();
-      listType = 'ol';
-      listItems.push(<li key={keyIdx++}>{parseInline(olMatch[1], keyIdx * 100)}</li>);
-    } else if (line.trim() === '') {
-      // Ne pas casser une liste en cours juste pour un saut de ligne
-      if (!listType) {
-        elements.push(<div key={keyIdx++} className="ai-md-spacer"></div>);
+    } else if (type === 'kpi_selection_request' || type === 'multi_kpi_selection_request') {
+      try {
+        const data = JSON.parse(content.trim());
+        elements.push(<MultiKpiSelector key={keyIdx++} data={data} onSelect={(kpi) => onActionClick('select_kpi', kpi)} confirmedKpis={confirmedKpis} pendingKpiSelections={pendingKpiSelections} />);
+      } catch (e) {
+        elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
+      }
+    } else if (type === 'kpi_listing_request') {
+      try {
+        const data = JSON.parse(content.trim());
+        elements.push(<KpiListingCard key={keyIdx++} kpis={data.kpis || []} onSelectMany={(kpis) => onActionClick('select_multiple_kpis', kpis)} />);
+      } catch (e) {
+        elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
+      }
+    } else if (type === 'kpi_format_request') {
+      try {
+        const data = JSON.parse(content.trim());
+        elements.push(<KpiFormatForm key={keyIdx++} kpis={data.kpis || []} onSubmit={(formats) => onActionClick('submit_kpi_formats', formats)} submitted={confirmedKpis['_formats_submitted_' + msgId] || false} />);
+      } catch (e) {
+        console.error("Erreur parsing kpi_format_request:", e, content);
+        elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
     } else {
-      flushList();
-      elements.push(<p key={keyIdx++} className="ai-md-p">{parseInline(line, keyIdx * 100)}</p>);
+      elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
     }
+
+    lastIndex = match.index + match[0].length;
   }
-  flushList();
+
+  // Traiter le reste du texte après le dernier bloc
+  const plainAfter = text.substring(lastIndex);
+  processPlainMarkdown(plainAfter);
+
   return <>{elements}</>;
 }
 // ─────────────────────────────────────────────────────────────────────────────
