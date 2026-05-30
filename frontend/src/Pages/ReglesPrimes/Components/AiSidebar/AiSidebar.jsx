@@ -421,6 +421,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
   const [convToDelete, setConvToDelete] = useState(null);
   const [proposalSimulations, setProposalSimulations] = useState({});
   const [confirmedKpis, setConfirmedKpis] = useState({});
+  const [pendingKpiSelections, setPendingKpiSelections] = useState({});
 
   // Charger la liste des conversations (Historique)
   const { data: conversations = [], revalidate: refreshHistory } = useApiSWR(
@@ -878,13 +879,26 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
 
           <div className="ai-sidebar__input-area">
             {Object.keys(pendingKpiSelections).length > 0 && !isLoading && (
-              <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ paddingBottom: '12px' }}>
                 <button 
-                  className="ai-btn-simulate" 
-                  style={{ width: '100%', background: '#10b981', color: 'white' }}
+                  style={{ 
+                    width: '100%', 
+                    background: 'var(--color-accent)', 
+                    color: 'white', 
+                    border: 'none', 
+                    padding: '10px 16px', 
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
                   onClick={() => handleActionClick('send_queued_kpis')}
                 >
-                  <i className="fa-solid fa-paper-plane"></i> Envoyer les {Object.keys(pendingKpiSelections).length} sélection(s)
+                  <i className="fa-solid fa-paper-plane"></i> Valider les {Object.keys(pendingKpiSelections).length} sélection(s)
                 </button>
               </div>
             )}
