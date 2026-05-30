@@ -16,6 +16,7 @@ import Step3Valeurs from './Steps/Step3Valeurs/Step3Valeurs';
 import Step4Paliers from './Steps/Step4Paliers/Step4Paliers';
 import Step5ReglesSpeciales from './Steps/Step5ReglesSpeciales/Step5ReglesSpeciales';
 import Step6Prorata from './Steps/Step6Prorata/Step6Prorata';
+import Step7Recapitulatif from './Steps/Step7Recapitulatif/Step7Recapitulatif';
 
 import './GrilleEditorModal.css';
 
@@ -501,12 +502,13 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
             </button>
           </div>
           <div className="gem-step-indicator">
-            <span className={activeStep === 1 ? 'active' : ''} onClick={() => setActiveStep(1)}>1. Statuts</span>
-            <span className={activeStep === 2 ? 'active' : ''} onClick={() => setActiveStep(2)}>2. Indicateurs</span>
-            <span className={activeStep === 3 ? 'active' : ''} onClick={() => setActiveStep(3)}>3. Valeurs</span>
+            <span className={activeStep === 1 ? 'active' : ''} onClick={() => setActiveStep(1)}>1. Profils</span>
+            <span className={activeStep === 2 ? 'active' : ''} onClick={() => setActiveStep(2)}>2. KPIs</span>
+            <span className={activeStep === 3 ? 'active' : ''} onClick={() => setActiveStep(3)}>3. Cibles</span>
             <span className={activeStep === 4 ? 'active' : ''} onClick={() => setActiveStep(4)}>4. Paliers</span>
-            <span className={activeStep === 5 ? 'active' : ''} onClick={() => setActiveStep(5)}>5. Tranches & Règles Spéciales</span>
-            <span className={activeStep === 6 ? 'active' : ''} onClick={() => setActiveStep(6)}>6. Prorata & Présence</span>
+            <span className={activeStep === 5 ? 'active' : ''} onClick={() => setActiveStep(5)}>5. Bonus</span>
+            <span className={activeStep === 6 ? 'active' : ''} onClick={() => setActiveStep(6)}>6. Présence</span>
+            <span className={activeStep === 7 ? 'active' : ''} onClick={() => setActiveStep(7)}>7. Synthèse</span>
           </div>
         </div>
 
@@ -579,6 +581,13 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
               onUpdate={setConfigTemps}
             />
           )}
+
+          {activeStep === 7 && (
+            <Step7Recapitulatif
+              data={data}
+              configTemps={configTemps}
+            />
+          )}
         </div>
 
         <div className="gem-footer">
@@ -590,11 +599,17 @@ export default function GrilleEditorModal({ isOpen, onClose, onSave, initialData
               <i className="fa-solid fa-arrow-left"></i> Précédent
             </button>
           )}
-          {activeStep < 6 ? (
+          {activeStep < 6 && (
             <button className="btn btn-primary" onClick={() => setActiveStep(activeStep + 1)}>
               Suivant <i className="fa-solid fa-arrow-right"></i>
             </button>
-          ) : (
+          )}
+          {activeStep === 6 && (
+            <button className="btn btn-primary" onClick={() => setActiveStep(7)}>
+              <i className="fa-solid fa-eye"></i> Voir le récapitulatif
+            </button>
+          )}
+          {activeStep === 7 && (
             <button className="btn btn-success" onClick={handleFinalSave}>
               <i className="fa-solid fa-floppy-disk"></i> Enregistrer la grille
             </button>

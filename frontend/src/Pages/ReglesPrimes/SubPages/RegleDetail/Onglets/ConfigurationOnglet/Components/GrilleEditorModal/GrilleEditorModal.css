@@ -46,13 +46,33 @@
 }
 .gem-btn-close:hover { background: var(--color-error-soft); color: var(--color-error); transform: rotate(90deg); }
 
-.gem-step-indicator { display: flex; gap: 24px; }
-.gem-step-indicator span {
-    font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--color-text-muted);
-    cursor: pointer; padding-bottom: 10px; border-bottom: 2px solid transparent;
-    text-transform: uppercase; letter-spacing: 0.05em;
+.gem-step-indicator { 
+    display: flex; 
+    gap: 16px; 
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 0 4px;
+    margin-top: 8px;
 }
-.gem-step-indicator span.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+.gem-step-indicator span {
+    font-size: 0.68rem; 
+    font-weight: 700; 
+    color: var(--color-text-disabled);
+    cursor: pointer; 
+    padding: 0 4px 12px 4px;
+    border-bottom: 3px solid transparent;
+    text-transform: uppercase; 
+    letter-spacing: 0.08em;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+}
+.gem-step-indicator span:hover {
+    color: var(--color-text-secondary);
+    border-bottom-color: var(--color-border);
+}
+.gem-step-indicator span.active { 
+    color: var(--color-accent); 
+    border-bottom-color: var(--color-accent); 
+}
 
 /* #region BODY */
 .gem-body { padding: 24px; flex: 1; overflow-y: auto; background: var(--color-bg-app); }

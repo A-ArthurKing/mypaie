@@ -1,0 +1,186 @@
+/* ── Wrapper ── */
+.gr-wrap { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── Stats bar ── */
+.gr-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.gr-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 80px;
+    padding: 14px 10px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+.gr-stat i {
+    font-size: 1rem;
+    color: var(--color-accent);
+    opacity: 0.7;
+}
+.gr-stat__value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+.gr-stat__label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+}
+
+/* ── Tabs ── */
+.gr-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+}
+.gr-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+.gr-tab:hover { color: var(--color-text-primary); background: var(--color-surface-hover); }
+.gr-tab.active {
+    background: var(--color-surface);
+    color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-subtle);
+}
+.gr-tab i { font-size: 0.85rem; }
+
+/* ── Code block ── */
+.gr-code-block {
+    background: #0f172a;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid #1e293b;
+}
+.gr-code-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+}
+.gr-code-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.gr-code-title {
+    margin-left: 8px;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-family: 'Fira Code', 'Consolas', monospace;
+}
+.gr-code-body {
+    padding: 20px 24px;
+    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* ── Lines ── */
+.gr-line { white-space: pre; }
+.gr-line--blank { height: 10px; }
+.gr-line--comment { color: #64748b; font-style: italic; }
+.gr-token--comment { color: #64748b; }
+.gr-line--keyword { color: #93c5fd; font-weight: 600; }
+.gr-line--assign  { color: #e2e8f0; }
+.gr-line--danger  { color: #fca5a5; }
+.gr-line--warn    { color: #fcd34d; }
+.gr-line--result  { color: #86efac; font-weight: 700; }
+.gr-line--plain   { color: #94a3b8; }
+
+/* ── Langage naturel ── */
+.gr-prose {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.gr-prose__item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    background: var(--color-surface);
+    transition: background var(--transition-fast);
+}
+.gr-prose__item:last-child { border-bottom: none; }
+.gr-prose__item:hover { background: var(--color-surface-hover); }
+
+.gr-prose__badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    width: 36px;
+}
+.gr-prose__badge i {
+    width: 36px;
+    height: 36px;
+    background: var(--color-accent-soft);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--color-accent);
+}
+.gr-prose__badge span {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+.gr-prose__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.gr-prose__titre {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.gr-prose__texte {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
