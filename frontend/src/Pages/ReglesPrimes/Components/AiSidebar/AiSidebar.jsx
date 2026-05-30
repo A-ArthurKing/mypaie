@@ -45,19 +45,24 @@ function getPreviousMonthRange() {
   return { debut: `${year}-${monthStr}-01`, fin: `${year}-${monthStr}-${lastDay}`, label };
 }
 
-function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedKpi }) {
+function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedKpi, pendingKpi }) {
   const [showPicker, setShowPicker] = useState(false);
 
-  if (confirmedKpi) {
+  const currentKpi = confirmedKpi || pendingKpi;
+
+  if (currentKpi) {
     return (
-      <div className="ai-kpi-card ai-kpi-card--confirmed">
-        <i className="fa-solid fa-check-circle"></i>
+      <div className={`ai-kpi-card ${confirmedKpi ? 'ai-kpi-card--confirmed' : 'ai-kpi-card--pending'}`}>
+        <i className={`fa-solid ${confirmedKpi ? 'fa-check-circle' : 'fa-hourglass-half'}`}></i>
         <span className="ai-kpi-card__user-name">"{userName}"</span>
         <i className="fa-solid fa-arrow-right ai-kpi-card__arrow"></i>
         <div className="ai-kpi-card__confirmed-info">
-          <span className="ai-kpi-card__confirmed-libelle">{confirmedKpi.libelle}</span>
-          <code className="ai-kpi-card__code">{confirmedKpi.code_kpi}</code>
+          <span className="ai-kpi-card__confirmed-libelle">{currentKpi.libelle}</span>
+          <code className="ai-kpi-card__code">{currentKpi.code_kpi}</code>
         </div>
+        {pendingKpi && !confirmedKpi && (
+          <span style={{ fontSize: '0.7rem', color: '#f59e0b', marginLeft: 'auto', fontWeight: 'bold' }}>En attente</span>
+        )}
       </div>
     );
   }
@@ -122,7 +127,7 @@ function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedK
           onClick={() => onSelect({ user_name: userName, ...suggested })}
           type="button"
         >
-          <i className="fa-solid fa-check"></i> Valider
+          <i className="fa-solid fa-check"></i> Choisir
         </button>
         <button
           className="ai-kpi-btn ai-kpi-btn--reject"
@@ -136,7 +141,67 @@ function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedK
   );
 }
 
-function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {} }) {
+function KpiListingCard({ kpis, onSelectMany }) {
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleKpi = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleConfirm = () => {
+    if (selectedIds.length === 0) return;
+    const selectedKpis = kpis.filter(k => selectedIds.includes(k.code_kpi));
+    onSelectMany(selectedKpis);
+  };
+
+  const groups = {};
+  kpis.forEach(k => {
+    const u = k.univers || 'AUTRE';
+    if (!groups[u]) groups[u] = [];
+    groups[u].push(k);
+  });
+
+  return (
+    <div className="ai-kpi-card ai-kpi-card--listing">
+      <div className="ai-kpi-card__pick-header">
+        <span>Sélectionnez les KPIs à utiliser :</span>
+      </div>
+      <div className="ai-kpi-card__scroll-list">
+        {Object.keys(groups).map(univers => (
+          <div key={univers} className="ai-kpi-group">
+            <div className="ai-kpi-group-title">{univers}</div>
+            {groups[univers].map(k => (
+              <label key={k.code_kpi} className={`ai-kpi-list-item ${selectedIds.includes(k.code_kpi) ? 'is-selected' : ''}`}>
+                <input 
+                  type="checkbox" 
+                  checked={selectedIds.includes(k.code_kpi)} 
+                  onChange={() => toggleKpi(k.code_kpi)}
+                />
+                <div className="ai-kpi-list-item-content">
+                  <span className="ai-kpi-list-item-libelle">{k.libelle}</span>
+                  <code className="ai-kpi-list-item-code">{k.code_kpi}</code>
+                </div>
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="ai-kpi-card__actions">
+        <button 
+          className="ai-kpi-btn ai-kpi-btn--validate" 
+          disabled={selectedIds.length === 0}
+          onClick={handleConfirm}
+        >
+          <i className="fa-solid fa-plus"></i> Utiliser ces {selectedIds.length} KPIs
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {}, pendingKpiSelections = {} }) {
   if (!text) return null;
   const lines = text.split('\n');
   const elements = [];
@@ -256,14 +321,29 @@ function MarkdownMessage({ text, onActionClick, simulation, confirmedKpis = {} }
         } else if (codeBlockType.trim() === 'kpi_selection_request') {
           try {
             const data = JSON.parse(fullCode);
+            const resolvedUserName = data.user_name || data.user_kpi_name;
             elements.push(
               <KpiSelectorCard
                 key={keyIdx++}
-                userName={data.user_name}
-                suggested={data.suggested || null}
+                userName={resolvedUserName}
+                suggested={data.suggested || data.best_guess || null}
                 candidates={data.candidates || []}
                 onSelect={(kpi) => onActionClick('select_kpi', kpi)}
-                confirmedKpi={confirmedKpis[data.user_name] || null}
+                confirmedKpi={confirmedKpis[resolvedUserName] || null}
+                pendingKpi={pendingKpiSelections && pendingKpiSelections[resolvedUserName] ? pendingKpiSelections[resolvedUserName] : null}
+              />
+            );
+          } catch (e) {
+            elements.push(<pre key={keyIdx++} className="ai-md-pre">{fullCode}</pre>);
+          }
+        } else if (codeBlockType.trim() === 'kpi_listing_request') {
+          try {
+            const data = JSON.parse(fullCode);
+            elements.push(
+              <KpiListingCard
+                key={keyIdx++}
+                kpis={data.kpis || []}
+                onSelectMany={(kpis) => onActionClick('select_multiple_kpis', kpis)}
               />
             );
           } catch (e) {
@@ -435,8 +515,33 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
         setIsLoading(false);
       }
     } else if (actionType === 'select_kpi') {
-      setConfirmedKpis(prev => ({ ...prev, [payload.user_name]: payload }));
-      const msg = `Pour "${payload.user_name}", j'utilise le KPI : [${payload.code_kpi}] – ${payload.libelle}`;
+      // Au lieu d'envoyer tout de suite, on met dans pending
+      setPendingKpiSelections(prev => ({ ...prev, [payload.user_name]: payload }));
+    } else if (actionType === 'send_queued_kpis') {
+      const items = Object.values(pendingKpiSelections);
+      if (items.length === 0) return;
+      
+      const newConfirmed = {};
+      items.forEach(i => newConfirmed[i.user_name] = i);
+      setConfirmedKpis(prev => ({ ...prev, ...newConfirmed }));
+      setPendingKpiSelections({});
+      
+      const msgLines = items.map(p => `- Pour "${p.user_name}", j'utilise le KPI : [${p.code_kpi}] – ${p.libelle}`);
+      await sendMessageToBot("Je valide les choix suivants :\n" + msgLines.join("\n"));
+    } else if (actionType === 'select_multiple_kpis') {
+      // payload est une liste d'objets KPI
+      const selectedNames = payload.map(k => k.libelle).join(', ');
+      const msg = `Je souhaite utiliser les KPIs suivants : ${selectedNames}.`;
+      
+      // On pré-remplit confirmedKpis pour éviter que l'IA ne repose la question un par un
+      const newConfirmed = {};
+      payload.forEach(k => {
+        // En mode multi, user_name est souvent égal au libelle ou code
+        newConfirmed[k.libelle] = k;
+        newConfirmed[k.code_kpi] = k;
+      });
+      setConfirmedKpis(prev => ({ ...prev, ...newConfirmed }));
+
       await sendMessageToBot(msg);
     } else if (actionType === 'request_simulation') {
       const grilleConfig = payload;
@@ -733,7 +838,14 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
                       <i className="fa-solid fa-ellipsis fa-fade"></i>
                     </div>
                   ) : msg.sender === 'bot' ? (
-                    <MarkdownMessage text={msg.text} msgId={msg.id} onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} simulation={proposalSimulations[msg.id]} confirmedKpis={confirmedKpis} />
+                    <MarkdownMessage 
+                      text={msg.text} 
+                      msgId={msg.id} 
+                      onActionClick={(type, payload) => handleActionClick(type, payload, msg.id)} 
+                      simulation={proposalSimulations[msg.id]} 
+                      confirmedKpis={confirmedKpis} 
+                      pendingKpiSelections={pendingKpiSelections}
+                    />
                   ) : (
                     msg.text
                   )}
@@ -765,6 +877,18 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
           </div>
 
           <div className="ai-sidebar__input-area">
+            {Object.keys(pendingKpiSelections).length > 0 && !isLoading && (
+              <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+                <button 
+                  className="ai-btn-simulate" 
+                  style={{ width: '100%', background: '#10b981', color: 'white' }}
+                  onClick={() => handleActionClick('send_queued_kpis')}
+                >
+                  <i className="fa-solid fa-paper-plane"></i> Envoyer les {Object.keys(pendingKpiSelections).length} sélection(s)
+                </button>
+              </div>
+            )}
+            
             {isLocked ? (
               <div className="ai-sidebar__locked-msg">
                 <i className="fa-solid fa-lock"></i> Conversation terminée (limite atteinte). <br/>
