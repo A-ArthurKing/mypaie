@@ -17,32 +17,32 @@
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
 }
 
-/* Mode Agrandi (Vrai Plein Écran) */
+/* Mode Agrandi (Plein écran mais laisse la Sidebar Navigation visible) */
 .ai-sidebar.is-maximized {
-  width: 100vw;
+  width: auto;
   max-width: none;
   height: 100vh;
   max-height: 100vh;
   top: 0;
-  left: 0;
+  left: 200px; /* Aligné sur la fin de la barre de navigation */
   right: 0;
   margin: 0;
   border-radius: 0;
   transform: none;
   z-index: 2000;
-  box-shadow: none;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
 }
 
 .ai-sidebar.is-maximized .ai-sidebar__header {
-  padding: 1rem 10%; /* Header plus large */
+  padding: 1rem 5%; 
 }
 
 .ai-sidebar.is-maximized .ai-sidebar__chat {
-  padding: 2rem 20%; /* Texte centré avec de larges marges pour le confort */
+  padding: 2rem 10%; /* Ajusté pour une largeur plus grande */
 }
 
 .ai-sidebar.is-maximized .ai-sidebar__input-area {
-  padding: 1.5rem 20%; /* Zone de saisie centrée aussi */
+  padding: 1.5rem 10%;
 }
 
 @media (max-width: 1200px) {
@@ -54,6 +54,9 @@
 }
 
 @media (max-width: 768px) {
+  .ai-sidebar.is-maximized {
+    left: 0;
+  }
   .ai-sidebar.is-maximized .ai-sidebar__chat,
   .ai-sidebar.is-maximized .ai-sidebar__input-area {
     padding-left: 1rem;
