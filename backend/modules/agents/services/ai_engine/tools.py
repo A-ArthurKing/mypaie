@@ -434,6 +434,97 @@ def get_real_performance_tool(regle_id: int, mois: str) -> str:
     return out
 
 
+def get_available_kpis_data_tool(regle_id: int) -> str:
+    """
+    Retourne la liste structurée de TOUS les KPIs disponibles pour une règle donnée.
+    À utiliser pour afficher un sélecteur cliquable à l'utilisateur (Phase 1).
+    Retourne un JSON formaté pour le bloc technique ```kpi_multi_selection_request```.
+    """
+    logger.info(f"[IA Tool] get_available_kpis_data_tool pour regle_id={regle_id}")
+    try:
+        regle_data = get_regle_by_id(regle_id)
+        projet     = regle_data.get('projet') if regle_data else None
+        kpis_norm  = get_all_kpis_with_status()
+
+        final_list = []
+        
+        # 1. KPIs Normalisés
+        for k in kpis_norm:
+            if not k['actif']:
+                continue
+            final_list.append({
+                "code_kpi": k.get('tech_key') or k['code'],
+                "libelle": k.get('libelle') or k['code'],
+                "univers": k.get('univers', 'NORMALISÉ'),
+                "source": "normalized"
+            })
+
+        # 2. Métriques Brutes BigQuery
+        PROJECT_ID   = os.getenv('GCP_PROJECT_ID', 'data-project-438313')
+        DATASET_PAIE = os.getenv('BQ_DATASET_ID') or os.getenv('BQ_DATASET_PAIE') or 'gcp_my_paie'
+        client       = get_bigquery_client()
+
+        where_clause_perf = "WHERE projet = @projet" if projet else ""
+        where_clause_qual = "WHERE projet LIKE @projet_prefix" if projet else ""
+        
+        sql = f"""
+            SELECT DISTINCT kpi_code, 'PERFORMANCE' as univers
+            FROM `{PROJECT_ID}.{DATASET_PAIE}.paie_performance_mensuelle` {where_clause_perf}
+            UNION ALL
+            SELECT DISTINCT kpi_code, 'QUALITE' as univers
+            FROM `{PROJECT_ID}.{DATASET_PAIE}.paie_qualite_mensuelle` {where_clause_qual}
+        """
+        
+        query_params = []
+        if projet:
+            query_params = [
+                bq_types.ScalarQueryParameter("projet", "STRING", projet),
+                bq_types.ScalarQueryParameter("projet_prefix", "STRING", f"{projet}%")
+            ]
+        
+        try:
+            job_config = bq_types.QueryJobConfig(query_parameters=query_params)
+            bq_rows = client.query(sql, job_config=job_config).result()
+            for r in bq_rows:
+                if not r.kpi_code: continue
+                # On ajoute les variantes _sum et _avg pour la performance
+                if r.univers == 'PERFORMANCE':
+                    final_list.append({
+                        "code_kpi": f"{r.kpi_code}_sum",
+                        "libelle": f"{r.kpi_code} (Somme)",
+                        "univers": "PERFORMANCE (BRUT)",
+                        "source": "raw_bq"
+                    })
+                    final_list.append({
+                        "code_kpi": f"{r.kpi_code}_avg",
+                        "libelle": f"{r.kpi_code} (Moyenne)",
+                        "univers": "PERFORMANCE (BRUT)",
+                        "source": "raw_bq"
+                    })
+                else:
+                    final_list.append({
+                        "code_kpi": r.kpi_code,
+                        "libelle": r.kpi_code,
+                        "univers": "QUALITÉ (BRUT)",
+                        "source": "raw_bq"
+                    })
+        except Exception as bq_err:
+            logger.warning(f"Erreur BQ dans get_available_kpis_data_tool: {bq_err}")
+
+        # Dé-doublonnage par code_kpi
+        seen = set()
+        unique_list = []
+        for k in final_list:
+            if k['code_kpi'] not in seen:
+                seen.add(k['code_kpi'])
+                unique_list.append(k)
+
+        return json.dumps({"kpis": unique_list}, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"[IA Tool] Erreur get_available_kpis_data_tool: {e}")
+        return json.dumps({"kpis": [], "error": str(e)})
+
+
 def list_available_kpis_tool(regle_id: int) -> str:
     """
     Retourne la liste de TOUS les KPIs disponibles pour une règle donnée (en filtrant par projet).

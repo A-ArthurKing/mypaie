@@ -338,7 +338,7 @@
   align-items: flex-end;
   background: white;
   border: none; /* Retrait de la bordure initiale */
-  border-radius: 1.5rem;
+  border-radius: 1rem;
   padding: 0.4rem 0.4rem 0.4rem 1.2rem;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

@@ -16,6 +16,7 @@ from modules.agents.services.ai_engine.prompts import SYSTEM_PROMPT
 from modules.agents.services.ai_engine.tools import (
     get_regle_info_tool,
     list_available_kpis_tool,
+    get_available_kpis_data_tool,
     resolve_kpi_names_tool,
     get_context_notes_tool,
     save_context_note_tool,
@@ -70,19 +71,25 @@ def _load_context_notes_for_prompt(regle_id: int) -> str:
 
 def _detect_kpi_confirmations(history: list) -> list:
     """
-    Scans user messages for KPI confirmation patterns emitted by the select_kpi handler.
-    Format: 'Pour "X", j\'utilise le KPI : [Y] – Z'
-    Returns list of confirmed user_names (e.g. ["DMT", "CVR Naturelle"]).
+    Scans user messages for KPI confirmation patterns.
+    1. Single selection: 'Pour "X", j'utilise le KPI : [Y] – Z'
+    2. Multi selection: 'Je souhaite utiliser les KPIs suivants : X, Y, Z.'
+    Returns list of confirmed user_names/libelles.
     """
     confirmed = []
     for h in (history or []):
         if h.get('sender') == 'user':
-            matches = re.findall(
-                r'Pour\s+"([^"]+)",\s+j\'utilise le KPI',
-                h.get('text') or '',
-                re.IGNORECASE
-            )
-            confirmed.extend(matches)
+            text = h.get('text') or ''
+            # Pattern 1
+            matches1 = re.findall(r'Pour\s+"([^"]+)",\s+j\'utilise le KPI', text, re.IGNORECASE)
+            confirmed.extend(matches1)
+            
+            # Pattern 2
+            match2 = re.search(r'Je souhaite utiliser les KPIs suivants\s*:\s*(.+)\.', text, re.IGNORECASE)
+            if match2:
+                names = [n.strip() for n in match2.group(1).split(',')]
+                confirmed.extend(names)
+                
     return confirmed
 
 
@@ -193,7 +200,8 @@ def process_chat_message_stream(message: str, regle_id: int = None, history: lis
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.2,
-                tools=[get_regle_info_tool, list_available_kpis_tool, resolve_kpi_names_tool,
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=False),
+                tools=[get_regle_info_tool, list_available_kpis_tool, get_available_kpis_data_tool, resolve_kpi_names_tool,
                        get_context_notes_tool, save_context_note_tool, get_active_grille_json_tool,
                        get_real_performance_tool, prepare_grille_proposal_tool,
                        save_grille_config_tool, update_regle_metadata_tool,
@@ -201,14 +209,15 @@ def process_chat_message_stream(message: str, regle_id: int = None, history: lis
             )
         )
 
-        full_text = []
-        for chunk in chat.send_message_stream(context_msg):
-            part = chunk.text or ""
-            if part:
-                full_text.append(part)
-                yield part
+        # Avec automatic_function_calling=True, send_message_stream a du mal à gérer l'enchaînement.
+        # On utilise send_message et on yield le résultat en un seul chunk.
+        response = chat.send_message(context_msg)
+        
+        part = response.text or ""
+        if part:
+            yield part
 
-        logger.info(f"[Gemini] Stream terminé ({sum(len(p) for p in full_text)} chars) pour regle_id={regle_id}")
+        logger.info(f"[Gemini] Traitement terminé ({len(part)} chars) pour regle_id={regle_id}")
 
     except Exception as e:
         logger.error(f"Erreur Gemini : {e}", exc_info=True)
@@ -238,7 +247,8 @@ def process_chat_message(message: str, regle_id: int = None, history: list = Non
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.2,
-                tools=[get_regle_info_tool, list_available_kpis_tool, resolve_kpi_names_tool,
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=False),
+                tools=[get_regle_info_tool, list_available_kpis_tool, get_available_kpis_data_tool, resolve_kpi_names_tool,
                        get_context_notes_tool, save_context_note_tool, get_active_grille_json_tool,
                        get_real_performance_tool, prepare_grille_proposal_tool,
                        save_grille_config_tool, update_regle_metadata_tool,

@@ -1023,7 +1023,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
                 <a href="#" onClick={(e) => { e.preventDefault(); startNewChat(); }}>Démarrer un nouveau chat</a>
               </div>
             ) : (
-              <>
+              <div className="ai-sidebar__input-container">
                 <textarea
                   ref={textareaRef}
                   className="ai-sidebar__input"
@@ -1050,7 +1050,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
                 >
                   <i className="fa-solid fa-paper-plane"></i>
                 </button>
-              </>
+              </div>
             )}
           </div>
         </>
