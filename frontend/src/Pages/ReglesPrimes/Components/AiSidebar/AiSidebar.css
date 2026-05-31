@@ -17,25 +17,47 @@
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
 }
 
-/* Mode Agrandi (Plein écran / Page) */
+/* Mode Agrandi (Vrai Plein Écran) */
 .ai-sidebar.is-maximized {
-  width: calc(100% - 1rem);
-  max-width: 1200px;
-  height: calc(100vh - 1rem);
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-  z-index: 1000;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: 100vh;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  border-radius: 0;
+  transform: none;
+  z-index: 2000;
+  box-shadow: none;
+}
+
+.ai-sidebar.is-maximized .ai-sidebar__header {
+  padding: 1rem 10%; /* Header plus large */
 }
 
 .ai-sidebar.is-maximized .ai-sidebar__chat {
-  padding: 2rem 15%; /* Plus d'espace sur les côtés pour la lecture en mode large */
+  padding: 2rem 20%; /* Texte centré avec de larges marges pour le confort */
 }
 
-@media (max-width: 1024px) {
-  .ai-sidebar.is-maximized .ai-sidebar__chat {
-    padding: 1.5rem 5%;
+.ai-sidebar.is-maximized .ai-sidebar__input-area {
+  padding: 1.5rem 20%; /* Zone de saisie centrée aussi */
+}
+
+@media (max-width: 1200px) {
+  .ai-sidebar.is-maximized .ai-sidebar__chat,
+  .ai-sidebar.is-maximized .ai-sidebar__input-area {
+    padding-left: 10%;
+    padding-right: 10%;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-sidebar.is-maximized .ai-sidebar__chat,
+  .ai-sidebar.is-maximized .ai-sidebar__input-area {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
 
