@@ -499,6 +499,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
   const [view, setView] = useState('chat'); // 'chat' or 'history'
   const [currentConvId, setCurrentConvId] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -847,7 +848,7 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
   };
 
   return (
-    <aside className="ai-sidebar">
+    <aside className={`ai-sidebar ${isMaximized ? 'is-maximized' : ''}`}>
       <div className="ai-sidebar__header">
         <h3 className="ai-sidebar__title">
           <i className="fa-solid fa-robot"></i> Assistant IA
@@ -867,6 +868,16 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
           >
             <i className="fa-solid fa-plus"></i>
           </button>
+          
+          {/* Nouveau bouton Agrandir/Réduire */}
+          <button 
+            className="ai-sidebar__action-btn"
+            onClick={() => setIsMaximized(!isMaximized)}
+            title={isMaximized ? "Réduire en barre latérale" : "Agrandir en mode page"}
+          >
+            <i className={`fa-solid ${isMaximized ? 'fa-compress' : 'fa-expand'}`}></i>
+          </button>
+
           <button className="ai-sidebar__close" onClick={onClose} title="Fermer le panneau IA">
             <i className="fa-solid fa-xmark"></i>
           </button>
