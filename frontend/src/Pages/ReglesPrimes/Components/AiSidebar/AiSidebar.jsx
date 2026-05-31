@@ -196,6 +196,77 @@ function KpiListingCard({ kpis, onSelectMany }) {
   );
 }
 
+function KpiFormatForm({ kpis, onSubmit, submitted }) {
+  const [formats, setFormats] = useState(() => 
+    (kpis || []).reduce((acc, kpi) => ({
+      ...acc,
+      [kpi.code_kpi]: { unite: 'pourcentage', mode_prime: 'score_global', libelle: kpi.libelle, user_name: kpi.user_name }
+    }), {})
+  );
+
+  if (!kpis || kpis.length === 0) return null;
+
+  if (submitted) {
+    return (
+      <div className="ai-kpi-card ai-kpi-card--confirmed">
+        <i className="fa-solid fa-check-circle"></i> Formats validés pour {kpis.length} KPI(s).
+      </div>
+    );
+  }
+
+  return (
+    <div className="ai-kpi-card ai-format-card" style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '10px 0', overflow: 'hidden' }}>
+      <div className="ai-kpi-card__pick-header" style={{ padding: '12px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}><i className="fa-solid fa-sliders"></i> Configuration des formats</span>
+      </div>
+      <div className="ai-format-list" style={{ maxHeight: '350px', overflowY: 'auto', padding: '12px' }}>
+        {kpis.map(kpi => (
+          <div key={kpi.code_kpi} className="ai-format-row" style={{ marginBottom: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div className="ai-format-kpi-name" style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '0.85rem' }}>
+              {kpi.user_name || kpi.libelle} <code style={{ fontSize: '0.75em', color: '#64748b', marginLeft: '6px', background: '#eee', padding: '2px 4px', borderRadius: '4px' }}>{kpi.code_kpi}</code>
+            </div>
+            <div className="ai-format-controls" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', color: '#64748b' }}>
+                Unité :
+                <select 
+                  style={{ marginTop: '4px', padding: '6px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  value={formats[kpi.code_kpi]?.unite}
+                  onChange={e => setFormats({...formats, [kpi.code_kpi]: {...formats[kpi.code_kpi], unite: e.target.value}})}
+                >
+                  <option value="pourcentage">% Pourcentage</option>
+                  <option value="devise">€ Devise (MAD, EUR...)</option>
+                  <option value="nombre"># Nombre / Quantité</option>
+                  <option value="temps">⏱️ Temps (DMT, durée)</option>
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', color: '#64748b' }}>
+                Type de prime :
+                <select 
+                  style={{ marginTop: '4px', padding: '6px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  value={formats[kpi.code_kpi]?.mode_prime}
+                  onChange={e => setFormats({...formats, [kpi.code_kpi]: {...formats[kpi.code_kpi], mode_prime: e.target.value}})}
+                >
+                  <option value="score_global">Atteinte d'objectif %</option>
+                  <option value="montant_direct">Montant direct en DH</option>
+                  <option value="pourcentage_valeur">Commission % valeur</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="ai-kpi-card__actions" style={{ padding: '12px', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
+        <button 
+          style={{ width: '100%', background: 'var(--color-accent)', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }} 
+          onClick={() => onSubmit(formats)}
+        >
+          <i className="fa-solid fa-check"></i> Valider les formats
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis = {}, pendingKpiSelections = {} }) {
   if (!text) return null;
   
@@ -203,8 +274,8 @@ function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis
   let keyIdx = 0;
 
   // 1. Extraire tous les blocs de code (```type ... ```)
-  // On utilise un regex global pour trouver tous les blocs
-  const codeBlockRegex = /```(\w+)?\s*([\s\S]*?)```/g;
+  // Regex amélioré : gère les espaces éventuels après les backticks
+  const codeBlockRegex = /```\s*(\w+)?\s*([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
 
@@ -255,14 +326,17 @@ function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis
     const plainBefore = text.substring(lastIndex, match.index);
     processPlainMarkdown(plainBefore);
 
-    const type = (match[1] || '').trim();
+    const type = (match[1] || '').trim().toLowerCase();
     const content = match[2];
 
     // Traiter le bloc spécifique
-    if (type === 'json_grille_proposal' || type === 'json_grille_applied') {
-      const isApplied = type === 'json_grille_applied';
+    if (type.includes('json_grille_proposal') || type.includes('json_grille_applied')) {
+      const isApplied = type.includes('json_grille_applied');
       try {
-        const proposal = JSON.parse(content.trim());
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}') + 1;
+        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
+        const proposal = JSON.parse(jsonStr.trim());
         elements.push(
           <div key={keyIdx++} className={`ai-grille-proposal ${isApplied ? 'applied' : ''}`}>
             <div className="ai-grille-proposal-title">
@@ -332,23 +406,32 @@ function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis
       } catch (e) {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
-    } else if (type === 'kpi_selection_request' || type === 'multi_kpi_selection_request') {
+    } else if (type.includes('kpi_selection_request') || type.includes('multi_kpi_selection_request')) {
       try {
-        const data = JSON.parse(content.trim());
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}') + 1;
+        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
+        const data = JSON.parse(jsonStr.trim());
         elements.push(<MultiKpiSelector key={keyIdx++} data={data} onSelect={(kpi) => onActionClick('select_kpi', kpi)} confirmedKpis={confirmedKpis} pendingKpiSelections={pendingKpiSelections} />);
       } catch (e) {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
-    } else if (type === 'kpi_listing_request') {
+    } else if (type.includes('kpi_listing_request')) {
       try {
-        const data = JSON.parse(content.trim());
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}') + 1;
+        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
+        const data = JSON.parse(jsonStr.trim());
         elements.push(<KpiListingCard key={keyIdx++} kpis={data.kpis || []} onSelectMany={(kpis) => onActionClick('select_multiple_kpis', kpis)} />);
       } catch (e) {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
-    } else if (type === 'kpi_format_request') {
+    } else if (type.includes('kpi_format_request')) {
       try {
-        const data = JSON.parse(content.trim());
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}') + 1;
+        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
+        const data = JSON.parse(jsonStr.trim());
         elements.push(<KpiFormatForm key={keyIdx++} kpis={data.kpis || []} onSubmit={(formats) => onActionClick('submit_kpi_formats', formats)} submitted={confirmedKpis['_formats_submitted_' + msgId] || false} />);
       } catch (e) {
         console.error("Erreur parsing kpi_format_request:", e, content);
