@@ -404,6 +404,39 @@
   transform: translateX(1px); /* Correction optique */
 }
 
+/* ── Floating Toggle Button ── */
+.ai-sidebar-toggle {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 12px 18px 12px 14px;
+  border-radius: 20px 0 0 20px;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: -4px 0 15px rgba(232, 83, 58, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.ai-sidebar-toggle:hover {
+  padding-right: 25px;
+  background-color: var(--color-accent-hover);
+  box-shadow: -6px 0 20px rgba(232, 83, 58, 0.35);
+}
+
+.ai-sidebar-toggle i {
+  font-size: 1.1rem;
+}
+
 /* ---- History Mode ---- */
 .ai-sidebar__history {
   flex: 1;
