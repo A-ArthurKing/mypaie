@@ -70,7 +70,11 @@ function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedK
               </button>
             )}
             <span style={{ fontSize: '0.85rem' }}>
-              {!suggested ? <strong>"{userName}"</strong> : <>Choisissez pour <strong>"{userName}"</strong> :</>}
+              {!suggested ? (
+                <>Désolé, pas de match évident pour <strong>"{userName}"</strong>. Choisissez :</>
+              ) : (
+                <>Choisissez une alternative pour <strong>"{userName}"</strong> :</>
+              )}
             </span>
           </div>
           <div className="ai-kpi-card__list" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
