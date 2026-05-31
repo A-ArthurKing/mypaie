@@ -338,6 +338,29 @@ function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis
     flushList();
   };
 
+  const tryParseJson = (str) => {
+    try {
+      // 1. Isoler le JSON (entre { et })
+      const jsonStart = str.indexOf('{');
+      const jsonEnd = str.lastIndexOf('}') + 1;
+      if (jsonStart === -1 || jsonEnd <= jsonStart) return null;
+      let jsonStr = str.substring(jsonStart, jsonEnd);
+
+      // 2. Nettoyage agressif des erreurs courantes d'IA
+      jsonStr = jsonStr
+        .replace(/\\"/g, '"')       // Transforme \" en "
+        .replace(/\\'/g, "'")       // Transforme \' en '
+        .replace(/,\s*}/g, '}')     // Enlève les virgules traînantes avant }
+        .replace(/,\s*]/g, ']')     // Enlève les virgules traînantes avant ]
+        .replace(/\.\.\./g, '')      // Enlève les points de suspension
+        .replace(/\n/g, ' ');        // Enlève les sauts de ligne pour stabiliser le parse
+
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      return null;
+    }
+  };
+
   while ((match = codeBlockRegex.exec(text)) !== null) {
     // Traiter le texte avant le bloc
     const plainBefore = text.substring(lastIndex, match.index);
@@ -349,11 +372,8 @@ function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis
     // Traiter le bloc spécifique
     if (type.includes('json_grille_proposal') || type.includes('json_grille_applied')) {
       const isApplied = type.includes('json_grille_applied');
-      try {
-        const jsonStart = content.indexOf('{');
-        const jsonEnd = content.lastIndexOf('}') + 1;
-        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
-        const proposal = JSON.parse(jsonStr.trim());
+      const proposal = tryParseJson(content);
+      if (proposal) {
         elements.push(
           <div key={keyIdx++} className={`ai-grille-proposal ${isApplied ? 'applied' : ''}`}>
             <div className="ai-grille-proposal-title">
@@ -420,38 +440,28 @@ function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis
             </div>
           </div>
         );
-      } catch (e) {
+      } else {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
     } else if (type.includes('kpi_selection_request') || type.includes('multi_kpi_selection_request')) {
-      try {
-        const jsonStart = content.indexOf('{');
-        const jsonEnd = content.lastIndexOf('}') + 1;
-        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
-        const data = JSON.parse(jsonStr.trim());
+      const data = tryParseJson(content);
+      if (data) {
         elements.push(<MultiKpiSelector key={keyIdx++} data={data} onSelect={(kpi) => onActionClick('select_kpi', kpi)} confirmedKpis={confirmedKpis} pendingKpiSelections={pendingKpiSelections} />);
-      } catch (e) {
+      } else {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
     } else if (type.includes('kpi_listing_request')) {
-      try {
-        const jsonStart = content.indexOf('{');
-        const jsonEnd = content.lastIndexOf('}') + 1;
-        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
-        const data = JSON.parse(jsonStr.trim());
+      const data = tryParseJson(content);
+      if (data) {
         elements.push(<KpiListingCard key={keyIdx++} kpis={data.kpis || []} onSelectMany={(kpis) => onActionClick('select_multiple_kpis', kpis)} />);
-      } catch (e) {
+      } else {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
     } else if (type.includes('kpi_format_request')) {
-      try {
-        const jsonStart = content.indexOf('{');
-        const jsonEnd = content.lastIndexOf('}') + 1;
-        const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart) ? content.substring(jsonStart, jsonEnd) : content;
-        const data = JSON.parse(jsonStr.trim());
+      const data = tryParseJson(content);
+      if (data) {
         elements.push(<KpiFormatForm key={keyIdx++} kpis={data.kpis || []} onSubmit={(formats) => onActionClick('submit_kpi_formats', formats)} submitted={confirmedKpis['_formats_submitted_' + msgId] || false} />);
-      } catch (e) {
-        console.error("Erreur parsing kpi_format_request:", e, content);
+      } else {
         elements.push(<pre key={keyIdx++} className="ai-md-pre">{content}</pre>);
       }
     } else {
