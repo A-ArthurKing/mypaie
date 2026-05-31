@@ -110,11 +110,16 @@ function KpiSelectorCard({ userName, suggested, candidates, onSelect, confirmedK
 }
 
 function MultiKpiSelector({ data, onSelect, confirmedKpis, pendingKpiSelections }) {
-  const items = [
-    ...(data.resolved || []).map(k => ({ user_name: k.user_name, suggested: k, candidates: [] })),
-    ...(data.unresolved || []).map(k => ({ user_name: k.user_name, suggested: null, candidates: k.candidates || [] })),
-    ...(data.items || []) // Compatibilité avec l'ancien format items[]
-  ];
+  // Gère à la fois le format multiple (resolved/unresolved) et le format simple (user_name/best_guess)
+  const items = data.user_name 
+    ? [{ user_name: data.user_name, suggested: data.best_guess || data.suggested, candidates: data.candidates || [] }]
+    : [
+        ...(data.resolved || []).map(k => ({ user_name: k.user_name, suggested: k, candidates: [] })),
+        ...(data.unresolved || []).map(k => ({ user_name: k.user_name, suggested: null, candidates: k.candidates || [] })),
+        ...(data.items || [])
+      ];
+
+  if (items.length === 0) return null;
 
   return (
     <div className="ai-multi-selector" style={{ background: '#f1f5f9', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '10px 0' }}>
@@ -200,7 +205,13 @@ function KpiFormatForm({ kpis, onSubmit, submitted }) {
   const [formats, setFormats] = useState(() => 
     (kpis || []).reduce((acc, kpi) => ({
       ...acc,
-      [kpi.code_kpi]: { unite: 'pourcentage', mode_prime: 'score_global', libelle: kpi.libelle, user_name: kpi.user_name }
+      [kpi.code_kpi]: { 
+        code_kpi: kpi.code_kpi, 
+        unite: 'pourcentage', 
+        mode_prime: 'score_global', 
+        libelle: kpi.libelle, 
+        user_name: kpi.user_name 
+      }
     }), {})
   );
 
