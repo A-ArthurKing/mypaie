@@ -267,6 +267,23 @@ function KpiFormatForm({ kpis, onSubmit, submitted }) {
   );
 }
 
+function LogicConfirmationCard({ onConfirm, submitted }) {
+  if (submitted) return null;
+  return (
+    <div style={{ margin: '15px 0', padding: '16px', background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent)', borderRadius: '12px', textAlign: 'center' }}>
+      <p style={{ margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '600', color: 'var(--color-accent)' }}>
+        La logique vous convient-elle ?
+      </p>
+      <button 
+        style={{ width: '100%', background: 'var(--color-accent)', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+        onClick={onConfirm}
+      >
+        <i className="fa-solid fa-wand-magic-sparkles"></i> Générer la configuration finale
+      </button>
+    </div>
+  );
+}
+
 function MarkdownMessage({ text, onActionClick, msgId, simulation, confirmedKpis = {}, pendingKpiSelections = {} }) {
   if (!text) return null;
   
@@ -591,6 +608,9 @@ export default function AiSidebar({ isOpen, onClose, regleId, onRefresh }) {
       
       const msg = `Voici mes choix de format pour les KPIs :\n${formatLines.join('\n')}\n\nVous pouvez passer à l'étape suivante.`;
       await sendMessageToBot(msg);
+    } else if (actionType === 'confirm_logic') {
+      setConfirmedKpis(prev => ({ ...prev, ['_logic_confirmed_' + msgId]: true }));
+      await sendMessageToBot("Cette logique me convient parfaitement. Veuillez maintenant générer la proposition de grille complète avec les données réelles et les simulations.");
     } else if (actionType === 'select_multiple_kpis') {
       // payload est une liste d'objets KPI
       const selectedNames = payload.map(k => k.libelle).join(', ');
