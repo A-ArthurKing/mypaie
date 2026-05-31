@@ -345,13 +345,14 @@
 }
 
 .ai-sidebar__input-container:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 4px 14px rgba(232, 83, 58, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); /* Ombre plus neutre au focus */
 }
 
 .ai-sidebar__input {
   flex: 1;
   border: none !important;
+  outline: none !important;
+  box-shadow: none !important; /* Retire tout halo résiduel */
   background: transparent !important;
   padding: 0.6rem 0;
   margin: 0;
@@ -361,8 +362,8 @@
   resize: none;
   min-height: 24px !important;
   max-height: 150px;
-  outline: none !important;
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .ai-sidebar__input::placeholder {
